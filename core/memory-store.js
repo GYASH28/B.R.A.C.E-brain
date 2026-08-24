@@ -1367,7 +1367,13 @@ class MemoryStore {
     return {
       schemaVersion: SCHEMA_VERSION,
       exportedAt: nowIso(),
-      projects: this.listProjects(),
+      projects: this.listProjects().map((project) => ({
+        id: project.id,
+        name: project.name,
+        created_at: project.created_at,
+        updated_at: project.updated_at,
+        last_indexed_at: project.last_indexed_at,
+      })),
       sources: this.db.prepare("SELECT * FROM sources ORDER BY updated_at DESC").all().map((row) => ({
         ...row,
         metadata: safeJsonParse(row.metadata_json, {}),

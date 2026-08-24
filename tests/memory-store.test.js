@@ -191,6 +191,7 @@ test("backup and privacy-safe export preserve the memory database", async (conte
   const exported = store.exportData();
   assert.equal(exported.memories.length, 1);
   assert.equal(Object.hasOwn(exported, "settings"), false);
+  assert.equal(exported.projects.every((project) => !Object.hasOwn(project, "root_path")), true);
   const target = path.join(directory, "backups", "brace-backup.sqlite3");
   const result = await store.backup(target);
   assert.ok(result.bytes > 0);

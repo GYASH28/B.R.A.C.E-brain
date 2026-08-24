@@ -31,5 +31,6 @@ test("synthetic demo initialization is idempotent and contains no user material"
   assert.equal(stats.sources, 3);
   assert.equal(stats.sourceChunks, 11);
   assert.match(store.listProjects()[0].name, /synthetic demo/i);
+  assert.equal(Object.hasOwn(store.exportData().projects[0], "root_path"), false);
   assert.doesNotMatch(JSON.stringify(store.exportData()), /C:\\\\Users\\|\/home\//);
 });

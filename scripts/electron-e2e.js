@@ -12,7 +12,9 @@ if (!process.env.BRACE_E2E_USER_DATA) {
   throw new Error("Launch Electron E2E through scripts/electron-e2e-runner.js.");
 }
 const userData = path.resolve(process.env.BRACE_E2E_USER_DATA);
-const screenshotDirectory = path.join(root, "artifacts", "screenshots");
+const screenshotDirectory = process.env.CI
+  ? path.join(userData, "screenshots")
+  : path.join(root, "artifacts", "screenshots");
 let activeService = null;
 let activeWindow = null;
 const { BraceMemoryService, registerBraceMemoryIpc } = require(
@@ -21,6 +23,10 @@ const { BraceMemoryService, registerBraceMemoryIpc } = require(
 
 app.setPath("userData", userData);
 app.commandLine.appendSwitch("force-device-scale-factor", "1");
+if (process.platform === "linux" && process.env.CI) {
+  app.disableHardwareAcceleration();
+  app.commandLine.appendSwitch("disable-gpu");
+}
 protocol.registerSchemesAsPrivileged([
   {
     scheme: "brain",
@@ -84,10 +90,23 @@ async function setInput(window, selector, value) {
 }
 
 async function screenshot(window, name) {
-  await wait(500);
-  await window.webContents.capturePage();
-  await wait(150);
-  const image = await window.webContents.capturePage();
+  await window.webContents.executeJavaScript("document.fonts?.ready || Promise.resolve()", true);
+  await wait(1_200);
+  let image;
+  let captureError;
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      window.webContents.invalidate();
+      image = await window.webContents.capturePage();
+      if (!image.isEmpty()) break;
+    } catch (error) {
+      captureError = error;
+    }
+    await wait(250 * (attempt + 1));
+  }
+  if (!image || image.isEmpty()) {
+    throw captureError || new Error(`Electron returned an empty screenshot for ${name}.`);
+  }
   fs.mkdirSync(screenshotDirectory, { recursive: true });
   const target = path.join(screenshotDirectory, `${name}.png`);
   fs.writeFileSync(target, image.toPNG());
@@ -221,7 +240,10 @@ async function run() {
 
   await clickText(window, "Connections");
   await waitFor(window, "document.body.innerText.includes('MCP stdio configuration') && document.body.innerText.includes('Read-only by default')");
-  const connectionReady = await window.webContents.executeJavaScript("document.body.innerText.includes('--mcp')");
+  const connectionMarker = process.platform === "win32" ? "BRACE_MCP_DIRECT" : "--mcp";
+  const connectionReady = await window.webContents.executeJavaScript(
+    `document.body.innerText.includes(${JSON.stringify(connectionMarker)})`,
+  );
 
   await clickText(window, "Settings");
   await waitFor(window, "document.body.innerText.includes('Make the workspace fit you')");
@@ -236,7 +258,7 @@ async function run() {
     databaseExists,
     stats: snapshot.stats,
     screenshots: [onboarding, overview, commands, capture, recall, timeline, graph, skills, settings].map((target) =>
-      path.relative(root, target),
+      process.env.CI ? path.basename(target) : path.relative(root, target),
     ),
     graphInteraction,
     connectionReady,

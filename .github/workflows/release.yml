@@ -27,7 +27,7 @@ jobs:
       - run: npx --no-install electron-builder --linux AppImage deb --publish never
       - run: npm run package:audit -- dist/installer/linux-unpacked/resources/app.asar
       - run: xvfb-run -a npm run electron:smoke -- dist/installer/linux-unpacked/brace
-      - run: xvfb-run -a node scripts/electron-mcp-smoke.js dist/installer/BRACE-0.1.0.AppImage
+      - run: xvfb-run -a node scripts/electron-mcp-smoke.js dist/installer/linux-unpacked/brace
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: linux-packages

@@ -21,6 +21,9 @@ const startupStartedAt = Date.now();
 const smokeToken = process.argv
   .find((argument) => argument.startsWith("--smoke-token="))
   ?.slice("--smoke-token=".length);
+const smokeResultPath = smokeToken && process.env.BRACE_SMOKE_RESULT_PATH
+  ? path.resolve(process.env.BRACE_SMOKE_RESULT_PATH)
+  : null;
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 
 let mainWindow: BrowserWindow | null = null;
@@ -42,6 +45,14 @@ app.on("second-instance", () => {
 
 function finishSmokeWhenReady() {
   if (!smokeToken || !smokeShellReady || !smokeRendererLoaded) return;
+  if (smokeResultPath) {
+    fs.writeFileSync(smokeResultPath, JSON.stringify({
+      token: smokeToken,
+      shellReady: true,
+      rendererLoaded: true,
+      loadFailed: false,
+    }));
+  }
   setTimeout(() => app.quit(), 250);
 }
 
@@ -152,6 +163,14 @@ function createWindow() {
       log.error(
         `Renderer load failed (${errorCode}) ${errorDescription}: ${validatedURL}`,
       );
+      if (smokeResultPath && smokeToken) {
+        fs.writeFileSync(smokeResultPath, JSON.stringify({
+          token: smokeToken,
+          shellReady: smokeShellReady,
+          rendererLoaded: false,
+          loadFailed: true,
+        }));
+      }
     },
   );
 

@@ -35,6 +35,7 @@ const executable = path.resolve(
 const token = `smoke-${Date.now()}-${process.pid}`;
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "brace-package-smoke-"));
 const configRoot = path.join(temporaryRoot, "config");
+const smokeResultPath = path.join(temporaryRoot, "smoke-result.json");
 
 function findLogFiles(directory) {
   if (!fs.existsSync(directory)) return [];
@@ -63,6 +64,7 @@ const child = spawn(executable, childArguments, {
   env: {
     ...process.env,
     BRACE_DATA_DIR: path.join(temporaryRoot, "data"),
+    BRACE_SMOKE_RESULT_PATH: smokeResultPath,
     ...(process.platform === "win32"
       ? {
           APPDATA: configRoot,
@@ -93,10 +95,15 @@ child.on("exit", (code) => {
   const log = logPaths
     .map((logPath) => fs.readFileSync(logPath, "utf8"))
     .join("\n");
-  const ready = log.includes(`Smoke ready ${token}`);
-  const loaded = log.includes(`Smoke loaded ${token}`);
+  let smokeResult = {};
+  try {
+    smokeResult = JSON.parse(fs.readFileSync(smokeResultPath, "utf8"));
+  } catch {}
+  const markerMatches = smokeResult.token === token;
+  const ready = (markerMatches && smokeResult.shellReady === true) || log.includes(`Smoke ready ${token}`);
+  const loaded = (markerMatches && smokeResult.rendererLoaded === true) || log.includes(`Smoke loaded ${token}`);
   const recent = log.slice(Math.max(0, log.lastIndexOf(token) - 2_000));
-  const loadFailed = recent.includes("Renderer load failed");
+  const loadFailed = (markerMatches && smokeResult.loadFailed === true) || recent.includes("Renderer load failed");
   const result = {
     executable,
     elapsedMs,

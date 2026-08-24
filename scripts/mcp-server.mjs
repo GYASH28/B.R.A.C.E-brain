@@ -60,7 +60,7 @@ export function createBraceMcpServer(options = {}) {
   const destructiveEnabled = options.destructiveEnabled ?? environment.BRACE_MCP_DESTRUCTIVE === "1";
   const embeddingAdapter = options.embeddingAdapter || createEmbeddingAdapter(environment);
   const server = new McpServer(
-    { name: "brace", version: "0.2.0" },
+    { name: "brace", version: "0.3.0" },
     {
       instructions: [
         "BRACE is a local-first memory layer.",

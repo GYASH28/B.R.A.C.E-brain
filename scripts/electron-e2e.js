@@ -94,6 +94,11 @@ async function screenshot(window, name) {
   return target;
 }
 
+function pressKey(window, keyCode, modifiers = []) {
+  window.webContents.sendInputEvent({ type: "keyDown", keyCode, modifiers });
+  window.webContents.sendInputEvent({ type: "keyUp", keyCode, modifiers });
+}
+
 async function run() {
   const consoleErrors = [];
   const outputRoot = path.join(root, "out");
@@ -151,6 +156,20 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Your context, ready when AI needs it.')");
   const overview = await screenshot(window, "app-overview");
 
+  pressKey(window, "K", ["control"]);
+  await waitFor(window, "document.querySelector('[aria-label=\"Command palette\"]')");
+  const commands = await screenshot(window, "app-commands");
+  pressKey(window, "Escape");
+  await waitFor(window, "!document.querySelector('[aria-label=\"Command palette\"]')");
+
+  pressKey(window, "N", ["control"]);
+  await waitFor(window, "document.querySelector('[aria-labelledby=\"quick-capture-title\"]')");
+  const capture = await screenshot(window, "app-quick-capture");
+  await setInput(window, "#quick-title", "Preserve the verified release checksum");
+  await setInput(window, "#quick-content", "Every native release artifact keeps an immutable SHA-256 checksum beside its download link.");
+  await clickText(window, "Save memory");
+  await waitFor(window, "document.body.innerText.includes('Memory saved locally.') && !document.querySelector('[aria-labelledby=\"quick-capture-title\"]')");
+
   await clickText(window, "Recall");
   await setInput(window, "input[placeholder^='What did we decide']", "canonical source files");
   await window.webContents.executeJavaScript(
@@ -173,10 +192,25 @@ async function run() {
       source.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       zoom.click();
       await new Promise((resolve) => setTimeout(resolve, 250));
+      const selectedSource = document.querySelector('.graph-inspector-type')?.textContent?.trim().toLowerCase() === 'source';
+      const beforeKeyboard = document.querySelector('.graph-node.is-selected')?.getAttribute('aria-label');
+      document.querySelector('.graph-node.is-selected')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 120));
+      const afterKeyboard = document.querySelector('.graph-node.is-selected')?.getAttribute('aria-label');
+      Array.from(document.querySelectorAll('.graph-layout button')).find((button) => button.textContent?.trim() === 'Flow')?.click();
+      await new Promise((resolve) => setTimeout(resolve, 120));
       return {
-        selectedSource: document.querySelector('.graph-inspector-type')?.textContent?.trim().toLowerCase() === 'source',
+        selectedSource,
         zoomed: document.querySelector('.graph-zoom span')?.textContent?.trim() === '112%',
+        keyboardTravel: Boolean(beforeKeyboard && afterKeyboard && beforeKeyboard !== afterKeyboard),
+        flowLayout: document.querySelector('.graph-layout button[aria-pressed="true"]')?.textContent?.trim() === 'Flow',
       };
+    })()
+  `);
+  await window.webContents.executeJavaScript(`
+    (() => {
+      Array.from(document.querySelectorAll('.graph-layout button')).find((button) => button.textContent?.trim() === 'Orbit')?.click();
+      document.querySelector('button[aria-label="Reset zoom"]')?.click();
     })()
   `);
   const graph = await screenshot(window, "app-graph");
@@ -185,16 +219,28 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Decision Journal') && document.querySelectorAll('[role=switch]').length === 2");
   const skills = await screenshot(window, "app-skills");
 
+  await clickText(window, "Connections");
+  await waitFor(window, "document.body.innerText.includes('MCP stdio configuration') && document.body.innerText.includes('Read-only by default')");
+  const connectionReady = await window.webContents.executeJavaScript("document.body.innerText.includes('--mcp')");
+
+  await clickText(window, "Settings");
+  await waitFor(window, "document.body.innerText.includes('Make the workspace fit you')");
+  await clickText(window, "Compact");
+  const preferenceReady = await window.webContents.executeJavaScript("document.documentElement.dataset.density === 'compact' && JSON.parse(localStorage.getItem('brace.ui')).density === 'compact'");
+  const settings = await screenshot(window, "app-settings");
+
   const snapshot = service.snapshot();
   const databaseExists = fs.existsSync(service.databasePath);
   const report = {
     profileIsTemporary: service.databasePath.startsWith(userData),
     databaseExists,
     stats: snapshot.stats,
-    screenshots: [onboarding, overview, recall, timeline, graph, skills].map((target) =>
+    screenshots: [onboarding, overview, commands, capture, recall, timeline, graph, skills, settings].map((target) =>
       path.relative(root, target),
     ),
     graphInteraction,
+    connectionReady,
+    preferenceReady,
     consoleErrors,
   };
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -202,10 +248,14 @@ async function run() {
     !report.profileIsTemporary ||
     !databaseExists ||
     snapshot.stats.projects !== 1 ||
-    snapshot.stats.memories !== 3 ||
+    snapshot.stats.memories !== 4 ||
     snapshot.stats.decisions !== 1 ||
     !graphInteraction.selectedSource ||
     !graphInteraction.zoomed ||
+    !graphInteraction.keyboardTravel ||
+    !graphInteraction.flowLayout ||
+    !connectionReady ||
+    !preferenceReady ||
     consoleErrors.length
   ) {
     process.exitCode = 1;
@@ -223,6 +273,6 @@ app.whenReady().then(async () => {
     try { activeWindow?.destroy(); } catch {}
     activeService = null;
     activeWindow = null;
-    app.quit();
+    app.exit(process.exitCode || 0);
   }
 });

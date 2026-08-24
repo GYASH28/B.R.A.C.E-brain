@@ -6,8 +6,24 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Planned
 
-- Collect structured feedback from the 0.2.0 preview.
+- Collect structured feedback from the 0.3.0 preview.
 - Add native signing and update-channel work when maintainers have signing infrastructure.
+
+## [0.3.0] - 2026-08-25
+
+### Changed
+
+- Replaced the rejected warm/orange identity with the Arctic Glass system: ink-blue depth, ice signal, spectral violet, optical glass edges, and restrained neomorphic pressure.
+- Re-authored the launch surface as a split-memory film with an opening sequence, provenance lens cursor, operable recall workbench, local-boundary vault, real-product panorama, and collapsing native download finale.
+- Rebuilt the beginner guide in the same responsive glass system and kept every install, recall, graph, skill, MCP, backup, privacy, and troubleshooting workflow grounded in implemented behavior.
+- Added a real command palette, global quick capture, numbered workspace navigation, keyboard map, device-local density/motion/contrast preferences, and richer opening, success, error, and empty states.
+- Added Orbit and Flow graph layouts, node shapes in addition to color, roving arrow-key navigation, relationship labels, zoom controls, and an accessible adjacency inspector.
+
+### Verified
+
+- Native Electron E2E now covers onboarding, command palette, quick capture persistence, recall, timeline, graph mouse and keyboard travel, both graph layouts, skills, MCP information, and persisted UI preferences using an isolated synthetic profile.
+- Scrollcraft contact sheets cover every act at desktop, mobile, and reduced motion with no dead scroll and at least 4.5:1 cue contrast.
+- Website WCAG 2.2 AA, native package smoke, persistence, privacy, secret, dependency, and artifact-content gates run before publication.
 
 ## [0.2.0] - 2026-08-24
 
@@ -44,6 +60,7 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Removed private seed data, machine-specific paths, legacy local servers, arbitrary plugin execution, and broad renderer privileges from the public candidate.
 - Added secret-pattern tests, dependency auditing, strict embedding endpoint validation, sandboxed rendering, CSP, and repository hygiene controls.
 
-[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.3.0
 [0.2.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.2.0
 [0.1.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.1.0

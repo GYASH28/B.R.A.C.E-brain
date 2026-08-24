@@ -14,6 +14,8 @@ import {
   Clock3,
   CloudOff,
   Code2,
+  Command,
+  CornerDownLeft,
   Database,
   Download,
   ExternalLink,
@@ -25,6 +27,7 @@ import {
   HardDrive,
   Info,
   KeyRound,
+  Keyboard,
   LayoutDashboard,
   LoaderCircle,
   Menu,
@@ -40,6 +43,7 @@ import {
   ServerCog,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   Sparkles,
   Tags,
   Trash2,
@@ -77,7 +81,7 @@ const kindTone: Record<string, string> = {
   summary: "border-cyan-400/20 bg-cyan-400/10 text-cyan-200",
   hypothesis: "border-fuchsia-400/20 bg-fuchsia-400/10 text-fuchsia-200",
   fact: "border-slate-400/20 bg-slate-400/10 text-slate-200",
-  procedure: "border-orange-400/20 bg-orange-400/10 text-orange-200",
+  procedure: "border-indigo-400/20 bg-indigo-400/10 text-indigo-200",
 };
 
 function formatDate(value?: string | null) {
@@ -102,6 +106,10 @@ function shortUri(value: string | null) {
   }
 }
 
+function applyUiPreference(key: "density" | "motion" | "contrast", value: string) {
+  document.documentElement.dataset[key] = value;
+}
+
 export function BraceApp() {
   const {
     view,
@@ -117,17 +125,54 @@ export function BraceApp() {
     clearMessage,
   } = useBrace();
   const [collapsed, setCollapsed] = useState(false);
+  const [commandOpen, setCommandOpen] = useState(false);
+  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   useEffect(() => {
     void bootstrap();
   }, [bootstrap]);
 
   useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem("brace.ui") || "{}");
+      if (saved.density) document.documentElement.dataset.density = saved.density;
+      if (saved.motion) document.documentElement.dataset.motion = saved.motion;
+      if (saved.contrast) document.documentElement.dataset.contrast = saved.contrast;
+    } catch {
+      localStorage.removeItem("brace.ui");
+    }
+  }, []);
+
+  useEffect(() => {
     const handler = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      const editing = target?.matches("input, textarea, select, [contenteditable='true']");
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
         event.preventDefault();
-        setView("search");
-        requestAnimationFrame(() => document.querySelector<HTMLInputElement>("#brace-global-search")?.focus());
+        setCommandOpen(true);
+        return;
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "n") {
+        event.preventDefault();
+        setQuickCaptureOpen(true);
+        return;
+      }
+      if (!editing && event.key === "?") {
+        event.preventDefault();
+        setShortcutsOpen(true);
+        return;
+      }
+      if (!editing && /^[1-9]$/.test(event.key)) {
+        event.preventDefault();
+        const destination = nav[Number(event.key) - 1];
+        if (destination) setView(destination.view);
+        return;
+      }
+      if (event.key === "Escape") {
+        setCommandOpen(false);
+        setQuickCaptureOpen(false);
+        setShortcutsOpen(false);
       }
     };
     window.addEventListener("keydown", handler);
@@ -179,7 +224,7 @@ export function BraceApp() {
                 title={collapsed ? item.label : undefined}
               >
                 {active && <span className="brace-nav-signal" />}
-                <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? "text-[#ff9a72]" : "text-white/34 group-hover:text-white/65"}`} strokeWidth={1.8} />
+                <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? "text-[#9bdcff]" : "text-white/34 group-hover:text-white/65"}`} strokeWidth={1.8} />
                 {!collapsed && <span>{item.label}</span>}
               </button>
             );
@@ -209,7 +254,7 @@ export function BraceApp() {
       </aside>
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <Header />
+        <Header onCommand={() => setCommandOpen(true)} onQuickCapture={() => setQuickCaptureOpen(true)} />
         {snapshot.environment === "browser-preview" && (
           <div className="flex items-center gap-2 border-b border-sky-300/10 bg-sky-300/[0.05] px-5 py-2 text-[11px] text-sky-100/70">
             <Info className="h-3.5 w-3.5" />
@@ -237,9 +282,12 @@ export function BraceApp() {
       </div>
 
       {selectedMemory && <MemoryDetail memory={selectedMemory} onClose={() => setSelectedMemory(null)} />}
+      {commandOpen && <CommandPalette onClose={() => setCommandOpen(false)} onQuickCapture={() => { setCommandOpen(false); setQuickCaptureOpen(true); }} onShortcuts={() => { setCommandOpen(false); setShortcutsOpen(true); }} />}
+      {quickCaptureOpen && <QuickCapture onClose={() => setQuickCaptureOpen(false)} />}
+      {shortcutsOpen && <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />}
       {operation && (
         <div className="fixed bottom-5 right-5 z-[80] flex items-center gap-3 rounded-xl border border-white/10 bg-[#171b20]/95 px-4 py-3 text-xs text-white/75 shadow-2xl backdrop-blur" role="status">
-          <LoaderCircle className="h-4 w-4 animate-spin text-[#ff8c5f]" />
+          <LoaderCircle className="h-4 w-4 animate-spin text-[#7dd3fc]" />
           {operation}
         </div>
       )}
@@ -251,20 +299,24 @@ function BraceMark() {
   return (
     <span className="brace-mark relative flex h-10 w-10 shrink-0 items-center justify-center">
       <span className="brace-mark-orbit" aria-hidden="true" />
-      <span className="relative text-sm font-black tracking-[-0.08em] text-[#1d0903]">B</span>
-      <span className="absolute right-[8px] top-[7px] h-1 w-1 rounded-full bg-[#fff5df]" />
+      <span className="relative text-sm font-black tracking-[-0.08em] text-[#04111f]">B</span>
+      <span className="absolute right-[8px] top-[7px] h-1 w-1 rounded-full bg-white" />
     </span>
   );
 }
 
 function LoadingScreen() {
   return (
-    <div className="flex h-[100dvh] items-center justify-center bg-[#080a0d] text-white">
-      <div className="text-center">
-        <div className="mx-auto mb-5"><BraceMark /></div>
-        <LoaderCircle className="mx-auto h-4 w-4 animate-spin text-[#ff7a45]" />
-        <p className="mt-3 text-xs tracking-wide text-white/40">Opening your local memory</p>
+    <div className="brace-opening" role="status" aria-live="polite">
+      <div className="brace-opening-orbits" aria-hidden="true"><i /><i /><i /></div>
+      <div className="brace-opening-copy">
+        <div className="mx-auto mb-6"><BraceMark /></div>
+        <span>LOCAL MEMORY STARTUP</span>
+        <h1>Bringing your context<br />into focus.</h1>
+        <div className="brace-opening-track" aria-hidden="true"><i /></div>
+        <p>Opening the encrypted local index. No network request is required.</p>
       </div>
+      <div className="brace-opening-steps" aria-hidden="true"><span><i />App shell</span><span><i />Local database</span><span><i />Memory graph</span></div>
     </div>
   );
 }
@@ -272,8 +324,8 @@ function LoadingScreen() {
 function Onboarding() {
   const { initializeDemo, addProject, operation, error, clearMessage } = useBrace();
   return (
-    <div className="relative flex min-h-[100dvh] overflow-hidden bg-[#080a0d] text-[#f4f1eb]">
-      <div className="pointer-events-none absolute inset-0 opacity-70" style={{ background: "radial-gradient(circle at 72% 30%, rgba(255,122,69,.13), transparent 34%), radial-gradient(circle at 22% 75%, rgba(89,126,247,.09), transparent 38%)" }} />
+    <div className="brace-onboarding relative flex min-h-[100dvh] overflow-hidden text-[#eef7ff]">
+      <div className="brace-onboarding-light pointer-events-none absolute inset-0" />
       <div className="relative mx-auto flex w-full max-w-6xl flex-col px-7 py-8 lg:px-12">
         <header className="flex items-center gap-3">
           <BraceMark />
@@ -298,7 +350,7 @@ function Onboarding() {
                 <FolderInput className="h-4 w-4" /> Import a project
               </button>
               <button type="button" onClick={() => void initializeDemo()} className="brace-secondary h-11 px-5">
-                <Sparkles className="h-4 w-4 text-[#ff9a72]" /> Explore synthetic demo
+                <Sparkles className="h-4 w-4 text-[#9bdcff]" /> Explore synthetic demo
               </button>
             </div>
             {error && (
@@ -313,9 +365,9 @@ function Onboarding() {
             </p>
           </section>
           <section className="relative">
-            <div className="absolute -inset-8 rounded-full bg-[#ff6a3d]/5 blur-3xl" />
-            <div className="relative overflow-hidden rounded-3xl border border-white/[0.09] bg-[#101318]/90 p-3 shadow-[0_30px_100px_rgba(0,0,0,.55)]">
-              <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 pb-3 pt-1 text-[10px] text-white/30"><span className="h-2 w-2 rounded-full bg-[#ff7a45]" /><span className="h-2 w-2 rounded-full bg-[#ffd166]" /><span className="h-2 w-2 rounded-full bg-[#64d39b]" /><span className="ml-2">How BRACE works</span></div>
+            <div className="absolute -inset-8 rounded-full bg-sky-300/5 blur-3xl" />
+            <div className="brace-onboarding-window relative overflow-hidden rounded-3xl p-3">
+              <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 pb-3 pt-1 text-[10px] text-white/30"><span className="h-2 w-2 rounded-full bg-sky-300" /><span className="h-2 w-2 rounded-full bg-violet-300" /><span className="h-2 w-2 rounded-full bg-emerald-300" /><span className="ml-2">How BRACE works</span></div>
               <div className="space-y-2 p-3">
                 <OnboardingStep number="01" icon={FolderInput} title="Connect work" text="Choose a specific project folder. Originals stay where they are." />
                 <OnboardingStep number="02" icon={Database} title="Build local memory" text="BRACE indexes sources, decisions, evidence, and relationships into SQLite." />
@@ -325,7 +377,7 @@ function Onboarding() {
           </section>
         </div>
       </div>
-      {operation && <div className="fixed bottom-5 right-5 flex items-center gap-3 rounded-xl border border-white/10 bg-[#171b20] px-4 py-3 text-xs text-white/70"><LoaderCircle className="h-4 w-4 animate-spin text-[#ff7a45]" />{operation}</div>}
+      {operation && <div className="fixed bottom-5 right-5 flex items-center gap-3 rounded-xl border border-white/10 bg-[#0d1828] px-4 py-3 text-xs text-white/70"><LoaderCircle className="h-4 w-4 animate-spin text-[#7dd3fc]" />{operation}</div>}
     </div>
   );
 }
@@ -334,13 +386,13 @@ function OnboardingStep({ number, icon: Icon, title, text }: { number: string; i
   return (
     <div className="grid grid-cols-[42px_42px_1fr] items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
       <span className="font-mono text-[10px] text-white/25">{number}</span>
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05] text-[#ff9a72]"><Icon className="h-[18px] w-[18px]" /></span>
+      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.05] text-[#9bdcff]"><Icon className="h-[18px] w-[18px]" /></span>
       <div><h2 className="text-sm font-semibold">{title}</h2><p className="mt-1 text-xs leading-5 text-white/40">{text}</p></div>
     </div>
   );
 }
 
-function Header() {
+function Header({ onCommand, onQuickCapture }: { onCommand: () => void; onQuickCapture: () => void }) {
   const { setView, setSearchQuery, search, searchQuery, snapshot } = useBrace();
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -358,10 +410,10 @@ function Header() {
           placeholder="Recall a decision, source, or lesson…"
           className="brace-command h-11 w-full rounded-xl pl-10 pr-16 text-sm text-white outline-none placeholder:text-white/25"
         />
-        <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-white/10 bg-black/20 px-1.5 py-0.5 text-[9px] text-white/28">Ctrl K</kbd>
+        <button type="button" onClick={onCommand} className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-[9px] text-white/35 hover:text-white/70" aria-label="Open command palette"><Command className="h-3 w-3" />Ctrl K</button>
       </form>
       <div className="ml-auto flex items-center gap-2" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
-        <button type="button" onClick={() => setView("memories")} className="brace-secondary h-10 px-3.5"><Plus className="h-4 w-4" /><span className="hidden sm:inline">New memory</span></button>
+        <button type="button" onClick={onQuickCapture} className="brace-secondary h-10 px-3.5" aria-keyshortcuts="Control+N Meta+N"><Plus className="h-4 w-4" /><span className="hidden sm:inline">Quick capture</span></button>
         <div className="hidden items-center gap-2 rounded-lg px-2.5 py-2 text-[11px] text-white/38 lg:flex">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
           {snapshot?.stats.memories ?? 0} memories
@@ -371,12 +423,119 @@ function Header() {
   );
 }
 
+function CommandPalette({ onClose, onQuickCapture, onShortcuts }: { onClose: () => void; onQuickCapture: () => void; onShortcuts: () => void }) {
+  const { setView } = useBrace();
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+  const commands = useMemo(() => [
+    ...nav.map((item, index) => ({
+      id: item.view,
+      label: item.label,
+      detail: `Open ${item.label.toLowerCase()}`,
+      icon: item.icon,
+      key: String(index + 1),
+      run: () => { setView(item.view); onClose(); },
+    })),
+    { id: "capture", label: "Capture a memory", detail: "Save durable context from anywhere", icon: Plus, key: "Ctrl N", run: onQuickCapture },
+    { id: "shortcuts", label: "Keyboard map", detail: "See every shortcut", icon: Keyboard, key: "?", run: onShortcuts },
+  ], [onClose, onQuickCapture, onShortcuts, setView]);
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return needle ? commands.filter((item) => `${item.label} ${item.detail}`.toLowerCase().includes(needle)) : commands;
+  }, [commands, query]);
+
+  useEffect(() => setActive(0), [query]);
+
+  return (
+    <div className="brace-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="brace-command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+        <div className="command-palette-search">
+          <Command className="h-4 w-4" />
+          <input
+            autoFocus
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") { event.preventDefault(); setActive((value) => Math.min(filtered.length - 1, value + 1)); }
+              if (event.key === "ArrowUp") { event.preventDefault(); setActive((value) => Math.max(0, value - 1)); }
+              if (event.key === "Enter" && filtered[active]) { event.preventDefault(); filtered[active].run(); }
+            }}
+            placeholder="Go somewhere or start an action…"
+            aria-label="Search commands"
+          />
+          <kbd>ESC</kbd>
+        </div>
+        <div className="command-palette-list" role="listbox" aria-label="Available commands">
+          {filtered.map((item, index) => {
+            const Icon = item.icon;
+            return <button key={item.id} type="button" role="option" aria-selected={index === active} className={index === active ? "is-active" : ""} onMouseEnter={() => setActive(index)} onClick={item.run}><span><Icon className="h-4 w-4" /></span><span><strong>{item.label}</strong><small>{item.detail}</small></span><kbd>{item.key}</kbd></button>;
+          })}
+          {!filtered.length && <div className="command-empty">No matching command. Try “graph” or “capture”.</div>}
+        </div>
+        <footer><span><CornerDownLeft className="h-3 w-3" /> run</span><span>↑↓ move</span><span>Everything stays local</span></footer>
+      </section>
+    </div>
+  );
+}
+
+function QuickCapture({ onClose }: { onClose: () => void }) {
+  const { createMemory, snapshot } = useBrace();
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [kind, setKind] = useState("fact");
+  const [scope, setScope] = useState("global");
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    await createMemory({ title, content, summary: content.slice(0, 400), kind, scope, confidence: 0.75, importance: 0.6 });
+    if (!useBrace.getState().error) onClose();
+  };
+  return (
+    <div className="brace-dialog-backdrop brace-dialog-backdrop--side" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <form className="quick-capture-sheet" onSubmit={submit} role="dialog" aria-modal="true" aria-labelledby="quick-capture-title">
+        <header><div><span>LOCAL QUICK CAPTURE</span><h1 id="quick-capture-title">Keep the part that matters.</h1></div><button type="button" onClick={onClose} aria-label="Close quick capture"><X className="h-4 w-4" /></button></header>
+        <p>Save one durable claim. BRACE keeps it separate from source evidence and available to connected AI clients.</p>
+        <div className="quick-capture-fields">
+          <label htmlFor="quick-title">Memory title</label>
+          <input id="quick-title" autoFocus required value={title} onChange={(event) => setTitle(event.target.value)} placeholder="A specific point future-you can recognize" />
+          <label htmlFor="quick-content">What should BRACE remember?</label>
+          <textarea id="quick-content" required value={content} onChange={(event) => setContent(event.target.value)} placeholder="Keep it concise. Do not store credentials or raw private transcripts." />
+          <div className="quick-capture-meta">
+            <label>Type<select value={kind} onChange={(event) => setKind(event.target.value)}><option value="fact">Fact</option><option value="project">Project context</option><option value="decision">Decision</option><option value="lesson">Lesson</option><option value="warning">Warning</option><option value="preference">Preference</option><option value="procedure">Procedure</option></select></label>
+            <label>Scope<select value={scope} onChange={(event) => setScope(event.target.value)}><option value="global">Global</option>{snapshot?.projects.map((project) => <option key={project.id} value={`project:${project.id}`}>{project.name}</option>)}</select></label>
+          </div>
+        </div>
+        <footer><span><ShieldCheck className="h-4 w-4" /> Stored in your local database</span><div><button type="button" onClick={onClose} className="brace-secondary">Cancel</button><button type="submit" className="brace-primary">Save memory <CornerDownLeft className="h-3.5 w-3.5" /></button></div></footer>
+      </form>
+    </div>
+  );
+}
+
+function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
+  const shortcuts = [
+    ["Ctrl / ⌘ K", "Open command palette"],
+    ["Ctrl / ⌘ N", "Quick capture"],
+    ["1 — 9", "Open a workspace view"],
+    ["↑ ↓", "Move through commands or graph nodes"],
+    ["Enter", "Open the selected command or node"],
+    ["Esc", "Close the active layer"],
+    ["?", "Show this keyboard map"],
+  ];
+  return (
+    <div className="brace-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+      <section className="shortcuts-sheet" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
+        <header><div><span>KEYBOARD MAP</span><h1 id="shortcuts-title">Move at the speed of recall.</h1></div><button type="button" onClick={onClose} aria-label="Close keyboard map"><X className="h-4 w-4" /></button></header>
+        <div>{shortcuts.map(([keys, action]) => <p key={keys}><kbd>{keys}</kbd><span>{action}</span></p>)}</div>
+      </section>
+    </div>
+  );
+}
+
 function Page({ eyebrow, title, description, actions, children }: { eyebrow?: string; title: string; description: string; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="brace-page mx-auto w-full max-w-[1500px] px-5 py-7 lg:px-9 lg:py-10">
       <div className="brace-page-heading mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
-          {eyebrow && <div className="brace-eyebrow mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ff956c]"><span />{eyebrow}</div>}
+          {eyebrow && <div className="brace-eyebrow mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#8edcff]"><span />{eyebrow}</div>}
           <h1 className="text-[clamp(2rem,3vw,3.2rem)] font-medium leading-[1.02] tracking-[-0.055em] text-[#faf7f1]">{title}</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-white/42">{description}</p>
         </div>
@@ -452,7 +611,7 @@ function SectionHeading({ title, action, onAction }: { title: string; action?: s
   return (
     <div className="flex items-center justify-between border-b border-white/[0.055] px-5 py-4">
       <h2 className="text-sm font-semibold">{title}</h2>
-      {action && <button type="button" onClick={onAction} className="text-[11px] font-medium text-[#ff9a72] hover:text-[#ffb294]">{action} <span aria-hidden>→</span></button>}
+      {action && <button type="button" onClick={onAction} className="text-[11px] font-medium text-[#8edcff] hover:text-[#d7f3ff]">{action} <span aria-hidden>→</span></button>}
     </div>
   );
 }
@@ -480,7 +639,7 @@ function TimelineMini({ event, last }: { event: TimelineEvent; last: boolean }) 
     <div className="relative flex gap-3 pt-4">
       <div className="relative flex w-4 shrink-0 justify-center">
         {!last && <span className="absolute bottom-[-16px] top-2 w-px bg-white/[0.07]" />}
-        <span className={`relative mt-1 h-2 w-2 rounded-full ${event.eventType.startsWith("decision") ? "bg-violet-300" : "bg-[#ff8c5f]"}`} />
+        <span className={`relative mt-1 h-2 w-2 rounded-full ${event.eventType.startsWith("decision") ? "bg-violet-300" : "bg-[#7dd3fc]"}`} />
       </div>
       <div className="min-w-0 pb-1"><div className="truncate text-xs font-medium text-white/74">{event.title}</div><div className="mt-1 text-[10px] text-white/28">{formatDate(event.occurredAt)}</div></div>
     </div>
@@ -494,7 +653,7 @@ function SearchView() {
     <Page eyebrow="Retrieval" title="Recall with provenance." description="Search durable memory and source chunks separately. BRACE never presents generated context as a source file.">
       <form onSubmit={submit} className="relative max-w-4xl">
         <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/30" />
-        <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="What did we decide about imported project files?" className="h-14 w-full rounded-2xl border border-white/[0.1] bg-white/[0.04] pl-14 pr-28 text-[15px] outline-none placeholder:text-white/23 focus:border-[#ff8c5f]/45" autoFocus />
+        <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="What did we decide about imported project files?" className="h-14 w-full rounded-2xl border border-white/[0.1] bg-white/[0.04] pl-14 pr-28 text-[15px] outline-none placeholder:text-white/23 focus:border-[#7dd3fc]/45" autoFocus />
         <button type="submit" className="brace-primary absolute right-2 top-2 h-10 px-4">Recall</button>
       </form>
       <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px] text-white/30">
@@ -542,7 +701,7 @@ function MemoriesView() {
       {composerOpen && <MemoryComposer onClose={() => setComposerOpen(false)} />}
       <div className="mb-4 flex flex-wrap gap-2">
         {["all", "project", "decision", "lesson", "warning", "preference", "fact", "procedure"].map((kind) => (
-          <button key={kind} type="button" onClick={() => setFilter(kind)} className={`rounded-lg border px-3 py-1.5 text-[10px] font-medium capitalize ${filter === kind ? "border-[#ff8c5f]/35 bg-[#ff7a45]/10 text-[#ffb090]" : "border-white/[0.07] text-white/35 hover:text-white/65"}`}>{kind}</button>
+          <button key={kind} type="button" onClick={() => setFilter(kind)} className={`rounded-lg border px-3 py-1.5 text-[10px] font-medium capitalize ${filter === kind ? "border-[#7dd3fc]/35 bg-[#38bdf8]/10 text-[#bae6fd]" : "border-white/[0.07] text-white/35 hover:text-white/65"}`}>{kind}</button>
         ))}
       </div>
       <div className="brace-memory-grid grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
@@ -591,7 +750,7 @@ function TimelineView() {
         {snapshot.timeline.map((event, index) => (
           <article key={event.id} className="relative grid grid-cols-[28px_1fr] gap-4 py-5">
             {index !== snapshot.timeline.length - 1 && <span className="absolute bottom-[-20px] left-[13px] top-8 w-px bg-white/[0.07]" />}
-            <span className={`relative mt-1.5 h-3 w-3 rounded-full border-[3px] border-[#14181d] ${event.eventType.startsWith("decision") ? "bg-violet-300 shadow-[0_0_0_3px_rgba(196,181,253,.1)]" : "bg-[#ff8c5f] shadow-[0_0_0_3px_rgba(255,140,95,.1)]"}`} />
+            <span className={`relative mt-1.5 h-3 w-3 rounded-full border-[3px] border-[#101927] ${event.eventType.startsWith("decision") ? "bg-violet-300 shadow-[0_0_0_3px_rgba(196,181,253,.1)]" : "bg-[#7dd3fc] shadow-[0_0_0_3px_rgba(125,211,252,.1)]"}`} />
             <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><span className="text-[10px] font-semibold uppercase tracking-wider text-white/28">{event.eventType.replaceAll(".", " · ")}</span><span className="text-[10px] text-white/20">{formatDate(event.occurredAt)}</span></div><h2 className="mt-2 text-[15px] font-semibold text-white/88">{event.title}</h2><p className="mt-1.5 max-w-2xl text-xs leading-5 text-white/40">{event.summary}</p></div>
           </article>
         ))}
@@ -627,6 +786,7 @@ function GraphView() {
   const [type, setType] = useState("all");
   const [query, setQuery] = useState("");
   const [zoom, setZoom] = useState(1);
+  const [layout, setLayout] = useState<"constellation" | "layers">("constellation");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   if (!snapshot) return null;
   const selected = snapshot.graph.nodes.find((node) => node.id === selectedId) || snapshot.graph.nodes.find((node) => node.type === "project") || snapshot.graph.nodes[0];
@@ -636,14 +796,15 @@ function GraphView() {
     <Page eyebrow="Living relationships" title="Memory constellation" description="Trace the path from a project to its sources, decisions, durable memories, and named ideas.">
       <div className="graph-toolbar">
         <label className="graph-search"><Search className="h-4 w-4" /><span className="sr-only">Find a node</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a memory, source, or entity…" /></label>
+        <div className="graph-layout" aria-label="Graph layout"><button type="button" className={layout === "constellation" ? "is-active" : ""} aria-pressed={layout === "constellation"} onClick={() => setLayout("constellation")}>Orbit</button><button type="button" className={layout === "layers" ? "is-active" : ""} aria-pressed={layout === "layers"} onClick={() => setLayout("layers")}>Flow</button></div>
         <div className="graph-filters" aria-label="Filter graph nodes">{["all", "project", "source", "memory", "decision", "entity"].map((item) => <button key={item} type="button" onClick={() => setType(item)} className={type === item ? "is-active" : ""} aria-pressed={type === item}>{item}</button>)}</div>
         <div className="graph-zoom" aria-label="Graph zoom controls"><button type="button" onClick={() => setZoom((value) => Math.max(.72, value - .12))} aria-label="Zoom out"><Minus className="h-4 w-4" /></button><span>{Math.round(zoom * 100)}%</span><button type="button" onClick={() => setZoom((value) => Math.min(1.45, value + .12))} aria-label="Zoom in"><Plus className="h-4 w-4" /></button><button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom"><Maximize2 className="h-4 w-4" /></button></div>
       </div>
       <div className="graph-stage">
         <div className="graph-canvas-wrap">
-          <GraphCanvas nodes={snapshot.graph.nodes} edges={snapshot.graph.edges} activeType={type} query={query} zoom={zoom} selectedId={selected?.id || null} onSelect={setSelectedId} />
-          <div className="graph-legend">{[["#ff7850", "Project"], ["#56c7ff", "Source"], ["#b99cff", "Decision"], ["#51e6b1", "Memory"], ["#b9c2d0", "Entity"]].map(([color, label]) => <span key={label}><i style={{ background: color }} />{label}</span>)}</div>
-          <div className="graph-hint"><CircleDot className="h-3.5 w-3.5" /> Select a node to follow its provenance</div>
+          <GraphCanvas nodes={snapshot.graph.nodes} edges={snapshot.graph.edges} activeType={type} query={query} zoom={zoom} layout={layout} selectedId={selected?.id || null} onSelect={setSelectedId} />
+          <div className="graph-legend">{[["project", "Project"], ["source", "Source"], ["decision", "Decision"], ["memory", "Memory"], ["entity", "Entity"]].map(([nodeType, label]) => <span key={label}><i data-type={nodeType} />{label}</span>)}</div>
+          <div className="graph-hint"><CircleDot className="h-3.5 w-3.5" /> Select a node · use arrow keys to travel</div>
         </div>
         <aside className="graph-inspector" aria-live="polite">
           {selected ? <>
@@ -663,20 +824,32 @@ function GraphView() {
   );
 }
 
-function GraphCanvas({ nodes, edges, activeType, query, zoom, selectedId, onSelect }: { nodes: GraphNode[]; edges: Array<{ id: string; from: string; to: string; relation: string }>; activeType: string; query: string; zoom: number; selectedId: string | null; onSelect: (id: string) => void }) {
+function GraphCanvas({ nodes, edges, activeType, query, zoom, layout, selectedId, onSelect }: { nodes: GraphNode[]; edges: Array<{ id: string; from: string; to: string; relation: string }>; activeType: string; query: string; zoom: number; layout: "constellation" | "layers"; selectedId: string | null; onSelect: (id: string) => void }) {
   const positions = useMemo(() => {
     const width = 1000;
     const height = 620;
-    const anchors: Record<string, { x: number; y: number }> = { project: { x: 500, y: 310 }, source: { x: 230, y: 310 }, decision: { x: 500, y: 105 }, memory: { x: 770, y: 310 }, entity: { x: 500, y: 525 } };
+    const anchors: Record<string, { x: number; y: number }> = layout === "layers"
+      ? { project: { x: 170, y: 310 }, source: { x: 330, y: 310 }, decision: { x: 500, y: 310 }, memory: { x: 670, y: 310 }, entity: { x: 830, y: 310 } }
+      : { project: { x: 500, y: 310 }, source: { x: 230, y: 310 }, decision: { x: 500, y: 105 }, memory: { x: 770, y: 310 }, entity: { x: 500, y: 525 } };
     const map = new Map<string, { x: number; y: number }>();
     const hash = (value: string) => [...value].reduce((total, character) => ((total << 5) - total + character.charCodeAt(0)) | 0, 0);
     nodes.forEach((node, index) => {
       const anchor = anchors[node.type];
       const seed = Math.abs(hash(node.id));
       const angle = ((seed % 360) * Math.PI) / 180;
-      const radius = 42 + ((seed + index * 17) % 105);
+      const radius = layout === "layers" ? 48 + ((seed + index * 17) % 175) : 42 + ((seed + index * 17) % 105);
       map.set(node.id, { x: anchor.x + Math.cos(angle) * radius, y: anchor.y + Math.sin(angle) * radius });
     });
+    if (layout === "layers") {
+      (["project", "source", "decision", "memory", "entity"] as const).forEach((nodeType) => {
+        const group = nodes.filter((node) => node.type === nodeType);
+        group.forEach((node, index) => {
+          const y = group.length === 1 ? height / 2 : 92 + index * (436 / Math.max(1, group.length - 1));
+          map.set(node.id, { x: anchors[nodeType].x, y });
+        });
+      });
+      return map;
+    }
     for (let iteration = 0; iteration < 150; iteration += 1) {
       const movement = new Map(nodes.map((node) => [node.id, { x: 0, y: 0 }]));
       for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
@@ -699,8 +872,8 @@ function GraphCanvas({ nodes, edges, activeType, query, zoom, selectedId, onSele
       });
     }
     return map;
-  }, [nodes, edges]);
-  const color = (nodeType: string) => ({ project: "#ff7850", source: "#56c7ff", decision: "#b99cff", memory: "#51e6b1", entity: "#b9c2d0" }[nodeType] || "#fff");
+  }, [nodes, edges, layout]);
+  const color = (nodeType: string) => ({ project: "#7dd3fc", source: "#60a5fa", decision: "#c4b5fd", memory: "#6ee7b7", entity: "#cbd5e1" }[nodeType] || "#fff");
   const filteredEdges = edges.filter((edge) => positions.has(edge.from) && positions.has(edge.to));
   const normalizedQuery = query.trim().toLowerCase();
   const isVisible = (node: GraphNode) => (activeType === "all" || node.type === activeType) && (!normalizedQuery || node.label.toLowerCase().includes(normalizedQuery));
@@ -710,8 +883,8 @@ function GraphCanvas({ nodes, edges, activeType, query, zoom, selectedId, onSele
       <defs><filter id="node-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter><radialGradient id="graph-vignette"><stop offset="0" stopColor="#17212a" stopOpacity=".7" /><stop offset="1" stopColor="#070a0d" stopOpacity="0" /></radialGradient><pattern id="graph-grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M 36 0 L 0 0 0 36" fill="none" stroke="rgba(255,255,255,.035)" strokeWidth="1" /></pattern></defs>
       <rect width="1000" height="620" fill="url(#graph-vignette)" /><rect width="1000" height="620" fill="url(#graph-grid)" />
       <g transform={`translate(${500 - 500 * zoom} ${310 - 310 * zoom}) scale(${zoom})`} className="graph-world">
-        {filteredEdges.map((edge, index) => { const from = positions.get(edge.from)!; const to = positions.get(edge.to)!; const active = edge.from === selectedId || edge.to === selectedId; const curve = (index % 2 ? 1 : -1) * Math.min(38, Math.hypot(to.x - from.x, to.y - from.y) * .08); const midX = (from.x + to.x) / 2; const midY = (from.y + to.y) / 2; const dx = to.x - from.x; const dy = to.y - from.y; const length = Math.max(1, Math.hypot(dx, dy)); const controlX = midX - (dy / length) * curve; const controlY = midY + (dx / length) * curve; return <g key={edge.id} className={active ? "graph-edge is-active" : "graph-edge"}><path d={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /><circle r="2.4" fill={active ? "#ff9a72" : "rgba(255,255,255,.28)"}><animateMotion dur={`${5 + index % 4}s`} repeatCount="indefinite" path={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /></circle>{active && <text x={controlX} y={controlY - 8} textAnchor="middle">{edge.relation.replaceAll("_", " ")}</text>}</g>; })}
-        {nodes.map((node, index) => { const position = positions.get(node.id)!; const radius = node.type === "project" ? 22 : node.type === "memory" || node.type === "decision" ? 16 : 13; const selected = node.id === selectedId; const visible = isVisible(node); const related = selectedNeighborIds.has(node.id); return <g key={node.id} transform={`translate(${position.x} ${position.y})`} className={`graph-node ${selected ? "is-selected" : ""} ${visible ? "is-visible" : "is-dimmed"} ${related ? "is-related" : ""}`} role="button" tabIndex={0} aria-label={`${node.type}: ${node.label}`} onClick={() => onSelect(node.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(node.id); } }} style={{ "--node-color": color(node.type), "--node-delay": `${index * 55}ms` } as React.CSSProperties}><circle className="graph-node-wave" r={radius + 18} /><circle className="graph-node-halo" r={radius + 10} /><circle className="graph-node-core" r={radius} filter={selected ? "url(#node-glow)" : undefined} /><circle className="graph-node-dot" r={node.type === "project" ? 5 : 3.5} /><text className="graph-node-label" y={radius + 26} textAnchor="middle">{node.label.length > 28 ? `${node.label.slice(0, 27)}…` : node.label}</text><text className="graph-node-type" y={radius + 39} textAnchor="middle">{node.type}</text></g>; })}
+        {filteredEdges.map((edge, index) => { const from = positions.get(edge.from)!; const to = positions.get(edge.to)!; const active = edge.from === selectedId || edge.to === selectedId; const curve = layout === "layers" ? 0 : (index % 2 ? 1 : -1) * Math.min(38, Math.hypot(to.x - from.x, to.y - from.y) * .08); const midX = (from.x + to.x) / 2; const midY = (from.y + to.y) / 2; const dx = to.x - from.x; const dy = to.y - from.y; const length = Math.max(1, Math.hypot(dx, dy)); const controlX = midX - (dy / length) * curve; const controlY = midY + (dx / length) * curve; return <g key={edge.id} className={active ? "graph-edge is-active" : "graph-edge"}><path d={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /><circle r="2.4" fill={active ? "#9bdcff" : "rgba(255,255,255,.28)"}><animateMotion dur={`${5 + index % 4}s`} repeatCount="indefinite" path={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /></circle>{active && <text x={controlX} y={controlY - 8} textAnchor="middle">{edge.relation.replaceAll("_", " ")}</text>}</g>; })}
+        {nodes.map((node, index) => { const position = positions.get(node.id)!; const radius = node.type === "project" ? 22 : node.type === "memory" || node.type === "decision" ? 16 : 13; const selected = node.id === selectedId; const visible = isVisible(node); const related = selectedNeighborIds.has(node.id); const core = node.type === "project" ? <rect className="graph-node-core" x={-radius} y={-radius} width={radius * 2} height={radius * 2} rx="7" /> : node.type === "decision" ? <path className="graph-node-core" d={`M 0 ${-radius} L ${radius} 0 L 0 ${radius} L ${-radius} 0 Z`} /> : node.type === "memory" ? <path className="graph-node-core" d={`M ${-radius * .86} ${-radius * .5} L 0 ${-radius} L ${radius * .86} ${-radius * .5} L ${radius * .86} ${radius * .5} L 0 ${radius} L ${-radius * .86} ${radius * .5} Z`} /> : <circle className={`graph-node-core ${node.type === "entity" ? "is-entity" : ""}`} r={radius} />; return <g key={node.id} data-node-index={index} transform={`translate(${position.x} ${position.y})`} className={`graph-node ${selected ? "is-selected" : ""} ${visible ? "is-visible" : "is-dimmed"} ${related ? "is-related" : ""}`} role="button" tabIndex={selected ? 0 : -1} aria-label={`${node.type}: ${node.label}`} onClick={() => onSelect(node.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(node.id); } if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(event.key)) { event.preventDefault(); const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1; const next = (index + direction + nodes.length) % nodes.length; onSelect(nodes[next].id); requestAnimationFrame(() => document.querySelector<SVGGElement>(`[data-node-index="${next}"]`)?.focus()); } }} style={{ "--node-color": color(node.type), "--node-delay": `${index * 42}ms` } as React.CSSProperties}><circle className="graph-node-wave" r={radius + 18} /><circle className="graph-node-halo" r={radius + 10} />{core}<circle className="graph-node-dot" r={node.type === "project" ? 5 : 3.5} /><text className="graph-node-label" y={radius + 26} textAnchor="middle">{node.label.length > 28 ? `${node.label.slice(0, 27)}…` : node.label}</text><text className="graph-node-type" y={radius + 39} textAnchor="middle">{node.type}</text></g>; })}
       </g>
     </svg>
   );
@@ -798,15 +971,39 @@ function SettingsView() {
     <Page eyebrow="Local control" title="Settings & data" description="You decide where memory lives, whether semantic retrieval runs, and when data leaves the machine.">
       <div className="grid gap-5 xl:grid-cols-[1fr_.9fr]">
         <div className="space-y-5">
+          <AppearanceControls />
           <section className="brace-card overflow-hidden"><SectionHeading title="Storage" /><div className="space-y-4 p-5"><SettingRow icon={Database} title="Application data" text={snapshot.storage?.directory || "System application-data directory"} /><SettingRow icon={HardDrive} title="SQLite database" text={snapshot.storage?.database || "brace.sqlite3"} /><p className="text-[10px] leading-5 text-white/28">The public source repository never contains this directory. Imported project originals stay outside it and are never modified.</p></div></section>
           <section className="brace-card overflow-hidden"><SectionHeading title="Backup & portability" /><div className="grid gap-3 p-5 sm:grid-cols-2"><button type="button" onClick={() => void backupData()} className="brace-secondary h-11 px-4"><Archive className="h-4 w-4" />Create SQLite backup</button><button type="button" onClick={() => void exportData()} className="brace-secondary h-11 px-4"><Download className="h-4 w-4" />Export portable JSON</button></div></section>
         </div>
         <div className="space-y-5">
-          <section className="brace-card overflow-hidden"><SectionHeading title="Optional semantic retrieval" /><form onSubmit={(event) => { event.preventDefault(); void configureEmbeddings({ enabled, endpoint, model }); }} className="space-y-4 p-5"><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#ff7a45]" /><span><span className="block text-xs font-semibold">Enable local Ollama embeddings</span><span className="mt-1 block text-[11px] leading-5 text-white/32">BRACE sends indexed chunks only to the loopback endpoint below.</span></span></label><div><label className="brace-label" htmlFor="embedding-endpoint">Loopback endpoint</label><input id="embedding-endpoint" value={endpoint} onChange={(event) => setEndpoint(event.target.value)} className="brace-input mt-2" /></div><div><label className="brace-label" htmlFor="embedding-model">Embedding model</label><input id="embedding-model" value={model} onChange={(event) => setModel(event.target.value)} className="brace-input mt-2" /></div><button type="submit" className="brace-primary h-10 px-4">Save retrieval settings</button></form></section>
+          <section className="brace-card overflow-hidden"><SectionHeading title="Optional semantic retrieval" /><form onSubmit={(event) => { event.preventDefault(); void configureEmbeddings({ enabled, endpoint, model }); }} className="space-y-4 p-5"><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} className="mt-0.5 h-4 w-4 accent-[#7dd3fc]" /><span><span className="block text-xs font-semibold">Enable local Ollama embeddings</span><span className="mt-1 block text-[11px] leading-5 text-white/32">BRACE sends indexed chunks only to the loopback endpoint below.</span></span></label><div><label className="brace-label" htmlFor="embedding-endpoint">Loopback endpoint</label><input id="embedding-endpoint" value={endpoint} onChange={(event) => setEndpoint(event.target.value)} className="brace-input mt-2" /></div><div><label className="brace-label" htmlFor="embedding-model">Embedding model</label><input id="embedding-model" value={model} onChange={(event) => setModel(event.target.value)} className="brace-input mt-2" /></div><button type="submit" className="brace-primary h-10 px-4">Save retrieval settings</button></form></section>
           <section className="overflow-hidden rounded-2xl border border-rose-400/15 bg-rose-400/[0.035]"><div className="border-b border-rose-400/10 px-5 py-4"><h2 className="text-sm font-semibold text-rose-100">Delete local data</h2></div><div className="p-5"><p className="text-xs leading-5 text-white/38">Removes BRACE memories, indexes, skills, settings, and the demo copy. Imported project files remain untouched.</p><div className="mt-4 flex gap-2"><input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder="Type DELETE" className="brace-input" aria-label="Type DELETE to confirm" /><button type="button" disabled={confirmation !== "DELETE"} onClick={() => void deleteAll(confirmation)} className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-rose-400/20 bg-rose-400/10 px-3 text-xs font-semibold text-rose-100 disabled:cursor-not-allowed disabled:opacity-30"><Trash2 className="h-3.5 w-3.5" />Delete all</button></div></div></section>
         </div>
       </div>
     </Page>
+  );
+}
+
+function AppearanceControls() {
+  const read = (key: "density" | "motion" | "contrast", fallback: string) => typeof document === "undefined" ? fallback : document.documentElement.dataset[key] || fallback;
+  const [density, setDensity] = useState(() => read("density", "comfortable"));
+  const [motion, setMotion] = useState(() => read("motion", "expressive"));
+  const [contrast, setContrast] = useState(() => read("contrast", "standard"));
+  const update = (key: "density" | "motion" | "contrast", value: string) => {
+    applyUiPreference(key, value);
+    const next = { density: read("density", "comfortable"), motion: read("motion", "expressive"), contrast: read("contrast", "standard"), [key]: value };
+    localStorage.setItem("brace.ui", JSON.stringify(next));
+    if (key === "density") setDensity(value);
+    if (key === "motion") setMotion(value);
+    if (key === "contrast") setContrast(value);
+  };
+  const controls = [
+    { key: "density" as const, label: "Density", value: density, options: [["comfortable", "Comfortable"], ["compact", "Compact"]] },
+    { key: "motion" as const, label: "Motion", value: motion, options: [["expressive", "Expressive"], ["calm", "Calm"]] },
+    { key: "contrast" as const, label: "Contrast", value: contrast, options: [["standard", "Standard"], ["high", "High"]] },
+  ];
+  return (
+    <section className="brace-card overflow-hidden"><SectionHeading title="Interface" /><div className="appearance-controls p-5"><div className="appearance-intro"><span><SlidersHorizontal className="h-4 w-4" /></span><div><h3>Make the workspace fit you</h3><p>These display preferences stay on this device and never enter memory.</p></div></div>{controls.map((control) => <fieldset key={control.key}><legend>{control.label}</legend><div>{control.options.map(([value, label]) => <button key={value} type="button" className={control.value === value ? "is-active" : ""} aria-pressed={control.value === value} onClick={() => update(control.key, value)}>{label}</button>)}</div></fieldset>)}</div></section>
   );
 }
 

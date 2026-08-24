@@ -15,10 +15,11 @@ const browser = await chromium.launch({
 const targets = [
   { name: "launch-desktop", path: "/", viewport: { width: 1440, height: 900 } },
   { name: "launch-mobile", path: "/", viewport: { width: 390, height: 844 } },
+  { name: "launch-reduced", path: "/", viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" },
+  { name: "launch-recall", path: "/", viewport: { width: 1440, height: 900 }, selector: "#recall", keyboard: false },
   { name: "launch-boundary", path: "/", viewport: { width: 1440, height: 900 }, selector: "#boundary", keyboard: false },
-  { name: "launch-handoff", path: "/", viewport: { width: 1440, height: 900 }, selector: "#handoff", keyboard: false },
-  { name: "launch-proof", path: "/", viewport: { width: 1440, height: 900 }, selector: "#proof", keyboard: false },
-  { name: "launch-close", path: "/", viewport: { width: 1440, height: 900 }, selector: "#get-brace", keyboard: false },
+  { name: "launch-product", path: "/", viewport: { width: 1440, height: 900 }, selector: "#product", keyboard: false },
+  { name: "launch-download", path: "/", viewport: { width: 1440, height: 900 }, selector: "#download", keyboard: false },
   { name: "guide-desktop", path: "/how-to/", viewport: { width: 1440, height: 900 } },
   { name: "guide-mobile", path: "/how-to/", viewport: { width: 390, height: 844 } },
 ];
@@ -62,7 +63,7 @@ async function keyboardAudit(page) {
 
 try {
   for (const target of targets) {
-    const page = await browser.newPage({ viewport: target.viewport, reducedMotion: "reduce" });
+    const page = await browser.newPage({ viewport: target.viewport, reducedMotion: target.reducedMotion || "reduce" });
     const consoleErrors = [];
     page.on("console", (message) => {
       if (message.type() === "error") consoleErrors.push(message.text());

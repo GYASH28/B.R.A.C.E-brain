@@ -1,6 +1,6 @@
 {
   "name": "brace-brain",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Local-first personal AI memory layer — one memory, every AI",
   "author": {
     "name": "BRACE contributors",
@@ -68,7 +68,7 @@
         "deb"
       ],
       "executableName": "brace",
-      "icon": "assets/brand/brace-app-icon.png",
+      "icon": "public/icon-512.png",
       "category": "Office",
       "syncDesktopName": true
     },

@@ -1,5 +1,7 @@
 .guide-body {
-  background: #090c0f;
+  --brace-line: rgba(198, 220, 255, 0.12);
+  --brace-line-strong: rgba(198, 220, 255, 0.22);
+  background: #05080f;
 }
 
 #install > p > a {
@@ -502,6 +504,31 @@ summary:hover {
   list-style: none;
 }
 
+.shortcut-deck {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 26px;
+}
+
+.shortcut-deck p {
+  display: grid;
+  grid-template-columns: 86px 1fr;
+  gap: 12px;
+  margin: 0;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: linear-gradient(145deg, rgba(17,31,49,.66), rgba(8,16,28,.62));
+  box-shadow: var(--edge), 0 15px 38px rgba(0,3,12,.12);
+}
+
+.shortcut-deck kbd { color: var(--signal); font: 8px var(--mono); }
+.shortcut-deck span,
+.shortcut-deck strong { display: block; }
+.shortcut-deck span { color: var(--soft); font-size: 10px; line-height: 1.6; }
+.shortcut-deck strong { margin-bottom: 3px; color: var(--ink); font-size: 11px; }
+
 .instruction-list li {
   display: grid;
   grid-template-columns: 36px 1fr;
@@ -845,4 +872,220 @@ summary:focus-visible,
 .permission-table:focus-visible {
   outline: 2px solid var(--sc-accent);
   outline-offset: 3px;
+}
+
+/* Arctic Glass guide layer — shared with the launch surface. */
+.guide-body::before {
+  content: "";
+  position: fixed;
+  z-index: -2;
+  inset: 0;
+  background:
+    radial-gradient(circle at 78% 11%, rgba(75, 158, 218, 0.12), transparent 31rem),
+    radial-gradient(circle at 16% 66%, rgba(149, 121, 218, 0.065), transparent 28rem),
+    linear-gradient(155deg, #05080f, #07101b 52%, #050913);
+}
+
+.guide-bar {
+  top: 12px;
+  left: 50%;
+  width: min(1180px, calc(100% - 28px));
+  height: 62px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(9, 18, 31, 0.68);
+  box-shadow: var(--edge), 0 24px 75px rgba(0, 3, 11, 0.38);
+  backdrop-filter: blur(28px) saturate(150%);
+  transform: translateX(-50%);
+}
+
+.guide-bar > nav a,
+.guide-footer > nav a {
+  color: var(--muted);
+}
+
+.guide-bar > nav a:hover,
+.guide-footer > nav a:hover {
+  color: var(--signal);
+}
+
+.product-mark {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 11px;
+}
+
+.product-mark img { filter: drop-shadow(0 9px 18px rgba(125,211,252,.16)); }
+.product-mark span,
+.product-mark strong,
+.product-mark small { display: block; }
+.product-mark strong { color: var(--ink); font-size: 12px; letter-spacing: .16em; }
+.product-mark small { margin-top: 2px; color: var(--muted); font: 7px var(--mono); letter-spacing: .13em; }
+
+.guide-bar .bar-action {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  border: 1px solid rgba(175, 229, 255, 0.33);
+  border-radius: 12px;
+  padding: 0 15px;
+  color: #061321;
+  background: linear-gradient(135deg, #d9f5ff, #7dd3fc 60%, #b7a8ff);
+  box-shadow: inset 0 1px rgba(255,255,255,.72), 0 12px 28px rgba(39, 137, 195, .2);
+  font-size: 10px;
+  font-weight: 750;
+  transition: transform .22s var(--ease), box-shadow .22s var(--ease);
+}
+
+.guide-bar .bar-action:hover { transform: translateY(-1px); box-shadow: inset 0 1px rgba(255,255,255,.8), 0 17px 34px rgba(39,137,195,.28); }
+.guide-bar .bar-action:active { transform: scale(.97); }
+
+.guide-hero {
+  position: relative;
+  overflow: hidden;
+  padding-top: clamp(178px, 23vh, 250px);
+  background:
+    radial-gradient(circle at 74% 41%, rgba(82, 173, 226, 0.13), transparent 25rem),
+    radial-gradient(circle at 73% 40%, transparent 0 7rem, rgba(125,211,252,.08) 7rem 7.08rem, transparent 7.1rem 11rem, rgba(196,181,253,.065) 11rem 11.08rem, transparent 11.1rem),
+    linear-gradient(rgba(199, 228, 247, 0.024) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(199, 228, 247, 0.02) 1px, transparent 1px),
+    #050913;
+  background-size: auto, auto, 58px 58px, 58px 58px, auto;
+}
+
+.guide-hero::after {
+  content: "LOCAL SETUP · ZERO ACCOUNT · NATIVE PACKAGES";
+  position: absolute;
+  right: max(24px, 6vw);
+  top: 50%;
+  color: rgba(167, 224, 253, .35);
+  font: 700 8px var(--mono);
+  letter-spacing: .14em;
+  writing-mode: vertical-rl;
+}
+
+.guide-hero h1 { color: var(--ink); text-shadow: 0 22px 70px rgba(0,3,12,.34); }
+.guide-lede,
+.guide-step > p,
+.details-body p,
+.platform-grid p { color: var(--soft); }
+
+.guide-route {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(13, 25, 41, .56);
+  box-shadow: var(--edge), 0 18px 48px rgba(0,3,12,.2);
+  backdrop-filter: blur(20px);
+}
+
+.guide-route a { border-color: var(--line); color: var(--soft); }
+.guide-route a:first-child { border-left: 0; }
+.guide-route a:hover { color: var(--ink); background: rgba(125,211,252,.07); }
+.guide-route span { color: var(--signal); }
+
+.guide-toc {
+  top: 94px;
+  border-color: var(--line);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(18, 32, 50, .75), rgba(8, 16, 28, .72));
+  box-shadow: var(--edge), 0 22px 60px rgba(0,3,12,.2);
+  backdrop-filter: blur(24px) saturate(140%);
+}
+
+.guide-toc a:hover,
+.guide-toc a[aria-current="true"] { color: var(--ink); background: linear-gradient(90deg, rgba(125,211,252,.11), rgba(196,181,253,.045)); }
+.guide-toc a[aria-current="true"] { box-shadow: inset 2px 0 var(--signal); }
+
+.step-header > span {
+  border-color: rgba(125,211,252,.22);
+  border-radius: 14px;
+  color: var(--signal);
+  background: linear-gradient(145deg, rgba(125,211,252,.12), rgba(196,181,253,.045));
+  box-shadow: inset 0 1px rgba(255,255,255,.07), 0 12px 25px rgba(0,3,12,.14);
+}
+
+.step-header p,
+.guide-step a,
+.do-dont strong { color: var(--signal); }
+.guide-step code,
+.location-list code,
+.permission-table code { color: #bdeaff; }
+
+.platform-grid > section,
+details,
+.instruction-list li,
+.feature-walkthrough article,
+.permission-table,
+.location-list {
+  border-color: var(--line);
+  border-radius: 17px;
+  background: linear-gradient(145deg, rgba(17, 31, 49, .72), rgba(8, 16, 28, .66));
+  box-shadow: var(--edge), 0 20px 55px rgba(0,3,12,.14);
+  backdrop-filter: blur(20px);
+}
+
+.platform-title span,
+.instruction-list li > span {
+  color: #041421;
+  background: linear-gradient(145deg, #d9f5ff, #7dd3fc 58%, #b9aaff);
+  box-shadow: inset 0 1px rgba(255,255,255,.72), 0 9px 22px rgba(48,148,204,.2);
+}
+
+.guide-note {
+  border-color: rgba(125,211,252,.14);
+  border-radius: 13px;
+  color: var(--soft) !important;
+  background: linear-gradient(90deg, rgba(125,211,252,.055), rgba(196,181,253,.025));
+}
+
+.guide-note strong { color: #ccefff; }
+
+pre {
+  border-color: var(--line);
+  border-radius: 14px;
+  color: #c6d5e3;
+  background: #050b14;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,.28);
+}
+
+.copy-code {
+  border-color: var(--line-strong);
+  border-radius: 9px;
+  color: var(--soft);
+  background: linear-gradient(145deg, rgba(27,45,67,.9), rgba(11,22,36,.9));
+  box-shadow: inset 0 1px rgba(255,255,255,.045);
+}
+.copy-code:hover { color: var(--signal); border-color: rgba(125,211,252,.34); }
+.copy-code:active { transform: scale(.96); }
+
+.guide-shot img,
+.feature-walkthrough img {
+  border-color: var(--line-strong);
+  border-radius: 19px;
+  background: #06101b;
+  box-shadow: var(--edge), 0 38px 100px rgba(0, 3, 12, .45);
+}
+
+.feature-walkthrough article { border-radius: 22px; }
+.feature-walkthrough article:nth-child(even) { grid-template-columns: minmax(220px,.9fr) minmax(0,1.1fr); }
+.feature-walkthrough article:nth-child(even) img { order: 2; }
+
+.permission-table > div,
+.location-list p { border-color: var(--line); background: rgba(12, 24, 39, .62); }
+.permission-table > div:first-child { background: rgba(7, 15, 26, .88); }
+
+.guide-footer { border-color: var(--line); }
+
+@media (max-width: 680px) {
+  .guide-bar { top: 8px; width: calc(100% - 16px); }
+  .guide-bar .product-mark small { display: none; }
+  .guide-bar .bar-action { min-height: 36px; padding-inline: 12px; }
+  .guide-hero { padding-top: 150px; }
+  .guide-hero::after { display: none; }
+  .guide-route { border-radius: 15px; }
+  .feature-walkthrough article:nth-child(even) { grid-template-columns: 1fr; }
+  .feature-walkthrough article:nth-child(even) img { order: initial; }
+  .shortcut-deck { grid-template-columns: 1fr; }
 }

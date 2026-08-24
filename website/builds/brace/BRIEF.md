@@ -1,52 +1,92 @@
-# BRACE 0.2 cinematic launch brief
+# BRACE 0.3 liquid-memory launch brief
 
-## Screen job
+> Self-authored from the user's stated direction during an autonomous goal continuation. The quoted phrases below preserve the user's words; inferred production decisions are labelled separately.
 
-The launch site must make a developer or knowledge worker feel the cost of disposable chat context, understand BRACE’s local boundary, see provenance survive an AI handoff, inspect the real application, and download the correct native package.
+## Interview answers
 
-The primary action is **Download BRACE**. The secondary action is learning how its private memory model works.
+1. **Vibe and references.** “Jaw dropping,” “liquid glass,” “glassmorphism,” “a little bit of neomorphism,” “opening animation,” and “really good transitions.” The earlier orange treatment is explicitly rejected. The premium reference is the confidence of an Apple product film, not its branding or page skeleton.
+2. **Journey.** The visitor first feels disposable AI context, then watches it resolve into durable local memory, sees the real product, understands the private data boundary, and downloads the correct native package.
+3. **Energy curve.** Calm and uncanny at entry, tense during the forget/remember split, intense when the divider collapses into the real product, quiet and precise through privacy proof, then decisive at download.
+4. **Feelings and remembered moment.** The intended feelings are curiosity, recognition, tension, awe, confidence, control, and resolve. The one remembered moment is: “the cursor found a forgotten fragment, pulled it through the glass, and the real BRACE brain snapped into focus.”
+5. **Something unique.** The user named a custom cursor as an example. BRACE turns that idea into a memory lens: it reveals provenance fragments and physically biases the forget/remember divider toward durable context.
+6. **Aesthetic range.** Premium-minimal with meaningful spatial depth, but far enough from conventional SaaS to feel cinematic and authored. No orange, generic dashboard hero, equal feature-card grid, fake testimonials, or AI-purple gradient.
+7. **World or scenes.** Inferred: distinct scenes connected by one persistent glass memory thread. A continuous camera world would hide the product and make the download journey fragile.
+8. **Existing assets.** Real packaged BRACE screenshots, the BRACE mark, synthetic Northstar demo data, and verified release artifacts. No generated lifestyle imagery and no private vault content.
 
-## Art direction
+## What this is and who it is for
 
-Editorial product cinema: deep ink, warm paper, one ember signal, large typographic cuts, real interface footage, precise spatial depth, and long moments of calm. The reference is the confidence and pacing of a premium hardware launch—not any company’s page structure, brand assets, or exact effects.
+BRACE is a local-first memory layer for developers and knowledge workers who use several AI clients and refuse to lose decisions, sources, and project context at the edge of every chat.
 
-The visual system deliberately avoids generic SaaS conventions:
+## Belief installed by the end
 
-- no pricing-table template, fake customer logos, invented counters, testimonial carousel, or card-grid hero;
-- no decorative dashboard pretending to be the product;
-- no remote fonts, analytics, generated lifestyle imagery, or user data;
-- no animation that blocks reading or becomes the only way to understand a state.
+Your AI context can persist locally, move between compatible clients, and keep the evidence attached.
 
-## Journey
+## Primary action
 
-1. **Recognition:** a sparse memory field resolves behind “Memory that stays with you.”
-2. **Product arrival:** the real Electron overview rises into view with two provenance receipts.
-3. **Recall:** a visitor operates a small synthetic local-recall example.
-4. **Boundary:** the data model opens into project files, local SQLite, and denied network access.
-5. **Handoff:** one evidence packet can be routed to selectable MCP clients without losing its receipt.
-6. **Proof:** five real packaged-app captures can be inspected without leaving the page.
-7. **Download:** the page resolves into a platform-aware native-package finale with checksums and SBOM nearby.
+**Download BRACE**. This exact label is used wherever the primary action appears.
+
+## Grammar
+
+**Split stage.** Disposable context and durable memory remain visible as opposing states until the peak, when the memory side takes the full frame. The divider is the persistent chrome. It also reports progress and provides section navigation.
+
+The previous BRACE site used a live-surface grammar with compact app chrome, a pinned recall hero, a command-field close, and a provenance-baton interaction. This revision differs on all six fingerprint dimensions: grammar, navigation, hero, act sequence, close, and signature move.
+
+## World
+
+**Arctic Glass.** Off-black blue ink, pearl-white type, ice-blue signal, restrained spectral violet, optical edge highlights, diffused depth, and subtle grain. Glass is reserved for boundaries, controls, receipts, and the memory lens. Neomorphic pressure is reserved for buttons and inset wells.
+
+No external font, generated imagery, tracking script, or remote dependency is required. The product screenshots use only the disposable synthetic Northstar profile.
+
+## Journey and feeling curve
+
+| Act | Visitor learns | Intended feeling | On-screen cause | Device |
+| --- | --- | --- | --- | --- |
+| Split memory | Ordinary AI context disappears while BRACE retains evidence | Curiosity → recognition | The memory lens exposes source fragments on one side of a live divider | `pin` + bespoke pointer lens |
+| Recall | A memory is useful only when its receipt survives | Tension → clarity | An operable synthetic recall assembles source, decision, and retrieval mode | `flow` + `in` |
+| Local boundary | Files, index, and network authority remain visibly separate | Confidence | A glass vault opens into three labelled layers | `pin` + `reveal` |
+| Product proof | The interface is real and inspectable | Awe → control | Full-scale packaged screenshots travel laterally and remain operable by controls | `pan` + pointer tilt |
+| Download resolve | The remembered side wins and becomes something installable | Resolve | The divider collapses; the detected native package enters an inset glass dock | `pin` + collapse |
+
+Final experiential length: 13.8 desktop viewport-heights and 14.1 mobile viewport-heights. The opening split is the longest act; the boundary before the proof is deliberately quieter.
+
+## Peak
+
+“The cursor found a forgotten fragment, pulled it through the glass, and the real BRACE brain snapped into focus.” It lives in the opening split and receives the largest scroll span, the richest spatial treatment, and the real overview screenshot.
+
+## Tell-someone sentence
+
+It is the site where your cursor rescues a disappearing thought and turns it into a source-backed brain you can download.
+
+## Authored silence
+
+The first third of the boundary act intentionally removes most particles and pointer response so the product-proof expansion has contrast. It must still retain the local-boundary title and active state; a blank viewport is not acceptable.
 
 ## Motion contract
 
-- Canvas fields animate only small points and lines, at capped pixel density.
-- Scroll work is scheduled through `requestAnimationFrame` and changes transforms or custom properties.
-- Intersection observers reveal content once; they do not continuously poll layout.
-- The desktop product frame and boundary device use short perspective movement, not expensive animated blur.
-- `prefers-reduced-motion` resolves every sequence into its readable final state and stops canvas loops.
+- Continuous work changes transform, opacity, clip-path, or canvas pixels only.
+- Pointer effects run only for fine pointers and stop under reduced motion.
+- Reduced motion retains every piece of content, uses opacity-only entrances, and exposes the proof rail through native horizontal scrolling.
+- Hover transitions remain short. Scroll movement is controlled by the visitor’s hand.
+- The memory lens cannot carry essential meaning by itself; labels and receipts remain visible without it.
 
 ## Real states
 
-- Direct Windows, AppImage, and Debian downloads point at versioned release assets.
-- The visitor’s operating system marks the likely package and updates the hero download target.
-- Recall accepts synthetic queries for canonical files, evaluation, and embeddings.
-- AI destination controls report their selected state and update the handoff receipt.
-- Product proof tabs update real screenshot, alt text, and title together.
-- All screenshots use the disposable synthetic Northstar profile.
+- Operating-system detection changes the primary native package without hiding alternatives.
+- Recall uses labelled synthetic results and reports lexical retrieval accurately.
+- Proof controls change a real screenshot, title, description, and accessible state together.
+- Download links point at immutable versioned release assets and degrade to the release page without JavaScript.
+- Loading, empty, success, error, disabled, selected, keyboard-focus, and reduced-motion states are all reachable in the product.
 
-## Verification
+## Verification contract
 
-- Launch and How-to pages: automated axe WCAG 2.2 AA at desktop and mobile widths.
-- Every launch act: overflow, field labels, focus visibility, console errors, and semantic heading count.
-- Desktop product: packaged Electron E2E, renderer-console check, source recall, timeline, interactive graph selection and zoom, and permission-scoped skills.
-- Reduced motion: all content remains present and understandable; no essential meaning depends on a moving element.
+- Scroll contact sheets at desktop, mobile, and reduced motion; inspect every sampled state.
+- Axe WCAG 2.2 AA, focus order, visible focus, label coverage, console errors, failed requests, overflow, and contrast.
+- Exact downloaded AppImage and native Windows build tested with isolated application-data directories.
+- Product E2E covers onboarding, quick capture persistence, recall, timeline, graph keyboard selection, graph zoom, both graph layouts, Skills, interface preferences, and MCP connection information. Core storage tests cover consistent backup and portable export independently.
+- Privacy, secret, home-path, dependency, license, package-content, and release-asset checks run before publication.
+
+## Final cold read
+
+One word per act, read before reopening this brief: **unease → proof → custody → command → resolve**.
+
+The intended curve survived implementation. The opening owns the largest transformation, the recall receipt is the clearest informational peak, the local-boundary act creates deliberate quiet without becoming blank, and the product panorama restores density before the download close. The desktop, 390×844 mobile, and reduced-motion contact sheets all advance without dead scroll; every measured cue clears 4.5:1 contrast at its worst composited frame. The ending holds a complete package choice and installation guidance instead of dissolving into atmosphere.

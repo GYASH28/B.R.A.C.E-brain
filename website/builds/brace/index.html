@@ -3,243 +3,183 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#080a0d">
-  <meta name="description" content="BRACE is a local-first, open-source personal AI memory layer. One private memory, every AI.">
-  <meta property="og:title" content="BRACE | One memory. Every AI.">
-  <meta property="og:description" content="A local-first memory layer with durable context, provenance, hybrid recall, decisions, timelines, and permission-scoped skills.">
+  <meta name="theme-color" content="#050608">
+  <meta name="description" content="BRACE is the local-first memory layer that gives every AI the same private, provenance-backed context.">
+  <meta property="og:title" content="BRACE — Memory that stays with you">
+  <meta property="og:description" content="One private memory for every AI. Local SQLite, provenance-backed recall, no account and no telemetry.">
   <meta property="og:type" content="website">
   <meta property="og:image" content="assets/app-overview.png">
-  <title>BRACE | One memory. Every AI.</title>
+  <title>BRACE — Memory that stays with you</title>
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="motion.css">
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
-  <a class="skip-link" href="#surface-main">Skip to the memory surface</a>
-  <span data-sc-progress aria-hidden="true"></span>
-  <div class="sc-grain" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="page-progress" aria-hidden="true"><i></i></div>
 
-  <div class="brace-shell">
-    <header class="product-bar" aria-label="BRACE product navigation">
-      <a class="product-mark" href="#recall" aria-label="BRACE home">
-        <img src="assets/brace-logo.svg" width="34" height="34" alt="">
-        <span><strong>BRACE</strong><small>LOCAL MEMORY</small></span>
-      </a>
-      <nav class="product-tabs" aria-label="Surface states">
-        <a href="#recall" data-site-nav>Recall</a>
-        <a href="#boundary" data-site-nav>Boundary</a>
-        <a href="#handoff" data-site-nav>Handoff</a>
-        <a href="#proof" data-site-nav>Proof</a>
-      </nav>
-      <div class="product-actions">
-        <span class="local-status"><i aria-hidden="true"></i> Local only</span>
-        <a class="bar-action" href="#get-brace">Get BRACE</a>
+  <header class="site-nav" aria-label="Primary navigation">
+    <a class="brand" href="#top" aria-label="BRACE home">
+      <img src="assets/brace-logo.svg" width="36" height="36" alt="">
+      <span><strong>BRACE</strong><small>ONE MEMORY · EVERY AI</small></span>
+    </a>
+    <nav>
+      <a href="#experience">Experience</a>
+      <a href="#boundary">Privacy</a>
+      <a href="#proof">Product</a>
+      <a href="how-to/">How to</a>
+    </nav>
+    <a class="nav-download" href="#get-brace">Download <span aria-hidden="true">↓</span></a>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <canvas id="memory-field" aria-hidden="true"></canvas>
+      <div class="hero-halo" aria-hidden="true"></div>
+      <div class="hero-copy">
+        <p class="eyebrow reveal">PRIVATE MEMORY FOR AI</p>
+        <h1 class="reveal">Memory that<br><em>stays with you.</em></h1>
+        <p class="hero-lede reveal">BRACE turns your projects, decisions, and hard-won context into one local memory layer every AI can recall—with the evidence still attached.</p>
+        <div class="hero-actions reveal">
+          <a class="button button--primary" data-primary-download href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest">Download BRACE <span aria-hidden="true">↘</span></a>
+          <a class="button button--quiet" href="#experience">Watch it remember <span aria-hidden="true">↓</span></a>
+        </div>
+        <p class="hero-trust reveal"><span></span> No account. No telemetry. Open source.</p>
       </div>
-    </header>
 
-    <main id="surface-main">
-      <section id="recall" class="surface-act surface-act--recall" data-sc-act="pin" data-sc-span="2.15">
-        <div class="surface-stage recall-stage" data-sc-stage data-sc-verify-state="ready">
-          <aside class="surface-rail" aria-label="Memory workspaces">
-            <div class="rail-label">WORKSPACE</div>
-            <button class="rail-workspace is-current" type="button" aria-pressed="true">
-              <span class="workspace-glyph">N</span>
-              <span><strong>Northstar</strong><small>Synthetic demo</small></span>
-            </button>
-            <div class="rail-label rail-label--lower">MEMORY LAYERS</div>
-            <button class="rail-item is-current" type="button"><span>Recall</span><b>R</b></button>
-            <button class="rail-item" type="button"><span>Decisions</span><b>D</b></button>
-            <button class="rail-item" type="button"><span>Timeline</span><b>T</b></button>
-            <button class="rail-item" type="button"><span>Graph</span><b>G</b></button>
-            <div class="rail-boundary"><span></span><strong>SQLite active</strong><small>No account. No telemetry.</small></div>
-          </aside>
-
-          <div class="recall-workbench">
-            <div class="surface-heading">
-              <div>
-                <p class="surface-kicker">LOCAL RECALL</p>
-                <h1>What did we decide?</h1>
-              </div>
-              <span class="sample-badge">SYNTHETIC DATA</span>
-            </div>
-
-            <form class="recall-form" id="recall-form" role="search">
-              <label for="recall-query">Search memories and source evidence</label>
-              <div class="query-line">
-                <span class="query-icon" aria-hidden="true"></span>
-                <input id="recall-query" name="q" value="canonical source files" autocomplete="off">
-                <button type="submit">Recall</button>
-              </div>
-            </form>
-
-            <div class="query-suggestions" aria-label="Example searches">
-              <button type="button" data-query="canonical source files">Canonical files</button>
-              <button type="button" data-query="retrieval evaluation">Evaluation</button>
-              <button type="button" data-query="local embeddings">Embeddings</button>
-            </div>
-
-            <div class="recall-status" aria-live="polite">
-              <span class="pulse-dot" aria-hidden="true"></span>
-              <span id="recall-status-copy">3 local records considered. Lexical retrieval.</span>
-            </div>
-
-            <div class="recall-results" id="recall-results" aria-live="polite"></div>
-
-            <div class="recall-foot">
-              <span>Durable memories stay separate from source evidence.</span>
-              <a href="how-to/#recall">Learn recall</a>
-            </div>
-          </div>
+      <div class="hero-product" aria-label="BRACE application preview">
+        <div class="product-shadow" aria-hidden="true"></div>
+        <div class="product-window">
+          <div class="window-chrome"><i></i><i></i><i></i><span>BRACE · LOCAL MEMORY</span><b>● PRIVATE</b></div>
+          <img src="assets/app-overview.png" width="1440" height="960" alt="BRACE overview using only synthetic Northstar data">
         </div>
-      </section>
+        <div class="floating-proof proof-a"><span>SOURCE</span><strong>Architecture Decisions.md</strong><small>Original remains canonical</small></div>
+        <div class="floating-proof proof-b"><span>MEMORY FOUND</span><strong>Keep files canonical</strong><small>96% confidence · lexical</small></div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true"><span></span> SCROLL TO REMEMBER</div>
+    </section>
 
-      <section id="boundary" class="sc-section boundary-act" data-sc-act="flow">
-        <div class="boundary-grid sc-wrap">
-          <div class="boundary-copy" data-sc-in data-sc-stagger="55">
-            <p class="surface-kicker">DATA BOUNDARY</p>
-            <h2>Your memory does not need a middleman.</h2>
-            <p>BRACE stores structured memory, evidence, decisions, relationships, and source indexes in SQLite under your operating system's application-data directory.</p>
-            <p>Imported originals stay in place. Project paths do not become public provenance. Optional embeddings can stay on loopback through Ollama.</p>
-            <a class="inline-action" href="how-to/#privacy">Open the privacy guide <span aria-hidden="true">→</span></a>
-          </div>
-          <div class="boundary-inspector" data-sc-in data-sc-stagger="65" aria-label="Local data boundary inspector">
-            <div class="inspector-bar"><span>BOUNDARY INSPECTOR</span><strong>ALLOWLIST MODE</strong></div>
-            <button class="boundary-row" type="button" aria-expanded="true">
-              <span class="boundary-icon">01</span>
-              <span><strong>Specific project folder</strong><small>Read supported text. Ignore credentials, databases, dependencies, and symlinks.</small></span>
-              <b>READ</b>
-            </button>
-            <button class="boundary-row" type="button" aria-expanded="true">
-              <span class="boundary-icon">02</span>
-              <span><strong>Local BRACE database</strong><small>Structured memory, FTS indexes, evidence, graph, timeline, and settings.</small></span>
-              <b>WRITE</b>
-            </button>
-            <button class="boundary-row" type="button" aria-expanded="false">
-              <span class="boundary-icon">03</span>
-              <span><strong>Network</strong><small>Off by default. Loopback embeddings are optional and explicit.</small></span>
-              <b>DENY</b>
-            </button>
-            <div class="inspector-receipt"><span>PUBLIC REPOSITORY</span><strong>No database. No personal seed. No machine paths.</strong></div>
-          </div>
+    <section class="manifesto" aria-label="Product promise">
+      <p>Your work should not disappear at the edge of a chat window.</p>
+      <div class="manifesto-line" aria-hidden="true"><i></i></div>
+      <p class="manifesto-accent">BRACE remembers the useful parts.</p>
+    </section>
+
+    <section id="experience" class="experience">
+      <div class="experience-copy reveal">
+        <p class="eyebrow">RECALL, WITH RECEIPTS</p>
+        <h2>Ask once.<br><em>Know why.</em></h2>
+        <p>BRACE keeps durable memories visibly separate from raw evidence. Every result reports how it was found and where it came from.</p>
+        <form class="recall-demo" id="recall-form" role="search">
+          <label for="recall-query">Try a local recall</label>
+          <div><span aria-hidden="true">⌕</span><input id="recall-query" value="canonical source files" autocomplete="off"><button type="submit">Recall</button></div>
+        </form>
+        <div class="recall-result" id="recall-result" aria-live="polite">
+          <span><i></i> DURABLE DECISION</span>
+          <strong>Keep imported files canonical</strong>
+          <p>BRACE indexes project context without editing or moving the original files.</p>
+          <small>Architecture Decisions.md · lexical retrieval</small>
         </div>
-      </section>
+      </div>
+      <div class="memory-film" aria-hidden="true">
+        <div class="film-ring ring-one"></div><div class="film-ring ring-two"></div><div class="film-ring ring-three"></div>
+        <div class="film-core"><span>B</span></div>
+        <article class="film-node node-source"><i></i><span>SOURCE</span><strong>architecture-decisions.md</strong></article>
+        <article class="film-node node-memory"><i></i><span>MEMORY</span><strong>Files stay canonical</strong></article>
+        <article class="film-node node-ai"><i></i><span>AI CLIENT</span><strong>Context received</strong></article>
+        <svg viewBox="0 0 800 800"><path d="M150,485 C255,430 315,400 400,400 S555,360 660,285"></path><path d="M150,485 C270,570 485,610 660,285"></path></svg>
+      </div>
+    </section>
 
-      <section id="handoff" class="surface-act handoff-act" data-sc-act="pin" data-sc-span="3.65">
-        <div class="surface-stage handoff-stage" data-sc-stage data-sc-verify-state="source:codex">
-          <div class="handoff-topline">
-            <div><p class="surface-kicker">PROVENANCE HANDOFF</p><h2>One memory. Every AI.</h2></div>
-            <span class="handoff-phase" id="handoff-phase">SOURCE SELECTED</span>
-          </div>
-
-          <div class="handoff-map" aria-label="Interactive provenance handoff">
-            <svg class="handoff-lines" viewBox="0 0 1000 430" preserveAspectRatio="none" aria-hidden="true">
-              <path class="route route--source" d="M 115 215 C 225 215, 245 215, 345 215"></path>
-              <path class="route route--evidence" d="M 430 215 C 535 215, 555 215, 650 215"></path>
-              <path class="route route--client" d="M 730 215 C 815 215, 835 92, 905 92"></path>
-              <path class="route route--client" d="M 730 215 C 820 215, 840 174, 905 174"></path>
-              <path class="route route--client" d="M 730 215 C 820 215, 840 256, 905 256"></path>
-              <path class="route route--client" d="M 730 215 C 815 215, 835 338, 905 338"></path>
-            </svg>
-
-            <article class="handoff-node handoff-node--source" data-handoff-node="source">
-              <span class="node-index">SOURCE</span>
-              <strong>architecture-decisions.md</strong>
-              <p>Imported project file. Original remains canonical.</p>
-              <small>brace-project://northstar-docs/</small>
-            </article>
-
-            <article class="handoff-node handoff-node--memory" data-handoff-node="memory">
-              <span class="node-index">DURABLE MEMORY</span>
-              <strong>Keep imported files canonical</strong>
-              <p>BRACE indexes context without becoming the editor of record.</p>
-              <small>Decision · confidence 96%</small>
-            </article>
-
-            <article class="handoff-node handoff-node--evidence" data-handoff-node="evidence">
-              <span class="node-index">EVIDENCE PACKET</span>
-              <strong>Source still attached</strong>
-              <p id="receipt-copy">Ready for Codex over read-only MCP.</p>
-              <small>Content + URI + retrieval mode</small>
-            </article>
-
-            <div class="memory-packet" id="memory-packet" aria-hidden="true"><span>B</span></div>
-
-            <div class="client-stack" role="group" aria-label="Choose receiving AI">
-              <button class="client-button is-active" type="button" data-client="Codex" aria-pressed="true"><span>CO</span><strong>Codex</strong><small>read-only</small></button>
-              <button class="client-button" type="button" data-client="Claude" aria-pressed="false"><span>CL</span><strong>Claude</strong><small>read-only</small></button>
-              <button class="client-button" type="button" data-client="Cursor" aria-pressed="false"><span>CU</span><strong>Cursor</strong><small>read-only</small></button>
-              <button class="client-button" type="button" data-client="Other MCP client" aria-pressed="false"><span>+</span><strong>Other MCP</strong><small>compatible</small></button>
-            </div>
-          </div>
-
-          <div class="handoff-receipt" aria-live="polite">
-            <span class="receipt-check" aria-hidden="true">✓</span>
-            <div><strong id="receipt-title">Waiting for the evidence packet</strong><small id="receipt-detail">The source URI remains attached throughout the handoff.</small></div>
-            <code>BRACE_MCP_WRITE=0</code>
-          </div>
+    <section id="boundary" class="boundary">
+      <div class="boundary-sticky">
+        <div class="boundary-copy reveal">
+          <p class="eyebrow">LOCAL BY ARCHITECTURE</p>
+          <h2>Nothing to upload.<br><em>Nothing to surrender.</em></h2>
+          <p>Your memory database lives in your operating system’s application-data directory. Imported projects stay exactly where you put them.</p>
+          <a href="how-to/#privacy">Read the privacy model <span aria-hidden="true">→</span></a>
         </div>
-      </section>
-
-      <section id="proof" class="sc-section proof-act" data-sc-act="flow">
-        <div class="proof-layout sc-wrap">
-          <div class="proof-index" data-sc-in data-sc-stagger="45">
-            <p class="surface-kicker">PRODUCT PROOF</p>
-            <h2>Inspect the real application.</h2>
-            <p>Every capture below came from the packaged Electron boundary using a disposable profile and the synthetic Northstar workspace.</p>
-            <div class="proof-tabs" role="tablist" aria-label="BRACE product captures">
-              <button id="proof-tab-overview" type="button" role="tab" aria-selected="true" aria-controls="proof-panel" data-shot="overview">Overview <span>01</span></button>
-              <button id="proof-tab-recall" type="button" role="tab" aria-selected="false" aria-controls="proof-panel" data-shot="recall">Recall <span>02</span></button>
-              <button id="proof-tab-timeline" type="button" role="tab" aria-selected="false" aria-controls="proof-panel" data-shot="timeline">Timeline <span>03</span></button>
-              <button id="proof-tab-graph" type="button" role="tab" aria-selected="false" aria-controls="proof-panel" data-shot="graph">Graph <span>04</span></button>
-              <button id="proof-tab-skills" type="button" role="tab" aria-selected="false" aria-controls="proof-panel" data-shot="skills">Skills <span>05</span></button>
-            </div>
+        <div class="boundary-device">
+          <div class="boundary-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="boundary-led"><span></span> LOCAL BOUNDARY ACTIVE</div>
+          <div class="boundary-stack">
+            <article><b>01</b><span><strong>Your project files</strong><small>Read in place · originals untouched</small></span><em>READ</em></article>
+            <article><b>02</b><span><strong>BRACE SQLite</strong><small>Memory · graph · evidence · timeline</small></span><em>LOCAL</em></article>
+            <article><b>03</b><span><strong>The network</strong><small>Off unless you explicitly choose loopback embeddings</small></span><em>DENY</em></article>
           </div>
-
-          <figure id="proof-panel" class="proof-frame" role="tabpanel" aria-labelledby="proof-tab-overview" data-sc-reveal="left" data-sc-reveal-at="0.1 0.58" data-sc-tilt="3.5">
-            <div class="proof-window" data-sc-parallax="-0.3">
-              <div class="window-bar"><span></span><span></span><span></span><strong>BRACE · SYNTHETIC NORTHSTAR</strong></div>
-              <img id="proof-image" src="assets/app-overview.png" width="1440" height="960" alt="BRACE Overview screen using synthetic Northstar data">
-            </div>
-            <figcaption><strong id="proof-caption-title">Overview</strong><span id="proof-caption-copy">Local memory health, recent durable context, and source coverage in one operational view.</span></figcaption>
-          </figure>
+          <div class="boundary-foot"><span>0</span> accounts <i></i><span>0</span> telemetry events <i></i><span>1</span> owner: you</div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <section id="get-brace" class="close-act" data-sc-act="flow">
-        <div class="close-surface sc-wrap">
-          <div class="close-status"><span></span> READY FOR FIRST RUN</div>
-          <div class="close-grid">
-            <div>
-              <p class="surface-kicker">LOCAL START</p>
-              <h2>Put your context back in your hands.</h2>
-              <p>Clone the source, run the checks, and open BRACE with an empty private database. The synthetic demo is optional and clearly labelled.</p>
-            </div>
-            <form class="command-form" id="command-form">
-              <label for="install-command">First command</label>
-              <div class="command-line">
-                <span aria-hidden="true">$</span>
-                <input id="install-command" value="git clone https://github.com/GYASH28/B.R.A.C.E-brain.git" readonly>
-                <button type="submit" id="copy-command">Get BRACE</button>
-              </div>
-              <p id="copy-status" role="status">Linux and Windows release packages are attached to tagged releases.</p>
-            </form>
-          </div>
-          <footer class="surface-footer">
-            <div class="footer-mark"><img src="assets/brace-logo.svg" width="30" height="30" alt=""><span><strong>BRACE</strong><small>OPEN SOURCE · LOCAL FIRST</small></span></div>
-            <nav aria-label="Project resources">
-              <a href="how-to/">Beginner guide</a>
-              <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest">Release</a>
-              <a href="https://github.com/GYASH28/B.R.A.C.E-brain">Source</a>
-            </nav>
-            <span class="footer-license">Apache-2.0</span>
-          </footer>
+    <section id="handoff" class="handoff">
+      <div class="handoff-heading reveal">
+        <p class="eyebrow">ONE MEMORY · EVERY AI</p>
+        <h2>Context arrives<br><em>with its story intact.</em></h2>
+      </div>
+      <div class="handoff-stage">
+        <svg class="handoff-paths" viewBox="0 0 1200 520" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M160 260 C300 260 320 260 445 260"></path><path d="M535 260 C650 260 670 260 785 260"></path>
+          <path d="M875 260 C985 260 995 100 1080 100"></path><path d="M875 260 C985 260 995 210 1080 210"></path><path d="M875 260 C985 260 995 320 1080 320"></path><path d="M875 260 C985 260 995 430 1080 430"></path>
+        </svg>
+        <div class="packet" aria-hidden="true"><span>B</span></div>
+        <article class="handoff-card handoff-source"><span>01 · SOURCE</span><strong>architecture-decisions.md</strong><small>Canonical project file</small></article>
+        <article class="handoff-card handoff-memory"><span>02 · MEMORY</span><strong>Keep files canonical</strong><small>Decision · confidence 96%</small></article>
+        <article class="handoff-card handoff-evidence"><span>03 · RECEIPT</span><strong>Evidence attached</strong><small>Content + URI + retrieval mode</small></article>
+        <div class="ai-destinations" role="group" aria-label="Choose receiving AI">
+          <button class="is-active" type="button" data-client="Codex" aria-pressed="true"><b>CO</b><span>Codex<small>read-only MCP</small></span></button>
+          <button type="button" data-client="Claude" aria-pressed="false"><b>CL</b><span>Claude<small>read-only MCP</small></span></button>
+          <button type="button" data-client="Cursor" aria-pressed="false"><b>CU</b><span>Cursor<small>read-only MCP</small></span></button>
+          <button type="button" data-client="Other MCP client" aria-pressed="false"><b>+</b><span>Other MCP<small>compatible</small></span></button>
         </div>
-      </section>
-    </main>
-  </div>
+      </div>
+      <div class="handoff-receipt" aria-live="polite"><span>✓</span><p><strong id="receipt-title">Delivered to Codex</strong><small>Memory, provenance, and retrieval mode stayed together.</small></p><code>BRACE_MCP_WRITE=0</code></div>
+    </section>
 
-  <noscript><p class="noscript">JavaScript enables the live memory handoff. All guide and source links remain available.</p></noscript>
-  <script src="motion.js"></script>
+    <section id="proof" class="proof">
+      <div class="proof-heading reveal"><p class="eyebrow">THE REAL PRODUCT</p><h2>A second brain you can<br><em>actually inspect.</em></h2></div>
+      <div class="proof-gallery">
+        <div class="proof-copy">
+          <button class="is-active" id="proof-overview" type="button" data-shot="overview" aria-pressed="true"><span>01</span><strong>Overview</strong><small>Read the health of your memory at a glance.</small></button>
+          <button id="proof-recall" type="button" data-shot="recall" aria-pressed="false"><span>02</span><strong>Recall</strong><small>Search memory and source evidence separately.</small></button>
+          <button id="proof-graph" type="button" data-shot="graph" aria-pressed="false"><span>03</span><strong>Constellation</strong><small>Follow decisions back to sources and projects.</small></button>
+          <button id="proof-timeline" type="button" data-shot="timeline" aria-pressed="false"><span>04</span><strong>Timeline</strong><small>Keep important changes from vanishing in chat.</small></button>
+          <button id="proof-skills" type="button" data-shot="skills" aria-pressed="false"><span>05</span><strong>Skills</strong><small>Extend workflows through explicit permissions.</small></button>
+        </div>
+        <figure class="proof-screen">
+          <div class="proof-chrome"><i></i><i></i><i></i><span id="proof-title">OVERVIEW · SYNTHETIC NORTHSTAR</span></div>
+          <img id="proof-image" src="assets/app-overview.png" width="1440" height="960" alt="BRACE overview with synthetic Northstar data">
+          <figcaption id="proof-caption">Captured from the packaged Electron application using a disposable synthetic profile.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="get-brace" class="download-cinema">
+      <canvas id="download-field" aria-hidden="true"></canvas>
+      <div class="download-glow" aria-hidden="true"></div>
+      <div class="download-content reveal">
+        <img src="assets/brace-logo.svg" width="88" height="88" alt="">
+        <p class="eyebrow">READY WHEN YOU ARE</p>
+        <h2>Your memory.<br><em>Back in your hands.</em></h2>
+        <p>Choose your system. BRACE opens with an empty private database; the labelled synthetic demo is optional.</p>
+        <div class="platforms">
+          <a class="platform platform--windows" data-download="windows" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest"><span class="platform-icon">⊞</span><span><small>WINDOWS 10 / 11</small><strong>Download .exe</strong><em>64-bit installer</em></span><b>↓</b></a>
+          <a class="platform platform--linux" data-download="linux" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest"><span class="platform-icon">⌁</span><span><small>LINUX</small><strong>Download AppImage</strong><em>Portable · x86_64</em></span><b>↓</b></a>
+          <a class="platform platform--deb" data-download="deb" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest"><span class="platform-icon">◈</span><span><small>DEBIAN / UBUNTU</small><strong>Download .deb</strong><em>amd64 package</em></span><b>↓</b></a>
+        </div>
+        <div class="download-meta"><span>v0.2.0 preview</span><i></i><span>Apache-2.0</span><i></i><a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest">Checksums &amp; SBOM</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="footer-brand"><img src="assets/brace-logo.svg" width="32" height="32" alt=""><span><strong>BRACE</strong><small>Built for a future where your AI memory belongs to you.</small></span></div>
+    <nav aria-label="Project links"><a href="how-to/">How to use</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain">Source</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest">Releases</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain/security">Security</a></nav>
+    <span>LOCAL FIRST · OPEN SOURCE · 2026</span>
+  </footer>
+
+  <noscript><p class="noscript">BRACE remains downloadable without JavaScript. Motion and interactive demonstrations are optional.</p></noscript>
   <script src="site.js"></script>
 </body>
 </html>

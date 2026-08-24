@@ -28,6 +28,8 @@ import {
   LayoutDashboard,
   LoaderCircle,
   Menu,
+  Maximize2,
+  Minus,
   Network,
   PackagePlus,
   PanelLeftClose,
@@ -139,11 +141,12 @@ export function BraceApp() {
   if (isEmpty) return <Onboarding />;
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden bg-[#080a0d] text-[#f4f1eb]">
+    <div className="brace-app flex h-[100dvh] overflow-hidden text-[#f4f1eb]">
+      <div className="brace-ambient" aria-hidden="true"><i /><i /><i /></div>
       <aside
-        className={`relative flex shrink-0 flex-col border-r border-white/[0.07] bg-[#0c0f13] transition-[width] duration-200 ${collapsed ? "w-[68px]" : "w-[228px]"}`}
+        className={`brace-sidebar relative z-20 flex shrink-0 flex-col transition-[width] duration-300 ${collapsed ? "w-[76px]" : "w-[238px]"}`}
       >
-        <div className="flex h-[72px] items-center border-b border-white/[0.07] px-4">
+        <div className="flex h-[76px] items-center px-5">
           <button
             type="button"
             onClick={() => setView("home")}
@@ -160,7 +163,7 @@ export function BraceApp() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto p-3" aria-label="BRACE navigation">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="BRACE navigation">
           {nav.map((item) => {
             const active = view === item.view;
             const Icon = item.icon;
@@ -169,23 +172,23 @@ export function BraceApp() {
                 key={item.view}
                 type="button"
                 onClick={() => setView(item.view)}
-                className={`group relative flex h-10 w-full items-center rounded-lg text-[13px] font-medium transition-colors ${
+                className={`brace-nav-item group relative flex h-11 w-full items-center rounded-xl text-[13px] font-medium ${
                   collapsed ? "justify-center" : "gap-3 px-3"
-                } ${active ? "bg-white/[0.08] text-white" : "text-white/48 hover:bg-white/[0.04] hover:text-white/80"}`}
+                } ${active ? "is-active text-white" : "text-white/45 hover:text-white/80"}`}
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
               >
-                {active && <span className="absolute left-0 h-4 w-[2px] rounded-full bg-[#ff7a45]" />}
-                <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? "text-[#ff9a72]" : "text-white/38 group-hover:text-white/65"}`} strokeWidth={1.8} />
+                {active && <span className="brace-nav-signal" />}
+                <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? "text-[#ff9a72]" : "text-white/34 group-hover:text-white/65"}`} strokeWidth={1.8} />
                 {!collapsed && <span>{item.label}</span>}
               </button>
             );
           })}
         </nav>
 
-        <div className="border-t border-white/[0.07] p-3">
+        <div className="p-3">
           {!collapsed && (
-            <div className="mb-2 rounded-lg border border-emerald-300/10 bg-emerald-300/[0.045] px-3 py-2.5">
+            <div className="brace-local-status mb-2 rounded-xl px-3 py-3">
               <div className="flex items-center gap-2 text-[11px] font-medium text-emerald-200/80">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                 Local database active
@@ -205,7 +208,7 @@ export function BraceApp() {
         </div>
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <Header />
         {snapshot.environment === "browser-preview" && (
           <div className="flex items-center gap-2 border-b border-sky-300/10 bg-sky-300/[0.05] px-5 py-2 text-[11px] text-sky-100/70">
@@ -220,7 +223,7 @@ export function BraceApp() {
             <button type="button" onClick={clearMessage} className="rounded p-1 hover:bg-white/5" aria-label="Dismiss message"><X className="h-3.5 w-3.5" /></button>
           </div>
         )}
-        <main className="min-h-0 flex-1 overflow-y-auto">
+        <main key={view} className="brace-main min-h-0 flex-1 overflow-y-auto">
           {view === "home" && <Overview />}
           {view === "search" && <SearchView />}
           {view === "memories" && <MemoriesView />}
@@ -246,9 +249,10 @@ export function BraceApp() {
 
 function BraceMark() {
   return (
-    <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[11px] border border-[#ff9064]/25 bg-gradient-to-br from-[#ff8759] to-[#c94328] shadow-[0_8px_24px_rgba(249,93,50,0.16)]">
-      <span className="text-sm font-black tracking-[-0.08em] text-[#160a06]">B</span>
-      <span className="absolute right-1.5 top-1.5 h-1 w-1 rounded-full bg-[#fff1d6]" />
+    <span className="brace-mark relative flex h-10 w-10 shrink-0 items-center justify-center">
+      <span className="brace-mark-orbit" aria-hidden="true" />
+      <span className="relative text-sm font-black tracking-[-0.08em] text-[#1d0903]">B</span>
+      <span className="absolute right-[8px] top-[7px] h-1 w-1 rounded-full bg-[#fff5df]" />
     </span>
   );
 }
@@ -343,7 +347,7 @@ function Header() {
     void search();
   };
   return (
-    <header className="flex h-[72px] shrink-0 items-center gap-4 border-b border-white/[0.07] bg-[#0a0c10]/95 px-5" style={{ WebkitAppRegion: "drag" } as React.CSSProperties}>
+    <header className="brace-header flex h-[76px] shrink-0 items-center gap-4 px-5" style={{ WebkitAppRegion: "drag" } as React.CSSProperties}>
       <form onSubmit={submit} className="relative w-full max-w-xl" style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}>
         <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
         <input
@@ -352,7 +356,7 @@ function Header() {
           onChange={(event) => setSearchQuery(event.target.value)}
           onFocus={() => setView("search")}
           placeholder="Recall a decision, source, or lesson…"
-          className="h-10 w-full rounded-xl border border-white/[0.08] bg-white/[0.035] pl-10 pr-16 text-sm text-white outline-none placeholder:text-white/25 hover:border-white/[0.12] focus:border-[#ff8c5f]/45 focus:bg-white/[0.05]"
+          className="brace-command h-11 w-full rounded-xl pl-10 pr-16 text-sm text-white outline-none placeholder:text-white/25"
         />
         <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border border-white/10 bg-black/20 px-1.5 py-0.5 text-[9px] text-white/28">Ctrl K</kbd>
       </form>
@@ -369,12 +373,12 @@ function Header() {
 
 function Page({ eyebrow, title, description, actions, children }: { eyebrow?: string; title: string; description: string; actions?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="mx-auto w-full max-w-[1420px] px-5 py-7 lg:px-8 lg:py-9">
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
+    <div className="brace-page mx-auto w-full max-w-[1500px] px-5 py-7 lg:px-9 lg:py-10">
+      <div className="brace-page-heading mb-8 flex flex-wrap items-end justify-between gap-5">
         <div>
-          {eyebrow && <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#ff956c]">{eyebrow}</div>}
-          <h1 className="text-3xl font-medium tracking-[-0.035em] text-[#faf7f1]">{title}</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-white/42">{description}</p>
+          {eyebrow && <div className="brace-eyebrow mb-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ff956c]"><span />{eyebrow}</div>}
+          <h1 className="text-[clamp(2rem,3vw,3.2rem)] font-medium leading-[1.02] tracking-[-0.055em] text-[#faf7f1]">{title}</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-white/42">{description}</p>
         </div>
         {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
@@ -387,53 +391,58 @@ function Overview() {
   const { snapshot, setView, setSelectedMemory } = useBrace();
   if (!snapshot) return null;
   const stats = [
-    ["Durable memories", snapshot.stats.memories, Brain, "text-[#ff9a72]"],
-    ["Indexed sources", snapshot.stats.sources, FileText, "text-sky-300"],
-    ["Recorded decisions", snapshot.stats.decisions, GitBranch, "text-violet-300"],
-    ["Graph relations", snapshot.stats.relations, Network, "text-emerald-300"],
+    ["memories", snapshot.stats.memories, Brain],
+    ["sources", snapshot.stats.sources, FileText],
+    ["decisions", snapshot.stats.decisions, GitBranch],
+    ["relations", snapshot.stats.relations, Network],
   ] as const;
+  const featured = snapshot.memories[0];
   return (
-    <Page eyebrow="Private memory layer" title="Your context, ready when AI needs it." description="A calm operational view of what BRACE knows, where it came from, and what changed.">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map(([label, value, Icon, color]) => (
-          <div key={label} className="brace-card p-5">
-            <div className="flex items-start justify-between"><span className="text-xs text-white/38">{label}</span><Icon className={`h-4 w-4 ${color}`} /></div>
-            <div className="mt-5 text-3xl font-medium tracking-[-0.04em]">{value.toLocaleString()}</div>
+    <Page eyebrow="Private memory layer" title="Your context, ready when AI needs it." description="See what BRACE knows, where it came from, and what changed—without sending your working memory elsewhere.">
+      <section className="brace-hero-grid">
+        <button type="button" onClick={() => featured && setSelectedMemory(featured)} className="brace-memory-signal group text-left" disabled={!featured}>
+          <div className="memory-signal-orbit" aria-hidden="true"><span /><span /><span /></div>
+          <div className="relative z-10 max-w-xl">
+            <span className="signal-status"><i /> MEMORY ONLINE</span>
+            <h2>{featured?.title || "Your first durable memory will surface here."}</h2>
+            <p>{featured?.summary || "Import a project or remember something important to begin."}</p>
+            <span className="signal-source"><FileText className="h-3.5 w-3.5" />{featured ? shortUri(featured.sourceUri) : "Waiting for local context"}</span>
           </div>
-        ))}
-      </div>
+          {featured && <span className="signal-open">Inspect memory <ArrowRight className="h-4 w-4" /></span>}
+        </button>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[1.25fr_.75fr]">
-        <section className="brace-card overflow-hidden">
-          <SectionHeading title="High-signal memory" action="View all" onAction={() => setView("memories")} />
+        <div className="brace-vitals" aria-label="Memory health">
+          <div className="vitals-heading"><span>LOCAL INDEX</span><strong>Healthy <i /></strong></div>
+          {stats.map(([label, value, Icon], index) => (
+            <button key={label} type="button" onClick={() => setView(index === 0 ? "memories" : index === 2 ? "timeline" : index === 3 ? "graph" : "projects")} className="vital-row">
+              <span><Icon className="h-4 w-4" />{label}</span><strong>{value.toLocaleString()}</strong><i style={{ "--vital": `${Math.min(100, 28 + value * 12)}%` } as React.CSSProperties} />
+            </button>
+          ))}
+          <button type="button" onClick={() => setView("search")} className="vitals-recall"><Search className="h-4 w-4" /> Ask your memory <ArrowRight className="ml-auto h-4 w-4" /></button>
+        </div>
+      </section>
+
+      <div className="mt-5 grid gap-5 xl:grid-cols-[1.22fr_.78fr]">
+        <section className="brace-card brace-card--lift overflow-hidden">
+          <SectionHeading title="High-signal memory" action="Open memory" onAction={() => setView("memories")} />
           <div className="divide-y divide-white/[0.055]">
-            {snapshot.memories.slice(0, 5).map((memory) => (
-              <MemoryRow key={memory.id} memory={memory} onClick={() => setSelectedMemory(memory)} />
-            ))}
+            {snapshot.memories.slice(0, 4).map((memory) => <MemoryRow key={memory.id} memory={memory} onClick={() => setSelectedMemory(memory)} />)}
             {snapshot.memories.length === 0 && <EmptyRows text="No durable memories yet." />}
           </div>
         </section>
-        <section className="brace-card overflow-hidden">
-          <SectionHeading title="Recent activity" action="Timeline" onAction={() => setView("timeline")} />
-          <div className="px-5 pb-5">
-            {snapshot.timeline.slice(0, 5).map((event, index) => (
-              <TimelineMini key={event.id} event={event} last={index === Math.min(4, snapshot.timeline.length - 1)} />
-            ))}
+        <section className="brace-card brace-card--lift overflow-hidden">
+          <SectionHeading title="Memory pulse" action="Full timeline" onAction={() => setView("timeline")} />
+          <div className="brace-timeline-flow px-5 pb-5">
+            {snapshot.timeline.slice(0, 5).map((event, index) => <TimelineMini key={event.id} event={event} last={index === Math.min(4, snapshot.timeline.length - 1)} />)}
             {snapshot.timeline.length === 0 && <EmptyRows text="New memories and decisions will appear here." />}
           </div>
         </section>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-2">
-        <button type="button" onClick={() => setView("connections")} className="brace-card group flex items-center gap-4 p-5 text-left hover:border-[#ff8c5f]/20">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#ff7a45]/10 text-[#ff9a72]"><Code2 className="h-5 w-5" /></span>
-          <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">Connect an AI client</span><span className="mt-1 block text-xs text-white/38">Use MCP to give supported tools the same local context.</span></span>
-          <ChevronRight className="h-4 w-4 text-white/20 transition-transform group-hover:translate-x-0.5 group-hover:text-white/50" />
-        </button>
-        <div className="brace-card flex items-center gap-4 p-5">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300"><ShieldCheck className="h-5 w-5" /></span>
-          <span><span className="block text-sm font-semibold">Private by architecture</span><span className="mt-1 block text-xs text-white/38">Database and indexed text stay in your application-data directory.</span></span>
-        </div>
+      <div className="brace-action-ribbon mt-5">
+        <button type="button" onClick={() => setView("connections")}><Code2 className="h-5 w-5" /><span><strong>Connect your AI</strong><small>Read-only MCP by default</small></span><ArrowRight className="ml-auto h-4 w-4" /></button>
+        <span className="ribbon-divider" />
+        <div><ShieldCheck className="h-5 w-5" /><span><strong>Private by architecture</strong><small>Local SQLite · no account · no telemetry</small></span></div>
       </div>
     </Page>
   );
@@ -536,9 +545,9 @@ function MemoriesView() {
           <button key={kind} type="button" onClick={() => setFilter(kind)} className={`rounded-lg border px-3 py-1.5 text-[10px] font-medium capitalize ${filter === kind ? "border-[#ff8c5f]/35 bg-[#ff7a45]/10 text-[#ffb090]" : "border-white/[0.07] text-white/35 hover:text-white/65"}`}>{kind}</button>
         ))}
       </div>
-      <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+      <div className="brace-memory-grid grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
         {memories.map((memory) => (
-          <button key={memory.id} type="button" onClick={() => setSelectedMemory(memory)} className="brace-card group flex min-h-48 flex-col p-5 text-left hover:border-white/[0.13]">
+          <button key={memory.id} type="button" onClick={() => setSelectedMemory(memory)} className="brace-card brace-memory-card group flex min-h-48 flex-col p-5 text-left hover:border-white/[0.13]">
             <div className="flex items-start justify-between gap-3"><span className={`rounded-md border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider ${kindTone[memory.kind]}`}>{memory.kind}</span><span className="text-[10px] text-white/22">{Math.round(memory.confidence * 100)}% confidence</span></div>
             <h2 className="mt-4 text-[15px] font-semibold leading-5 text-white/90">{memory.title}</h2>
             <p className="mt-2 line-clamp-3 text-xs leading-5 text-white/38">{memory.summary}</p>
@@ -578,7 +587,7 @@ function TimelineView() {
   return (
     <Page eyebrow="Change over time" title="Timeline & decisions" description="An auditable history of explicit decisions, memory changes, evidence, and indexing events." actions={<button type="button" onClick={() => setFormOpen((value) => !value)} className="brace-primary h-10 px-4"><GitBranch className="h-4 w-4" />Record decision</button>}>
       {formOpen && <DecisionComposer onClose={() => setFormOpen(false)} />}
-      <div className="brace-card mx-auto max-w-4xl overflow-hidden px-5 py-3 sm:px-8">
+      <div className="brace-card brace-timeline-card mx-auto max-w-4xl overflow-hidden px-5 py-3 sm:px-8">
         {snapshot.timeline.map((event, index) => (
           <article key={event.id} className="relative grid grid-cols-[28px_1fr] gap-4 py-5">
             {index !== snapshot.timeline.length - 1 && <span className="absolute bottom-[-20px] left-[13px] top-8 w-px bg-white/[0.07]" />}
@@ -616,43 +625,94 @@ function DecisionComposer({ onClose }: { onClose: () => void }) {
 function GraphView() {
   const { snapshot } = useBrace();
   const [type, setType] = useState("all");
+  const [query, setQuery] = useState("");
+  const [zoom, setZoom] = useState(1);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   if (!snapshot) return null;
-  const nodes = type === "all" ? snapshot.graph.nodes : snapshot.graph.nodes.filter((node) => node.type === type);
+  const selected = snapshot.graph.nodes.find((node) => node.id === selectedId) || snapshot.graph.nodes.find((node) => node.type === "project") || snapshot.graph.nodes[0];
+  const connectedEdges = selected ? snapshot.graph.edges.filter((edge) => edge.from === selected.id || edge.to === selected.id) : [];
+  const connectedNodes = connectedEdges.map((edge) => snapshot.graph.nodes.find((node) => node.id === (edge.from === selected?.id ? edge.to : edge.from))).filter(Boolean) as GraphNode[];
   return (
-    <Page eyebrow="Relationships" title="Knowledge graph" description="Projects anchor the graph. Sources, explicit decisions, memories, and extracted entities stay visibly distinct.">
-      <div className="mb-4 flex flex-wrap gap-2">{["all", "project", "source", "memory", "decision", "entity"].map((item) => <button key={item} type="button" onClick={() => setType(item)} className={`rounded-lg border px-3 py-1.5 text-[10px] capitalize ${type === item ? "border-[#ff8c5f]/35 bg-[#ff7a45]/10 text-[#ffb090]" : "border-white/[0.07] text-white/35"}`}>{item}</button>)}</div>
-      <div className="brace-card relative min-h-[560px] overflow-hidden bg-[radial-gradient(circle_at_center,rgba(255,255,255,.035)_0,transparent_52%)]">
-        <GraphCanvas nodes={nodes} edges={snapshot.graph.edges} />
-        <div className="absolute bottom-4 left-4 flex flex-wrap gap-3 rounded-lg border border-white/[0.06] bg-black/25 px-3 py-2 text-[9px] text-white/30 backdrop-blur">{[["#ff8c5f", "Project"], ["#7dd3fc", "Source"], ["#c4b5fd", "Decision"], ["#6ee7b7", "Memory"], ["#cbd5e1", "Entity"]].map(([color, label]) => <span key={label} className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ background: color }} />{label}</span>)}</div>
+    <Page eyebrow="Living relationships" title="Memory constellation" description="Trace the path from a project to its sources, decisions, durable memories, and named ideas.">
+      <div className="graph-toolbar">
+        <label className="graph-search"><Search className="h-4 w-4" /><span className="sr-only">Find a node</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a memory, source, or entity…" /></label>
+        <div className="graph-filters" aria-label="Filter graph nodes">{["all", "project", "source", "memory", "decision", "entity"].map((item) => <button key={item} type="button" onClick={() => setType(item)} className={type === item ? "is-active" : ""} aria-pressed={type === item}>{item}</button>)}</div>
+        <div className="graph-zoom" aria-label="Graph zoom controls"><button type="button" onClick={() => setZoom((value) => Math.max(.72, value - .12))} aria-label="Zoom out"><Minus className="h-4 w-4" /></button><span>{Math.round(zoom * 100)}%</span><button type="button" onClick={() => setZoom((value) => Math.min(1.45, value + .12))} aria-label="Zoom in"><Plus className="h-4 w-4" /></button><button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom"><Maximize2 className="h-4 w-4" /></button></div>
+      </div>
+      <div className="graph-stage">
+        <div className="graph-canvas-wrap">
+          <GraphCanvas nodes={snapshot.graph.nodes} edges={snapshot.graph.edges} activeType={type} query={query} zoom={zoom} selectedId={selected?.id || null} onSelect={setSelectedId} />
+          <div className="graph-legend">{[["#ff7850", "Project"], ["#56c7ff", "Source"], ["#b99cff", "Decision"], ["#51e6b1", "Memory"], ["#b9c2d0", "Entity"]].map(([color, label]) => <span key={label}><i style={{ background: color }} />{label}</span>)}</div>
+          <div className="graph-hint"><CircleDot className="h-3.5 w-3.5" /> Select a node to follow its provenance</div>
+        </div>
+        <aside className="graph-inspector" aria-live="polite">
+          {selected ? <>
+            <div className="graph-inspector-type"><i data-type={selected.type} />{selected.type}</div>
+            <h2>{selected.label}</h2>
+            <p>{selected.type === "project" ? "The anchor for imported context. Original files remain canonical." : selected.type === "source" ? "Indexed evidence from an imported source. BRACE does not edit the original." : selected.type === "decision" ? "An explicit choice preserved with its rationale and project context." : selected.type === "memory" ? "Durable context distilled for reliable recall across connected AI tools." : "A named idea extracted to make related context easier to traverse."}</p>
+            <div className="graph-inspector-stat"><span>Direct relations</span><strong>{connectedEdges.length}</strong></div>
+            <div className="graph-inspector-links">
+              <span>CONNECTED TO</span>
+              {connectedNodes.slice(0, 5).map((node) => <button key={node.id} type="button" onClick={() => setSelectedId(node.id)}><i data-type={node.type} /><span>{node.label}<small>{node.type}</small></span><ChevronRight className="ml-auto h-3.5 w-3.5" /></button>)}
+              {!connectedNodes.length && <small>No direct relationships in this view.</small>}
+            </div>
+          </> : <EmptyRows text="Add or import context to build your graph." />}
+        </aside>
       </div>
     </Page>
   );
 }
 
-function GraphCanvas({ nodes, edges }: { nodes: GraphNode[]; edges: Array<{ id: string; from: string; to: string; relation: string }> }) {
+function GraphCanvas({ nodes, edges, activeType, query, zoom, selectedId, onSelect }: { nodes: GraphNode[]; edges: Array<{ id: string; from: string; to: string; relation: string }>; activeType: string; query: string; zoom: number; selectedId: string | null; onSelect: (id: string) => void }) {
   const positions = useMemo(() => {
-    const center = { x: 450, y: 280 };
+    const width = 1000;
+    const height = 620;
+    const anchors: Record<string, { x: number; y: number }> = { project: { x: 500, y: 310 }, source: { x: 230, y: 310 }, decision: { x: 500, y: 105 }, memory: { x: 770, y: 310 }, entity: { x: 500, y: 525 } };
     const map = new Map<string, { x: number; y: number }>();
-    const ordered = [...nodes].sort((a, b) => (a.type === "project" ? -1 : b.type === "project" ? 1 : a.id.localeCompare(b.id)));
-    ordered.forEach((node, index) => {
-      if (index === 0 && node.type === "project") map.set(node.id, center);
-      else {
-        const ringIndex = index - (ordered[0]?.type === "project" ? 1 : 0);
-        const count = Math.max(1, ordered.length - (ordered[0]?.type === "project" ? 1 : 0));
-        const angle = (ringIndex / count) * Math.PI * 2 - Math.PI / 2;
-        const radius = 190 + (ringIndex % 3) * 28;
-        map.set(node.id, { x: center.x + Math.cos(angle) * radius, y: center.y + Math.sin(angle) * radius });
-      }
+    const hash = (value: string) => [...value].reduce((total, character) => ((total << 5) - total + character.charCodeAt(0)) | 0, 0);
+    nodes.forEach((node, index) => {
+      const anchor = anchors[node.type];
+      const seed = Math.abs(hash(node.id));
+      const angle = ((seed % 360) * Math.PI) / 180;
+      const radius = 42 + ((seed + index * 17) % 105);
+      map.set(node.id, { x: anchor.x + Math.cos(angle) * radius, y: anchor.y + Math.sin(angle) * radius });
     });
+    for (let iteration = 0; iteration < 150; iteration += 1) {
+      const movement = new Map(nodes.map((node) => [node.id, { x: 0, y: 0 }]));
+      for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+        const left = map.get(nodes[leftIndex].id)!; const right = map.get(nodes[rightIndex].id)!;
+        const dx = left.x - right.x || .1; const dy = left.y - right.y || .1; const distanceSquared = Math.max(900, dx * dx + dy * dy); const force = 1500 / distanceSquared;
+        const leftMove = movement.get(nodes[leftIndex].id)!; const rightMove = movement.get(nodes[rightIndex].id)!;
+        leftMove.x += dx * force; leftMove.y += dy * force; rightMove.x -= dx * force; rightMove.y -= dy * force;
+      }
+      edges.forEach((edge) => {
+        const from = map.get(edge.from); const to = map.get(edge.to); if (!from || !to) return;
+        const dx = to.x - from.x; const dy = to.y - from.y; const distance = Math.max(1, Math.hypot(dx, dy)); const force = (distance - 150) * .006;
+        movement.get(edge.from)!.x += (dx / distance) * force; movement.get(edge.from)!.y += (dy / distance) * force;
+        movement.get(edge.to)!.x -= (dx / distance) * force; movement.get(edge.to)!.y -= (dy / distance) * force;
+      });
+      nodes.forEach((node) => {
+        const point = map.get(node.id)!; const move = movement.get(node.id)!; const anchor = anchors[node.type];
+        const anchorStrength = node.type === "project" ? .07 : .018;
+        point.x = Math.max(85, Math.min(width - 85, point.x + move.x + (anchor.x - point.x) * anchorStrength));
+        point.y = Math.max(70, Math.min(height - 70, point.y + move.y + (anchor.y - point.y) * anchorStrength));
+      });
+    }
     return map;
-  }, [nodes]);
-  const color = (type: string) => ({ project: "#ff8c5f", source: "#7dd3fc", decision: "#c4b5fd", memory: "#6ee7b7", entity: "#cbd5e1" }[type] || "#fff");
+  }, [nodes, edges]);
+  const color = (nodeType: string) => ({ project: "#ff7850", source: "#56c7ff", decision: "#b99cff", memory: "#51e6b1", entity: "#b9c2d0" }[nodeType] || "#fff");
   const filteredEdges = edges.filter((edge) => positions.has(edge.from) && positions.has(edge.to));
+  const normalizedQuery = query.trim().toLowerCase();
+  const isVisible = (node: GraphNode) => (activeType === "all" || node.type === activeType) && (!normalizedQuery || node.label.toLowerCase().includes(normalizedQuery));
+  const selectedNeighborIds = new Set(filteredEdges.filter((edge) => edge.from === selectedId || edge.to === selectedId).flatMap((edge) => [edge.from, edge.to]));
   return (
-    <svg viewBox="0 0 900 560" className="h-full min-h-[560px] w-full" role="img" aria-label={`${nodes.length} knowledge nodes and ${filteredEdges.length} relationships`}>
-      <defs><filter id="node-glow"><feGaussianBlur stdDeviation="5" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter></defs>
-      {filteredEdges.map((edge) => { const from = positions.get(edge.from)!; const to = positions.get(edge.to)!; return <g key={edge.id}><line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="rgba(255,255,255,.1)" strokeWidth="1" /><text x={(from.x + to.x) / 2} y={(from.y + to.y) / 2 - 5} fill="rgba(255,255,255,.22)" fontSize="8" textAnchor="middle">{edge.relation}</text></g>; })}
-      {nodes.map((node) => { const position = positions.get(node.id)!; const radius = node.type === "project" ? 17 : node.type === "memory" ? 11 : 9; return <g key={node.id} transform={`translate(${position.x} ${position.y})`}><circle r={radius + 7} fill={color(node.type)} opacity=".06" /><circle r={radius} fill="#10151a" stroke={color(node.type)} strokeWidth="2" filter="url(#node-glow)" /><text y={radius + 18} fill="rgba(255,255,255,.72)" fontSize="10" fontWeight="500" textAnchor="middle">{node.label.length > 25 ? `${node.label.slice(0, 24)}…` : node.label}</text><text y={radius + 30} fill="rgba(255,255,255,.25)" fontSize="7" textAnchor="middle">{node.type}</text></g>; })}
+    <svg viewBox="0 0 1000 620" className="graph-svg" role="img" aria-label={`${nodes.length} knowledge nodes and ${filteredEdges.length} relationships`}>
+      <defs><filter id="node-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter><radialGradient id="graph-vignette"><stop offset="0" stopColor="#17212a" stopOpacity=".7" /><stop offset="1" stopColor="#070a0d" stopOpacity="0" /></radialGradient><pattern id="graph-grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M 36 0 L 0 0 0 36" fill="none" stroke="rgba(255,255,255,.035)" strokeWidth="1" /></pattern></defs>
+      <rect width="1000" height="620" fill="url(#graph-vignette)" /><rect width="1000" height="620" fill="url(#graph-grid)" />
+      <g transform={`translate(${500 - 500 * zoom} ${310 - 310 * zoom}) scale(${zoom})`} className="graph-world">
+        {filteredEdges.map((edge, index) => { const from = positions.get(edge.from)!; const to = positions.get(edge.to)!; const active = edge.from === selectedId || edge.to === selectedId; const curve = (index % 2 ? 1 : -1) * Math.min(38, Math.hypot(to.x - from.x, to.y - from.y) * .08); const midX = (from.x + to.x) / 2; const midY = (from.y + to.y) / 2; const dx = to.x - from.x; const dy = to.y - from.y; const length = Math.max(1, Math.hypot(dx, dy)); const controlX = midX - (dy / length) * curve; const controlY = midY + (dx / length) * curve; return <g key={edge.id} className={active ? "graph-edge is-active" : "graph-edge"}><path d={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /><circle r="2.4" fill={active ? "#ff9a72" : "rgba(255,255,255,.28)"}><animateMotion dur={`${5 + index % 4}s`} repeatCount="indefinite" path={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /></circle>{active && <text x={controlX} y={controlY - 8} textAnchor="middle">{edge.relation.replaceAll("_", " ")}</text>}</g>; })}
+        {nodes.map((node, index) => { const position = positions.get(node.id)!; const radius = node.type === "project" ? 22 : node.type === "memory" || node.type === "decision" ? 16 : 13; const selected = node.id === selectedId; const visible = isVisible(node); const related = selectedNeighborIds.has(node.id); return <g key={node.id} transform={`translate(${position.x} ${position.y})`} className={`graph-node ${selected ? "is-selected" : ""} ${visible ? "is-visible" : "is-dimmed"} ${related ? "is-related" : ""}`} role="button" tabIndex={0} aria-label={`${node.type}: ${node.label}`} onClick={() => onSelect(node.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(node.id); } }} style={{ "--node-color": color(node.type), "--node-delay": `${index * 55}ms` } as React.CSSProperties}><circle className="graph-node-wave" r={radius + 18} /><circle className="graph-node-halo" r={radius + 10} /><circle className="graph-node-core" r={radius} filter={selected ? "url(#node-glow)" : undefined} /><circle className="graph-node-dot" r={node.type === "project" ? 5 : 3.5} /><text className="graph-node-label" y={radius + 26} textAnchor="middle">{node.label.length > 28 ? `${node.label.slice(0, 27)}…` : node.label}</text><text className="graph-node-type" y={radius + 39} textAnchor="middle">{node.type}</text></g>; })}
+      </g>
     </svg>
   );
 }
@@ -673,7 +733,7 @@ function ProjectsView() {
 
 function ProjectCard({ project, onReindex }: { project: BraceProject; onReindex: () => void }) {
   return (
-    <article className="brace-card p-5"><div className="flex items-start gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300"><Box className="h-5 w-5" /></span><div className="min-w-0 flex-1"><h2 className="truncate text-[15px] font-semibold">{project.name}</h2><p className="mt-1 truncate text-[10px] text-white/25" title={project.root_path}>{project.root_path}</p></div><button type="button" onClick={onReindex} className="brace-secondary h-9 px-3" aria-label={`Reindex ${project.name}`}><RefreshCw className="h-3.5 w-3.5" />Reindex</button></div><div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/[0.055] pt-4 text-[10px]"><div><span className="block text-white/25">Last indexed</span><span className="mt-1 block text-white/55">{formatDate(project.last_indexed_at)}</span></div><div><span className="block text-white/25">Ownership</span><span className="mt-1 block text-emerald-200/65">Originals unchanged</span></div></div></article>
+    <article className="brace-card brace-project-card p-5"><div className="flex items-start gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300"><Box className="h-5 w-5" /></span><div className="min-w-0 flex-1"><h2 className="truncate text-[15px] font-semibold">{project.name}</h2><p className="mt-1 truncate text-[10px] text-white/25" title={project.root_path}>{project.root_path}</p></div><button type="button" onClick={onReindex} className="brace-secondary h-9 px-3" aria-label={`Reindex ${project.name}`}><RefreshCw className="h-3.5 w-3.5" />Reindex</button></div><div className="mt-5 grid grid-cols-2 gap-3 border-t border-white/[0.055] pt-4 text-[10px]"><div><span className="block text-white/25">Last indexed</span><span className="mt-1 block text-white/55">{formatDate(project.last_indexed_at)}</span></div><div><span className="block text-white/25">Ownership</span><span className="mt-1 block text-emerald-200/65">Originals unchanged</span></div></div></article>
   );
 }
 
@@ -692,7 +752,7 @@ function SkillsView() {
 
 function SkillCard({ skill, onToggle }: { skill: BraceSkill; onToggle: (enabled: boolean) => void }) {
   return (
-    <article className="brace-card p-5"><div className="flex items-start gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-300/10 text-amber-200"><Zap className="h-5 w-5" /></span><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="text-[15px] font-semibold">{skill.displayName}</h2><span className="font-mono text-[9px] text-white/20">v{skill.version}</span></div><p className="mt-1.5 text-xs leading-5 text-white/38">{skill.description}</p></div><button type="button" role="switch" aria-checked={skill.enabled} onClick={() => onToggle(!skill.enabled)} className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${skill.enabled ? "border-emerald-300/25 bg-emerald-300/25" : "border-white/10 bg-white/5"}`}><span className={`absolute top-[3px] h-4 w-4 rounded-full transition-transform ${skill.enabled ? "translate-x-[21px] bg-emerald-200" : "translate-x-[3px] bg-white/35"}`} /></button></div><div className="mt-5 border-t border-white/[0.055] pt-4"><div className="mb-2 text-[9px] font-semibold uppercase tracking-wider text-white/25">Permissions</div><div className="flex flex-wrap gap-1.5">{skill.permissions.map((permission) => <span key={permission} className="rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 font-mono text-[9px] text-white/38">{permission}</span>)}</div></div></article>
+    <article className="brace-card brace-skill-card p-5"><div className="flex items-start gap-4"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-300/10 text-amber-200"><Zap className="h-5 w-5" /></span><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><h2 className="text-[15px] font-semibold">{skill.displayName}</h2><span className="font-mono text-[9px] text-white/20">v{skill.version}</span></div><p className="mt-1.5 text-xs leading-5 text-white/38">{skill.description}</p></div><button type="button" role="switch" aria-checked={skill.enabled} onClick={() => onToggle(!skill.enabled)} className={`relative h-6 w-11 shrink-0 rounded-full border transition-colors ${skill.enabled ? "border-emerald-300/25 bg-emerald-300/25" : "border-white/10 bg-white/5"}`}><span className={`absolute top-[3px] h-4 w-4 rounded-full transition-transform ${skill.enabled ? "translate-x-[21px] bg-emerald-200" : "translate-x-[3px] bg-white/35"}`} /></button></div><div className="mt-5 border-t border-white/[0.055] pt-4"><div className="mb-2 text-[9px] font-semibold uppercase tracking-wider text-white/25">Permissions</div><div className="flex flex-wrap gap-1.5">{skill.permissions.map((permission) => <span key={permission} className="rounded-md border border-white/[0.07] bg-white/[0.025] px-2 py-1 font-mono text-[9px] text-white/38">{permission}</span>)}</div></div></article>
   );
 }
 
@@ -763,7 +823,7 @@ function MemoryDetail({ memory, onClose }: { memory: BraceMemory; onClose: () =>
   }, [memory.id]);
   return (
     <div className="fixed inset-0 z-[70] flex justify-end bg-black/45 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="memory-detail-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <aside className="flex h-full w-full max-w-[520px] flex-col border-l border-white/[0.08] bg-[#101318] shadow-2xl">
+      <aside className="brace-detail-panel flex h-full w-full max-w-[520px] flex-col border-l border-white/[0.08] bg-[#101318] shadow-2xl">
         <div className="flex h-[72px] items-center justify-between border-b border-white/[0.07] px-5"><span className={`rounded-md border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider ${kindTone[full.kind]}`}>{full.kind}</span><button type="button" onClick={onClose} className="rounded-lg p-2 text-white/35 hover:bg-white/5 hover:text-white" aria-label="Close memory"><X className="h-4 w-4" /></button></div>
         <div className="flex-1 overflow-y-auto p-6"><h1 id="memory-detail-title" className="text-2xl font-medium leading-tight tracking-[-0.03em]">{full.title}</h1><p className="mt-3 text-sm leading-6 text-white/48">{full.summary}</p><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Durable content</h2><p className="mt-3 whitespace-pre-wrap text-[13px] leading-6 text-white/66">{full.content}</p></div><dl className="mt-7 grid grid-cols-2 gap-4 border-t border-white/[0.06] pt-6 text-[10px]"><div><dt className="text-white/25">Scope</dt><dd className="mt-1 truncate text-white/52">{full.scope}</dd></div><div><dt className="text-white/25">Confidence</dt><dd className="mt-1 text-white/52">{Math.round(full.confidence * 100)}%</dd></div><div><dt className="text-white/25">Updated</dt><dd className="mt-1 text-white/52">{formatDate(full.updatedAt)}</dd></div><div><dt className="text-white/25">Embedding</dt><dd className="mt-1 text-white/52">{full.embeddingModel || "Lexical only"}</dd></div></dl><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Provenance</h2><div className="mt-3 rounded-xl border border-sky-300/10 bg-sky-300/[0.035] p-4"><div className="flex items-center gap-2 text-xs text-sky-100/70"><FileText className="h-4 w-4" />{shortUri(full.sourceUri)}</div>{full.sourceExcerpt && <p className="mt-2 text-[11px] leading-5 text-white/36">{full.sourceExcerpt}</p>}</div></div>{full.evidence && full.evidence.length > 0 && <div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Evidence</h2>{full.evidence.map((evidence) => <div key={evidence.id} className="mt-3 rounded-xl border border-white/[0.06] p-4"><div className="text-[10px] uppercase text-white/25">{evidence.outcome}</div><p className="mt-1 text-xs text-white/55">{evidence.summary}</p><p className="mt-2 font-mono text-[9px] text-white/25">{evidence.reference}</p></div>)}</div>}</div>
         <div className="flex items-center justify-between border-t border-white/[0.07] p-5"><span className="text-[10px] text-white/25">Forgetting keeps only a non-sensitive audit tombstone.</span><button type="button" onClick={() => void forgetMemory(full.id)} className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs text-rose-200/60 hover:bg-rose-400/[0.07] hover:text-rose-100"><Trash2 className="h-3.5 w-3.5" />Forget</button></div>

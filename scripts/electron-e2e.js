@@ -165,6 +165,20 @@ async function run() {
 
   await clickText(window, "Graph");
   await waitFor(window, "document.querySelector('svg[aria-label*=\"knowledge nodes\"]')");
+  const graphInteraction = await window.webContents.executeJavaScript(`
+    (async () => {
+      const source = document.querySelector('.graph-node[aria-label^="source:"]');
+      const zoom = document.querySelector('button[aria-label="Zoom in"]');
+      if (!source || !zoom) return { selectedSource: false, zoomed: false };
+      source.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      zoom.click();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      return {
+        selectedSource: document.querySelector('.graph-inspector-type')?.textContent?.trim().toLowerCase() === 'source',
+        zoomed: document.querySelector('.graph-zoom span')?.textContent?.trim() === '112%',
+      };
+    })()
+  `);
   const graph = await screenshot(window, "app-graph");
 
   await clickText(window, "Skills");
@@ -180,6 +194,7 @@ async function run() {
     screenshots: [onboarding, overview, recall, timeline, graph, skills].map((target) =>
       path.relative(root, target),
     ),
+    graphInteraction,
     consoleErrors,
   };
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -189,6 +204,8 @@ async function run() {
     snapshot.stats.projects !== 1 ||
     snapshot.stats.memories !== 3 ||
     snapshot.stats.decisions !== 1 ||
+    !graphInteraction.selectedSource ||
+    !graphInteraction.zoomed ||
     consoleErrors.length
   ) {
     process.exitCode = 1;

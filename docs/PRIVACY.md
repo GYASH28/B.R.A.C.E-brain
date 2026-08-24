@@ -92,11 +92,11 @@ Forgetting one memory removes content, evidence, and vectors while preserving a 
 
 Delete-all clears BRACE-owned tables but leaves imported project originals untouched. Existing external backups and exports are independent copies and must be removed separately.
 
-SQLite, filesystems, and storage media can retain recoverable blocks after logical deletion. BRACE 0.1.0 does not claim forensic erasure.
+SQLite, filesystems, and storage media can retain recoverable blocks after logical deletion. BRACE 0.2.0 does not claim forensic erasure.
 
 ## Encryption
 
-BRACE 0.1.0 does not encrypt `brace.sqlite3` at the application layer. Use operating-system full-disk encryption, a strong login, automatic screen locking, and encrypted backup storage.
+BRACE 0.2.0 does not encrypt `brace.sqlite3` at the application layer. Use operating-system full-disk encryption, a strong login, automatic screen locking, and encrypted backup storage.
 
 ## Public repository policy
 

@@ -6,8 +6,23 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Planned
 
-- Collect structured feedback from the 0.1.0 preview.
+- Collect structured feedback from the 0.2.0 preview.
 - Add native signing and update-channel work when maintainers have signing infrastructure.
+
+## [0.2.0] - 2026-08-24
+
+### Changed
+
+- Rebuilt the desktop shell as a layered, motion-rich private memory instrument with stronger hierarchy, responsive navigation, micro-interactions, and reduced-motion support.
+- Replaced the static radial graph with a searchable, filterable, zoomable memory constellation, animated provenance paths, keyboard-selectable nodes, and a relationship inspector.
+- Reworked Overview around a live memory signal, real local-index vitals, high-signal context, and direct recall and connection actions.
+- Rebuilt the public site as a cinematic product journey with live recall, a local-boundary sequence, provenance handoff, packaged-app gallery, responsive layouts, and direct platform downloads.
+- Made release artifact discovery version-safe in GitHub Actions and added platform-specific direct download links for Windows, AppImage, and Debian packages.
+
+### Verified
+
+- The launch site and How-to guide pass automated WCAG 2.2 AA checks at desktop and mobile widths with no overflow, unlabeled controls, focus failures, or console errors.
+- Packaged Electron E2E uses only the synthetic Northstar profile and exercises Overview, Recall, Timeline, Graph, and Skills without renderer errors.
 
 ## [0.1.0] - 2026-08-24
 
@@ -29,5 +44,6 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Removed private seed data, machine-specific paths, legacy local servers, arbitrary plugin execution, and broad renderer privileges from the public candidate.
 - Added secret-pattern tests, dependency auditing, strict embedding endpoint validation, sandboxed rendering, CSP, and repository hygiene controls.
 
-[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.2.0
 [0.1.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.1.0

@@ -1,6 +1,6 @@
 {
   "name": "brace-launch-surface",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "serve": "python3 -m http.server 4517 --bind 127.0.0.1",

@@ -32,8 +32,8 @@ jobs:
         with:
           name: linux-packages
           path: |
-            dist/installer/BRACE-0.1.0.AppImage
-            dist/installer/brace-brain_0.1.0_amd64.deb
+            dist/installer/BRACE-*.AppImage
+            dist/installer/brace-brain_*_amd64.deb
           if-no-files-found: error
 
   windows:
@@ -58,7 +58,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: windows-package
-          path: dist/installer/BRACE-Setup-0.1.0.exe
+          path: dist/installer/BRACE-Setup-*.exe
           if-no-files-found: error
 
   publish:
@@ -81,10 +81,13 @@ jobs:
       - name: Generate SBOM and checksums
         shell: bash
         run: |
-          npm sbom --sbom-format cyclonedx > release-files/brace-0.1.0.cdx.json
+          release_version="${GITHUB_REF_NAME#v}"
+          npm sbom --sbom-format cyclonedx > "release-files/brace-${release_version}.cdx.json"
           find release-files -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's#  release-files/#  #' > release-files/SHA256SUMS.txt
       - name: Create GitHub prerelease
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" release-files/* --prerelease --verify-tag --title "BRACE 0.1.0 preview" --notes-file docs/RELEASE_NOTES_0.1.0.md
+        run: |
+          release_version="${GITHUB_REF_NAME#v}"
+          gh release create "$GITHUB_REF_NAME" release-files/* --prerelease --verify-tag --title "BRACE ${release_version} preview" --notes-file "docs/RELEASE_NOTES_${release_version}.md"

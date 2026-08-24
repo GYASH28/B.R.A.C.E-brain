@@ -1,317 +1,147 @@
 (() => {
   "use strict";
 
-  const memories = [
-    {
-      type: "DURABLE MEMORY",
-      mode: "decision",
-      title: "Keep imported files canonical",
-      summary: "BRACE indexes project context without editing or moving the original files.",
-      uri: "brace-project://northstar-docs/architecture-decisions.md",
-      terms: ["canonical", "source", "files", "architecture", "decision"],
-    },
-    {
-      type: "SOURCE EVIDENCE",
-      mode: "source",
-      title: "Architecture Decisions",
-      summary: "The project directory remains the source of truth. The local index is disposable and rebuildable.",
-      uri: "brace-project://northstar-docs/architecture-decisions.md#source-ownership",
-      terms: ["canonical", "source", "files", "architecture", "ownership"],
-    },
-    {
-      type: "DURABLE MEMORY",
-      mode: "lesson",
-      title: "Evaluate retrieval with named examples",
-      summary: "Keep evaluation prompts and expected evidence next to the decision that introduced them.",
-      uri: "brace-project://northstar-docs/retrieval-evaluation.md",
-      terms: ["retrieval", "evaluation", "examples", "evidence"],
-    },
-    {
-      type: "SOURCE EVIDENCE",
-      mode: "source",
-      title: "Local embedding policy",
-      summary: "Use a loopback Ollama endpoint when semantic ranking is enabled. Lexical recall remains available without it.",
-      uri: "brace-project://northstar-docs/local-retrieval.md",
-      terms: ["local", "embeddings", "ollama", "semantic", "lexical"],
-    },
-  ];
-
-  const proofShots = {
-    overview: {
-      src: "assets/app-overview.png",
-      alt: "BRACE Overview screen using synthetic Northstar data",
-      title: "Overview",
-      copy: "Local memory health, recent durable context, and source coverage in one operational view.",
-    },
-    recall: {
-      src: "assets/app-recall.png",
-      alt: "BRACE Recall screen separating memories from source evidence",
-      title: "Recall",
-      copy: "Durable memory and project evidence stay visibly separate, with the retrieval mode reported.",
-    },
-    timeline: {
-      src: "assets/app-timeline.png",
-      alt: "BRACE Timeline screen showing a synthetic decision",
-      title: "Timeline",
-      copy: "Decisions become first-class events instead of disappearing inside a chat transcript.",
-    },
-    graph: {
-      src: "assets/app-graph.png",
-      alt: "BRACE knowledge graph showing synthetic projects, memories, sources, and entities",
-      title: "Graph",
-      copy: "Projects, sources, memories, decisions, and extracted entities remain distinct and traceable.",
-    },
-    skills: {
-      src: "assets/app-skills.png",
-      alt: "BRACE Skills screen showing declarative permissions and integrity controls",
-      title: "Skills",
-      copy: "Declarative extensions install disabled, declare permissions, and fail closed after tampering.",
-    },
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
+  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest/download";
+  const downloads = {
+    windows: `${releaseBase}/BRACE-Setup-0.2.0.exe`,
+    linux: `${releaseBase}/BRACE-0.2.0.AppImage`,
+    deb: `${releaseBase}/brace-brain_0.2.0_amd64.deb`,
   };
 
-  const resultRoot = document.querySelector("#recall-results");
-  const queryInput = document.querySelector("#recall-query");
-  const statusCopy = document.querySelector("#recall-status-copy");
-  const recallStage = document.querySelector(".recall-stage");
-  const handoffStage = document.querySelector(".handoff-stage");
-  const packet = document.querySelector("#memory-packet");
-  let activeClient = "Codex";
-  let lastRecallPhase = "";
-  let lastHandoffPhase = "";
-
-  function escapeMarkup(value) {
-    return String(value)
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+  document.querySelectorAll("[data-download]").forEach((link) => {
+    link.href = downloads[link.dataset.download];
+  });
+  const platform = /Windows/i.test(navigator.userAgent) ? "windows" : /Linux/i.test(navigator.userAgent) ? "linux" : null;
+  if (platform) {
+    document.querySelector(`[data-download="${platform}"]`)?.classList.add("is-recommended");
+    const primary = document.querySelector("[data-primary-download]");
+    if (primary) primary.href = downloads[platform];
   }
 
-  function searchMemories(query) {
-    const words = query.toLowerCase().trim().split(/\s+/).filter(Boolean);
-    if (!words.length) return memories.slice(0, 3);
-    const ranked = memories
-      .map((memory) => ({
-        memory,
-        score: words.reduce((score, word) => {
-          const haystack = `${memory.title} ${memory.summary} ${memory.terms.join(" ")}`.toLowerCase();
-          return score + (haystack.includes(word) ? 1 : 0);
-        }, 0),
-      }))
-      .filter((entry) => entry.score > 0)
-      .sort((left, right) => right.score - left.score);
-    return (ranked.length ? ranked : memories).slice(0, 3).map((entry) => entry.memory || entry);
-  }
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      entry.target.classList.add("is-visible");
+      revealObserver.unobserve(entry.target);
+    });
+  }, { rootMargin: "0px 0px -8%", threshold: 0.08 });
+  document.querySelectorAll(".reveal").forEach((element) => revealObserver.observe(element));
 
-  function renderResults(query) {
-    const results = searchMemories(query);
-    resultRoot.innerHTML = results.map((result) => `
-      <article class="result-card ${result.mode === "source" ? "result-card--source" : ""}">
-        <div class="result-type"><span>${escapeMarkup(result.type)}</span><span>${escapeMarkup(result.mode)}</span></div>
-        <h3>${escapeMarkup(result.title)}</h3>
-        <p>${escapeMarkup(result.summary)}</p>
-        <span class="result-uri">${escapeMarkup(result.uri)}</span>
-      </article>
-    `).join("");
-    statusCopy.textContent = `${results.length} local records considered. Lexical retrieval.`;
-  }
+  const sections = ["experience", "boundary", "proof", "get-brace"];
+  const navLinks = Array.from(document.querySelectorAll(".site-nav nav a[href^='#']"));
+  const sectionObserver = new IntersectionObserver((entries) => {
+    const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+    if (!visible) return;
+    navLinks.forEach((link) => link.setAttribute("aria-current", String(link.hash === `#${visible.target.id}`)));
+  }, { rootMargin: "-32% 0px -52%", threshold: [0, 0.2, 0.6] });
+  sections.forEach((id) => { const section = document.getElementById(id); if (section) sectionObserver.observe(section); });
 
+  let framePending = false;
+  function renderScroll() {
+    framePending = false;
+    const scrollRange = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    document.documentElement.style.setProperty("--progress", String(clamp(scrollY / scrollRange)));
+    document.querySelector(".site-nav")?.classList.toggle("is-scrolled", scrollY > 30);
+    const hero = document.querySelector(".hero");
+    const heroProduct = document.querySelector(".hero-product");
+    if (hero && heroProduct) {
+      const rect = hero.getBoundingClientRect();
+      heroProduct.style.setProperty("--hero-p", String(clamp(-rect.top / Math.max(1, rect.height - innerHeight))));
+    }
+    const boundary = document.querySelector(".boundary");
+    const device = document.querySelector(".boundary-device");
+    if (boundary && device) {
+      const rect = boundary.getBoundingClientRect();
+      device.style.setProperty("--boundary-p", String(clamp((innerHeight - rect.top) / Math.max(1, innerHeight * 0.9))));
+    }
+  }
+  function scheduleScroll() { if (!framePending) { framePending = true; requestAnimationFrame(renderScroll); } }
+  addEventListener("scroll", scheduleScroll, { passive: true });
+  addEventListener("resize", scheduleScroll, { passive: true });
+  renderScroll();
+
+  const recallEntries = [
+    { type: "DURABLE DECISION", title: "Keep imported files canonical", copy: "BRACE indexes project context without editing or moving the original files.", source: "Architecture Decisions.md · lexical retrieval" },
+    { type: "SOURCE EVIDENCE", title: "Local embedding policy", copy: "Semantic ranking can use a loopback Ollama endpoint. Lexical recall remains available without it.", source: "local-retrieval.md · lexical retrieval" },
+    { type: "DURABLE LESSON", title: "Evaluate retrieval with named examples", copy: "Keep evaluation prompts and expected evidence next to the decision that introduced them.", source: "retrieval-evaluation.md · lexical retrieval" },
+  ];
   document.querySelector("#recall-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
-    renderResults(queryInput.value);
-    recallStage.dataset.phase = "verified";
-    recallStage.dataset.scVerifyState = `verified:${queryInput.value.trim().toLowerCase() || "all"}`;
+    const value = document.querySelector("#recall-query")?.value.toLowerCase() || "";
+    const entry = value.includes("embed") ? recallEntries[1] : value.includes("evaluat") ? recallEntries[2] : recallEntries[0];
+    const root = document.querySelector("#recall-result");
+    root?.classList.add("is-refreshing");
+    setTimeout(() => {
+      root.querySelector("span").innerHTML = `<i></i> ${entry.type}`;
+      root.querySelector("strong").textContent = entry.title;
+      root.querySelector("p").textContent = entry.copy;
+      root.querySelector("small").textContent = entry.source;
+      root.classList.remove("is-refreshing");
+    }, reducedMotion.matches ? 0 : 220);
   });
 
-  document.querySelectorAll("[data-query]").forEach((button) => {
+  const proof = {
+    overview: ["assets/app-overview.png", "BRACE overview with synthetic Northstar data", "OVERVIEW · SYNTHETIC NORTHSTAR"],
+    recall: ["assets/app-recall.png", "BRACE recall separating durable memories from source evidence", "RECALL · PROVENANCE VISIBLE"],
+    graph: ["assets/app-graph.png", "BRACE interactive memory constellation", "CONSTELLATION · RELATIONSHIPS"],
+    timeline: ["assets/app-timeline.png", "BRACE decision timeline", "TIMELINE · DECISIONS"],
+    skills: ["assets/app-skills.png", "BRACE permission-scoped skills", "SKILLS · EXPLICIT PERMISSIONS"],
+  };
+  document.querySelectorAll("[data-shot]").forEach((button) => {
     button.addEventListener("click", () => {
-      queryInput.value = button.dataset.query;
-      renderResults(button.dataset.query);
-      queryInput.focus();
+      const data = proof[button.dataset.shot];
+      if (!data) return;
+      document.querySelectorAll("[data-shot]").forEach((item) => { item.classList.toggle("is-active", item === button); item.setAttribute("aria-pressed", String(item === button)); });
+      const screen = document.querySelector(".proof-screen");
+      screen.classList.add("is-changing");
+      setTimeout(() => {
+        const image = document.querySelector("#proof-image"); image.src = data[0]; image.alt = data[1];
+        document.querySelector("#proof-title").textContent = data[2];
+        screen.classList.remove("is-changing");
+      }, reducedMotion.matches ? 0 : 240);
     });
   });
 
-  document.querySelectorAll(".rail-item").forEach((button) => {
+  const clientPositions = { Codex: "18%", Claude: "39%", Cursor: "61%", "Other MCP client": "82%" };
+  document.querySelectorAll("[data-client]").forEach((button) => {
     button.addEventListener("click", () => {
-      document.querySelectorAll(".rail-item").forEach((item) => item.classList.remove("is-current"));
-      button.classList.add("is-current");
-      const query = button.textContent.trim().toLowerCase();
-      if (query !== "recall") {
-        queryInput.value = query;
-        renderResults(query);
-      }
+      document.querySelectorAll("[data-client]").forEach((item) => { item.classList.toggle("is-active", item === button); item.setAttribute("aria-pressed", String(item === button)); });
+      const packet = document.querySelector(".packet"); packet.style.left = "91%"; packet.style.top = clientPositions[button.dataset.client];
+      document.querySelector("#receipt-title").textContent = `Delivered to ${button.dataset.client}`;
+      setTimeout(() => { packet.style.left = "12%"; packet.style.top = "50%"; }, reducedMotion.matches ? 0 : 1900);
     });
   });
 
-  document.querySelectorAll(".boundary-row").forEach((row) => {
-    row.addEventListener("click", () => {
-      row.setAttribute("aria-expanded", row.getAttribute("aria-expanded") === "true" ? "false" : "true");
-    });
-  });
-
-  function selectClient(button) {
-    document.querySelectorAll(".client-button").forEach((client) => {
-      const selected = client === button;
-      client.classList.toggle("is-active", selected);
-      client.setAttribute("aria-pressed", String(selected));
-    });
-    activeClient = button.dataset.client;
-    document.querySelector("#receipt-copy").textContent = `Ready for ${activeClient} over read-only MCP.`;
-    updateHandoff(true);
-  }
-
-  document.querySelectorAll(".client-button").forEach((button) => {
-    button.addEventListener("click", () => selectClient(button));
-  });
-
-  function selectProof(button, focus = false) {
-    const key = button.dataset.shot;
-    const shot = proofShots[key];
-    if (!shot) return;
-    document.querySelectorAll("[data-shot]").forEach((tab) => {
-      tab.setAttribute("aria-selected", String(tab === button));
-      tab.tabIndex = tab === button ? 0 : -1;
-    });
-    const image = document.querySelector("#proof-image");
-    image.src = shot.src;
-    image.alt = shot.alt;
-    document.querySelector("#proof-caption-title").textContent = shot.title;
-    document.querySelector("#proof-caption-copy").textContent = shot.copy;
-    document.querySelector("#proof-panel").setAttribute("aria-labelledby", button.id);
-    if (focus) button.focus();
-  }
-
-  const proofTabs = Array.from(document.querySelectorAll("[data-shot]"));
-  proofTabs.forEach((button, index) => {
-    button.tabIndex = index === 0 ? 0 : -1;
-    button.addEventListener("click", () => selectProof(button));
-    button.addEventListener("keydown", (event) => {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      let next = index;
-      if (event.key === "ArrowLeft") next = (index - 1 + proofTabs.length) % proofTabs.length;
-      if (event.key === "ArrowRight") next = (index + 1) % proofTabs.length;
-      if (event.key === "Home") next = 0;
-      if (event.key === "End") next = proofTabs.length - 1;
-      selectProof(proofTabs[next], true);
-    });
-  });
-
-  document.querySelector("#command-form")?.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const value = document.querySelector("#install-command").value;
-    let copied = false;
-    try {
-      await navigator.clipboard.writeText(value);
-      copied = true;
-    } catch {
-      const input = document.querySelector("#install-command");
-      input.select();
-      copied = document.execCommand("copy");
+  function createField(canvas, options = {}) {
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    let width = 0; let height = 0; let points = []; let raf = 0;
+    const count = options.count || 42;
+    function resize() {
+      cancelAnimationFrame(raf);
+      const rect = canvas.getBoundingClientRect(); const ratio = Math.min(1.5, devicePixelRatio || 1);
+      width = rect.width; height = rect.height; canvas.width = Math.max(1, Math.round(width * ratio)); canvas.height = Math.max(1, Math.round(height * ratio)); context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      points = Array.from({ length: width < 650 ? Math.round(count * .55) : count }, (_, index) => ({ x: Math.random() * width, y: Math.random() * height, vx: (Math.random() - .5) * .12, vy: (Math.random() - .5) * .12, r: index % 11 === 0 ? 2.2 : .8 + Math.random() * .8, warm: index % 9 === 0 }));
+      draw();
     }
-    document.querySelector("#copy-command").textContent = copied ? "Copied" : "Select command";
-    document.querySelector("#copy-status").textContent = copied
-      ? "Clone command copied. The beginner guide covers the next steps."
-      : "Copy the selected command, then follow the beginner guide.";
-  });
-
-  function progressFor(element) {
-    const raw = getComputedStyle(element).getPropertyValue("--sc-p");
-    const value = Number.parseFloat(raw);
-    return Number.isFinite(value) ? Math.max(0, Math.min(1, value)) : 0;
-  }
-
-  function updateRecall() {
-    if (!recallStage) return;
-    const act = recallStage.closest("[data-sc-act]");
-    const progress = progressFor(act);
-    const phase = progress < 0.2 ? "ready" : progress < 0.48 ? "query" : progress < 0.78 ? "results" : "verified";
-    if (phase !== lastRecallPhase) {
-      recallStage.dataset.phase = phase;
-      recallStage.dataset.scVerifyState = `${phase}:${phase === "verified" ? "provenance-visible" : "surface"}`;
-      lastRecallPhase = phase;
+    function draw() {
+      context.clearRect(0, 0, width, height);
+      points.forEach((point, index) => {
+        if (!reducedMotion.matches) { point.x = (point.x + point.vx + width) % width; point.y = (point.y + point.vy + height) % height; }
+        for (let next = index + 1; next < points.length; next += 1) {
+          const other = points[next]; const distance = Math.hypot(point.x - other.x, point.y - other.y);
+          if (distance > (options.distance || 145)) continue;
+          context.beginPath(); context.moveTo(point.x, point.y); context.lineTo(other.x, other.y); context.strokeStyle = `rgba(255,255,255,${(1 - distance / (options.distance || 145)) * .07})`; context.lineWidth = .6; context.stroke();
+        }
+        context.beginPath(); context.arc(point.x, point.y, point.r, 0, Math.PI * 2); context.fillStyle = point.warm ? "rgba(255,118,70,.68)" : "rgba(220,229,235,.3)"; context.fill();
+      });
+      if (!reducedMotion.matches) raf = requestAnimationFrame(draw);
     }
+    const observer = new ResizeObserver(resize); observer.observe(canvas);
+    document.addEventListener("visibilitychange", () => { cancelAnimationFrame(raf); if (!document.hidden && !reducedMotion.matches) draw(); });
   }
-
-  function updateHandoff(force = false) {
-    if (!handoffStage) return;
-    const act = handoffStage.closest("[data-sc-act]");
-    const progress = progressFor(act);
-    const phase = progress < 0.2 ? "source" : progress < 0.43 ? "memory" : progress < 0.69 ? "evidence" : "delivered";
-    const phaseLabels = {
-      source: "SOURCE SELECTED",
-      memory: "MEMORY RESOLVED",
-      evidence: "EVIDENCE ATTACHED",
-      delivered: "HANDOFF COMPLETE",
-    };
-    const order = ["source", "memory", "evidence"];
-    const activeIndex = { source: 0, memory: 1, evidence: 2, delivered: 3 }[phase];
-    handoffStage.dataset.phase = phase;
-    handoffStage.dataset.scVerifyState = `${phase}:${activeClient.toLowerCase().replaceAll(" ", "-")}`;
-    document.querySelector("#handoff-phase").textContent = phaseLabels[phase];
-    order.forEach((name, index) => {
-      const node = document.querySelector(`[data-handoff-node="${name}"]`);
-      node.classList.toggle("is-complete", index < activeIndex);
-      node.classList.toggle("is-active", index === activeIndex || (phase === "delivered" && name === "evidence"));
-    });
-
-    const pathStart = 10;
-    const pathEnd = 90.5;
-    const travel = Math.max(0, Math.min(1, (progress - 0.12) / 0.76));
-    const targetIndex = Array.from(document.querySelectorAll(".client-button")).findIndex((button) => button.classList.contains("is-active"));
-    const targetY = [20.8, 40.3, 59.7, 79.2][Math.max(0, targetIndex)] || 20.8;
-    const packetY = travel < 0.78 ? 50 : 50 + (targetY - 50) * ((travel - 0.78) / 0.22);
-    packet.style.left = `${pathStart + (pathEnd - pathStart) * travel}%`;
-    packet.style.top = `${packetY}%`;
-    packet.style.opacity = String(Math.min(1, Math.max(0, (progress - 0.08) * 8)));
-
-    const delivered = phase === "delivered";
-    document.querySelector("#receipt-title").textContent = delivered
-      ? `Delivered to ${activeClient} with provenance intact`
-      : "Waiting for the evidence packet";
-    document.querySelector("#receipt-detail").textContent = delivered
-      ? "Read-only MCP returned the memory, source URI, and retrieval mode."
-      : "The source URI remains attached throughout the handoff.";
-    if (force || phase !== lastHandoffPhase) lastHandoffPhase = phase;
-  }
-
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (reducedMotion) {
-    recallStage?.setAttribute("data-sc-verify-hold", "true");
-    handoffStage?.setAttribute("data-sc-verify-hold", "true");
-    recallStage.dataset.phase = "verified";
-    handoffStage.dataset.phase = "delivered";
-    document.querySelectorAll("[data-handoff-node]").forEach((node) => node.classList.add("is-complete"));
-    document.querySelector("#handoff-phase").textContent = "HANDOFF COMPLETE";
-    document.querySelector("#receipt-title").textContent = `Delivered to ${activeClient} with provenance intact`;
-    document.querySelector("#receipt-detail").textContent = "Read-only MCP returned the memory, source URI, and retrieval mode.";
-  }
-
-  let frameRequested = false;
-  function scheduleSurfaceUpdate() {
-    if (frameRequested) return;
-    frameRequested = true;
-    requestAnimationFrame(() => {
-      frameRequested = false;
-      if (!reducedMotion) {
-        updateRecall();
-        updateHandoff();
-      }
-    });
-  }
-
-  const navLinks = Array.from(document.querySelectorAll("[data-site-nav]"));
-  const sectionObserver = new IntersectionObserver((entries) => {
-    const visible = entries.filter((entry) => entry.isIntersecting).sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-    if (!visible) return;
-    navLinks.forEach((link) => link.setAttribute("aria-current", String(link.getAttribute("href") === `#${visible.target.id}`)));
-  }, { rootMargin: "-38% 0px -46%", threshold: [0, 0.2, 0.6] });
-  document.querySelectorAll("#recall, #boundary, #handoff, #proof").forEach((section) => sectionObserver.observe(section));
-
-  renderResults(queryInput.value);
-  window.addEventListener("scroll", scheduleSurfaceUpdate, { passive: true });
-  window.addEventListener("resize", scheduleSurfaceUpdate, { passive: true });
-  BraceMotion.mount(document.body);
-  scheduleSurfaceUpdate();
+  createField(document.querySelector("#memory-field"), { count: 55, distance: 155 });
+  createField(document.querySelector("#download-field"), { count: 38, distance: 175 });
 })();

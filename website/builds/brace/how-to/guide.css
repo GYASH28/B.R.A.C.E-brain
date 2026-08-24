@@ -2,6 +2,11 @@
   background: #090c0f;
 }
 
+#install > p > a {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
 .guide-wrap {
   width: min(1180px, calc(100% - clamp(28px, 7vw, 96px)));
   margin-inline: auto;

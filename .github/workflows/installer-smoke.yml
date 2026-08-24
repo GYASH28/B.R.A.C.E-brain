@@ -1,0 +1,79 @@
+name: Released Windows installer smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag whose NSIS installer should be verified
+        required: true
+        default: v0.3.0
+
+permissions:
+  contents: read
+
+jobs:
+  windows-installer:
+    name: Install, launch, connect, and uninstall
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.tag }}
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+
+      - name: Download and verify the released installer
+        id: download
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $downloadDir = Join-Path $env:RUNNER_TEMP "brace-release-download"
+          New-Item -ItemType Directory -Force -Path $downloadDir | Out-Null
+          gh release download "${{ inputs.tag }}" --pattern "BRACE-Setup-*.exe" --pattern "SHA256SUMS.txt" --dir $downloadDir --clobber
+          $installer = Get-ChildItem $downloadDir -Filter "BRACE-Setup-*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "The release contains no BRACE NSIS installer." }
+          $checksumLine = Get-Content (Join-Path $downloadDir "SHA256SUMS.txt") | Where-Object { $_ -match [regex]::Escape($installer.Name) } | Select-Object -First 1
+          if (-not $checksumLine) { throw "SHA256SUMS.txt does not list $($installer.Name)." }
+          $expected = ($checksumLine -split "\s+")[0].ToLowerInvariant()
+          $actual = (Get-FileHash -Algorithm SHA256 $installer.FullName).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "Installer checksum mismatch: expected $expected, received $actual." }
+          "installer=$($installer.FullName)" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Install without elevation
+        id: install
+        shell: pwsh
+        run: |
+          $installDir = "C:\brace-release-smoke-$env:GITHUB_RUN_ID"
+          if (Test-Path $installDir) { Remove-Item -Recurse -Force $installDir }
+          $process = Start-Process -FilePath "${{ steps.download.outputs.installer }}" -ArgumentList @("/S", "/D=$installDir") -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Installer exited with code $($process.ExitCode)." }
+          $executable = Join-Path $installDir "BRACE.exe"
+          if (-not (Test-Path $executable)) { throw "The installer did not create $executable." }
+          $version = (Get-Item $executable).VersionInfo.ProductVersion
+          if ($version -notlike "0.3.0*") { throw "Installed executable reports unexpected version $version." }
+          "directory=$installDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "executable=$executable" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Smoke the installed desktop shell
+        run: npm run electron:smoke -- "${{ steps.install.outputs.executable }}"
+
+      - name: Smoke the installed MCP entry point
+        run: node scripts/electron-mcp-smoke.js "${{ steps.install.outputs.executable }}"
+
+      - name: Uninstall cleanly
+        if: always() && steps.install.outputs.directory != ''
+        shell: pwsh
+        run: |
+          $installDir = "${{ steps.install.outputs.directory }}"
+          $uninstaller = Get-ChildItem $installDir -Filter "Uninstall*.exe" | Select-Object -First 1
+          if (-not $uninstaller) { throw "The installed application has no uninstaller." }
+          $process = Start-Process -FilePath $uninstaller.FullName -ArgumentList "/S" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Uninstaller exited with code $($process.ExitCode)." }
+          for ($attempt = 0; $attempt -lt 20 -and (Test-Path (Join-Path $installDir "BRACE.exe")); $attempt += 1) {
+            Start-Sleep -Milliseconds 500
+          }
+          if (Test-Path (Join-Path $installDir "BRACE.exe")) { throw "BRACE.exe remained after uninstall." }

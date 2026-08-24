@@ -4,13 +4,17 @@
 
 const { app, BrowserWindow, net, protocol } = require("electron");
 const fs = require("node:fs");
-const os = require("node:os");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 
 const root = path.resolve(__dirname, "..");
-const userData = fs.mkdtempSync(path.join(os.tmpdir(), "brace-e2e-profile-"));
+if (!process.env.BRACE_E2E_USER_DATA) {
+  throw new Error("Launch Electron E2E through scripts/electron-e2e-runner.js.");
+}
+const userData = path.resolve(process.env.BRACE_E2E_USER_DATA);
 const screenshotDirectory = path.join(root, "artifacts", "screenshots");
+let activeService = null;
+let activeWindow = null;
 const { BraceMemoryService, registerBraceMemoryIpc } = require(
   path.join(root, "dist", "electron", "memory-service.js"),
 );
@@ -116,6 +120,7 @@ async function run() {
     getWindow: () => window,
   });
   registerBraceMemoryIpc(service);
+  activeService = service;
 
   window = new BrowserWindow({
     width: 1440,
@@ -132,6 +137,7 @@ async function run() {
       backgroundThrottling: false,
     },
   });
+  activeWindow = window;
   window.webContents.on("console-message", (event) => {
     const level = event?.level;
     if (level === "error" || level === 3) consoleErrors.push(event.message);
@@ -187,8 +193,6 @@ async function run() {
   ) {
     process.exitCode = 1;
   }
-  service.close();
-  window.destroy();
 }
 
 app.whenReady().then(async () => {
@@ -198,6 +202,10 @@ app.whenReady().then(async () => {
     process.stderr.write(`${error.stack || error.message}\n`);
     process.exitCode = 1;
   } finally {
+    try { activeService?.close(); } catch {}
+    try { activeWindow?.destroy(); } catch {}
+    activeService = null;
+    activeWindow = null;
     app.quit();
   }
 });

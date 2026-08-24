@@ -37,7 +37,7 @@
     "mcp": "node scripts/mcp-server.mjs",
     "electron:compile": "node scripts/build-electron.js",
     "electron:dev": "concurrently -k \"npm run dev\" \"npm run electron:compile && wait-on http-get://127.0.0.1:3000 && cross-env NODE_ENV=development electron .\"",
-    "electron:e2e": "npm run electron:compile && electron scripts/electron-e2e.js",
+    "electron:e2e": "npm run electron:compile && node scripts/electron-e2e-runner.js",
     "electron:mcp-smoke": "npm run electron:compile && node scripts/electron-mcp-smoke.js",
     "electron:smoke": "node scripts/electron-smoke.js",
     "electron:pack": "npm run build && npm run electron:compile && electron-builder --dir",

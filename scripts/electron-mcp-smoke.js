@@ -66,7 +66,12 @@ async function run() {
     }, null, 2)}\n`);
   } finally {
     try { await client.close(); } catch {}
-    fs.rmSync(temporaryRoot, { recursive: true, force: true });
+    fs.rmSync(temporaryRoot, {
+      recursive: true,
+      force: true,
+      maxRetries: 10,
+      retryDelay: 100,
+    });
   }
 }
 

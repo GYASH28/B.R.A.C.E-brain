@@ -22,7 +22,7 @@ jobs:
       - run: npm audit --audit-level=high
       - run: npm run license:audit
       - run: npm run verify
-      - run: npm run electron:compile && xvfb-run -a npx --no-install electron --no-sandbox scripts/electron-e2e.js
+      - run: xvfb-run -a npm run electron:e2e
       - run: xvfb-run -a npm run electron:mcp-smoke
       - run: npx --no-install electron-builder --linux AppImage deb --publish never
       - run: npm run package:audit -- dist/installer/linux-unpacked/resources/app.asar

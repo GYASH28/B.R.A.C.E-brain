@@ -97,5 +97,10 @@ child.on("exit", (code) => {
   if (!ready || !loaded || loadFailed || elapsedMs > SMOKE_TIMEOUT_MS) {
     process.exitCode = 1;
   }
-  fs.rmSync(temporaryRoot, { recursive: true, force: true });
+  fs.rmSync(temporaryRoot, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
 });

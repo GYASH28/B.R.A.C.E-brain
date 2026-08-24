@@ -44,7 +44,7 @@ function fixture(context) {
   const store = new MemoryStore(path.join(directory, "profile", "brace.sqlite3"));
   context.after(() => {
     try { store.close(); } catch {}
-    fs.rmSync(directory, { recursive: true, force: true });
+    fs.rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   });
   return { directory, projectRoot, store };
 }

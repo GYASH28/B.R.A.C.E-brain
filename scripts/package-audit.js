@@ -75,5 +75,10 @@ try {
   }, null, 2)}\n`);
   if (violations.length) process.exitCode = 1;
 } finally {
-  fs.rmSync(temporaryRoot, { recursive: true, force: true });
+  fs.rmSync(temporaryRoot, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
 }

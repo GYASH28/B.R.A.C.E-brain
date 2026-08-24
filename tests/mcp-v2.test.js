@@ -33,7 +33,12 @@ async function connect(context, environment = {}) {
 function fixture(context) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "brace-mcp-v2-"));
   const databasePath = path.join(directory, "brace.sqlite3");
-  context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  context.after(() => fs.rmSync(directory, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  }));
   return { directory, databasePath };
 }
 
@@ -71,6 +76,7 @@ test("official MCP v2 stdio server exposes structured read-only memory tools", a
 
   const resource = await client.readResource({ uri: "brace://status" });
   assert.match(resource.contents[0].text, /"schemaVersion": 2/);
+  await client.close();
 });
 
 test("MCP writes are separately enabled and destructive forgetting remains absent", async (context) => {
@@ -102,9 +108,9 @@ test("MCP writes are separately enabled and destructive forgetting remains absen
 
   await client.close();
   const stored = new MemoryStore(databasePath);
-  context.after(() => stored.close());
   assert.equal(stored.stats().memories, 1);
   assert.equal(stored.search("schema migration").results[0].title, "Restart after migrations");
+  stored.close();
 });
 
 test("destructive MCP mode advertises forgetting with a destructive annotation", async (context) => {
@@ -118,4 +124,5 @@ test("destructive MCP mode advertises forgetting with a destructive annotation",
   const forget = listed.tools.find((tool) => tool.name === "brace_forget_memory");
   assert.equal(forget.annotations.destructiveHint, true);
   assert.equal(forget.annotations.readOnlyHint, false);
+  await client.close();
 });

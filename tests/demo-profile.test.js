@@ -8,7 +8,12 @@ const { initializeDemoProfile } = require("../core/demo-profile");
 
 test("synthetic demo initialization is idempotent and contains no user material", async (context) => {
   const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "brace-demo-test-"));
-  context.after(() => fs.rmSync(temporary, { recursive: true, force: true }));
+  context.after(() => fs.rmSync(temporary, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  }));
   const store = new MemoryStore(path.join(temporary, "brace.sqlite3"));
   context.after(() => store.close());
   const options = {

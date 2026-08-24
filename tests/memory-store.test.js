@@ -13,7 +13,7 @@ function fixture(context) {
   const store = new MemoryStore(databasePath);
   context.after(() => {
     try { store.close(); } catch {}
-    fs.rmSync(directory, { recursive: true, force: true });
+    fs.rmSync(directory, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 });
   });
   return { directory, databasePath, store };
 }
@@ -51,13 +51,13 @@ test("structured memories survive restart with provenance and evidence", (contex
 
   store.close();
   const reopened = new MemoryStore(databasePath);
-  context.after(() => reopened.close());
   const memory = reopened.getMemory(created.memory.id, { includeEvidence: true });
   assert.equal(memory.title, "Keep synchronization local-first");
   assert.equal(memory.sourceId, source.id);
   assert.equal(memory.evidence.length, 1);
   assert.equal(memory.evidence[0].outcome, "promoted");
   assert.equal(reopened.stats().schemaVersion, 2);
+  reopened.close();
 });
 
 test("exact duplicates reuse the active record and near duplicates are reviewable", (context) => {
@@ -195,8 +195,8 @@ test("backup and privacy-safe export preserve the memory database", async (conte
   const result = await store.backup(target);
   assert.ok(result.bytes > 0);
   const restored = new MemoryStore(target);
-  context.after(() => restored.close());
   assert.equal(restored.stats().memories, 1);
+  restored.close();
 });
 
 test("deleteAll removes user content without invalidating the schema", (context) => {
@@ -239,8 +239,8 @@ test("version-one databases migrate source chunks without losing memories", (con
   `);
   store.close();
   const migrated = new MemoryStore(databasePath);
-  context.after(() => migrated.close());
   assert.equal(migrated.stats().schemaVersion, 2);
   assert.equal(migrated.getMemory(memory.id).title, "Migration fixture");
   assert.deepEqual(migrated.searchSources("anything").results, []);
+  migrated.close();
 });

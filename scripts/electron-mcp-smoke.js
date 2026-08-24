@@ -32,9 +32,12 @@ async function run() {
   seed.close();
 
   const client = new Client({ name: "brace-electron-smoke", version: "1.0.0" });
+  const sandboxArguments = process.platform === "linux" ? ["--no-sandbox"] : [];
   const transport = new StdioClientTransport({
     command: packagedExecutable || electronPath,
-    args: packagedExecutable ? ["--mcp"] : [root, "--mcp"],
+    args: packagedExecutable
+      ? [...sandboxArguments, "--mcp"]
+      : [...sandboxArguments, root, "--mcp"],
     cwd: root,
     env: {
       ...process.env,

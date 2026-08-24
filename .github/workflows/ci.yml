@@ -33,7 +33,7 @@ jobs:
       - run: npm run verify
       - name: Electron E2E (Linux)
         if: runner.os == 'Linux'
-        run: xvfb-run -a npm run electron:e2e
+        run: npm run electron:compile && xvfb-run -a npx --no-install electron --no-sandbox scripts/electron-e2e.js
       - name: Electron E2E (Windows)
         if: runner.os == 'Windows'
         run: npm run electron:e2e

@@ -1,0 +1,198 @@
+import type { BraceSnapshot, SearchResponse } from "./types";
+
+const projectId = "demo-northstar";
+const timestamp = "2026-04-18T10:30:00.000Z";
+
+export const browserPreviewSnapshot: BraceSnapshot = {
+  environment: "browser-preview",
+  storage: {
+    directory: "System application-data directory",
+    database: "brace.sqlite3",
+  },
+  stats: {
+    schemaVersion: 2,
+    projects: 1,
+    sources: 3,
+    sourceChunks: 11,
+    memories: 3,
+    forgotten: 0,
+    decisions: 1,
+    events: 5,
+    entities: 6,
+    relations: 8,
+    skills: 2,
+  },
+  projects: [
+    {
+      id: projectId,
+      name: "Northstar (synthetic demo)",
+      root_path: "Synthetic demo workspace",
+      created_at: timestamp,
+      updated_at: timestamp,
+      last_indexed_at: timestamp,
+    },
+  ],
+  memories: [
+    {
+      id: "memory-promise",
+      kind: "project",
+      scope: `project:${projectId}`,
+      title: "Northstar product promise",
+      summary: "Share durable project context across AI tools while source files stay local.",
+      content: "Northstar demonstrates a fictional research team using one provenance-backed memory layer across multiple AI clients.",
+      status: "active",
+      confidence: 0.9,
+      importance: 0.85,
+      tags: ["northstar", "product"],
+      sourceId: "source-architecture",
+      sourceUri: "brace-project://demo-northstar/Architecture%20Decisions.md",
+      sourceExcerpt: "Imported files remain canonical.",
+      embeddingModel: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      accessedAt: timestamp,
+      duplicateOf: null,
+      redacted: false,
+    },
+    {
+      id: "memory-provenance",
+      kind: "lesson",
+      scope: `project:${projectId}`,
+      title: "Show provenance beside retrieval results",
+      summary: "Stable project URIs and headings improve trust in recalled context.",
+      content: "The synthetic retrieval study found that people trusted results more when every excerpt showed its source and heading.",
+      status: "active",
+      confidence: 0.82,
+      importance: 0.72,
+      tags: ["research", "provenance"],
+      sourceId: null,
+      sourceUri: "brace-project://demo-northstar/Research%20Notes.md",
+      sourceExcerpt: "Participants asked for visible source labels.",
+      embeddingModel: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      accessedAt: timestamp,
+      duplicateOf: null,
+      redacted: false,
+    },
+    {
+      id: "memory-dedup",
+      kind: "warning",
+      scope: `project:${projectId}`,
+      title: "Do not auto-merge near-duplicate decisions",
+      summary: "Similarity is a review signal, not proof that two records agree.",
+      content: "BRACE suggests near-duplicate pairs for review and reuses only exact normalized hashes automatically.",
+      status: "active",
+      confidence: 0.88,
+      importance: 0.78,
+      tags: ["consolidation", "safety"],
+      sourceId: null,
+      sourceUri: null,
+      sourceExcerpt: null,
+      embeddingModel: null,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      accessedAt: timestamp,
+      duplicateOf: null,
+      redacted: false,
+    },
+  ],
+  timeline: [
+    {
+      id: "event-decision",
+      eventType: "decision.recorded",
+      occurredAt: timestamp,
+      title: "Keep imported files canonical",
+      summary: "Index imported files into external SQLite while preserving originals as canonical sources.",
+      memoryId: null,
+      decisionId: "decision-canonical",
+      projectId,
+      sourceId: "source-architecture",
+      metadata: {},
+    },
+    {
+      id: "event-memory",
+      eventType: "memory.created",
+      occurredAt: "2026-04-18T10:28:00.000Z",
+      title: "Remembered: Northstar product promise",
+      summary: "Share durable project context across AI tools while source files stay local.",
+      memoryId: "memory-promise",
+      decisionId: null,
+      projectId,
+      sourceId: "source-architecture",
+      metadata: {},
+    },
+  ],
+  graph: {
+    nodes: [
+      { id: projectId, type: "project", label: "Northstar" },
+      { id: "source-architecture", type: "source", label: "Architecture Decisions" },
+      { id: "source-research", type: "source", label: "Research Notes" },
+      { id: "decision-canonical", type: "decision", label: "Keep files canonical", status: "accepted" },
+      { id: "memory-promise", type: "memory", label: "Product promise", kind: "project" },
+      { id: "memory-provenance", type: "memory", label: "Visible provenance", kind: "lesson" },
+      { id: "memory-dedup", type: "memory", label: "Safe deduplication", kind: "warning" },
+      { id: "entity-mcp", type: "entity", label: "MCP" },
+    ],
+    edges: [
+      { id: "e1", from: "source-architecture", to: projectId, relation: "belongs_to", weight: 1, sourceId: "source-architecture" },
+      { id: "e2", from: "source-research", to: projectId, relation: "belongs_to", weight: 1, sourceId: "source-research" },
+      { id: "e3", from: "decision-canonical", to: projectId, relation: "belongs_to", weight: 1, sourceId: "source-architecture" },
+      { id: "e4", from: "memory-promise", to: "entity-mcp", relation: "mentions", weight: 0.8, sourceId: "source-architecture" },
+      { id: "e5", from: "memory-provenance", to: "source-research", relation: "supported_by", weight: 0.9, sourceId: "source-research" },
+    ],
+  },
+  skills: [
+    {
+      name: "decision-journal",
+      version: "1.0.0",
+      displayName: "Decision Journal",
+      description: "Capture a sourced project decision and return its updated timeline.",
+      enabled: true,
+      permissions: ["decision:write", "timeline:read"],
+      actions: [{ id: "capture-decision", label: "Capture decision", description: "Record one explicit decision.", inputSchema: {} }],
+    },
+    {
+      name: "project-recall",
+      version: "1.0.0",
+      displayName: "Project Recall",
+      description: "Search durable memory and imported sources for one project question.",
+      enabled: true,
+      permissions: ["memory:read", "source:read"],
+      actions: [{ id: "recall", label: "Recall project context", description: "Return memory and source evidence separately.", inputSchema: {} }],
+    },
+  ],
+  semantic: {
+    enabled: false,
+    config: { enabled: false, endpoint: "http://127.0.0.1:11434", model: "nomic-embed-text" },
+  },
+};
+
+export function searchBrowserPreview(query: string): SearchResponse {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const memories = browserPreviewSnapshot.memories.filter((memory) => {
+    const haystack = `${memory.title} ${memory.summary} ${memory.content} ${memory.tags.join(" ")}`.toLowerCase();
+    return words.some((word) => haystack.includes(word));
+  });
+  return {
+    mode: "lexical",
+    embeddingModel: null,
+    warning: "Browser preview uses the bundled synthetic profile. Desktop search runs against local SQLite.",
+    memories,
+    sources: query.trim()
+      ? [
+          {
+            id: "chunk-architecture",
+            sourceId: "source-architecture",
+            projectId,
+            projectName: "Northstar (synthetic demo)",
+            title: "Architecture Decisions.md",
+            uri: "brace-project://demo-northstar/Architecture%20Decisions.md",
+            heading: "Decision: imported files stay canonical",
+            content: "BRACE indexes the workspace without moving, rewriting, or taking ownership of project files.",
+            retrieval: { score: 0.016, lexicalRank: 1, semanticRank: null, semanticSimilarity: null },
+          },
+        ]
+      : [],
+  };
+}

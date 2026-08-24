@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "name": "project-recall",
+  "displayName": "Project Recall",
+  "version": "1.0.0",
+  "description": "Search durable memory and imported sources for one project question.",
+  "license": "MIT",
+  "distribution": "bundled",
+  "permissions": [
+    "memory:read",
+    "source:read"
+  ],
+  "actions": [
+    {
+      "id": "recall",
+      "label": "Recall project context",
+      "description": "Return separate memory and source evidence without blending provenance.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "scope": { "type": "string", "maxLength": 200 },
+          "projectId": { "type": "string", "maxLength": 200 },
+          "query": { "type": "string", "maxLength": 1000 }
+        },
+        "required": ["scope", "projectId", "query"],
+        "additionalProperties": false
+      },
+      "steps": [
+        {
+          "use": "memory.search",
+          "with": {
+            "scope": "{{input.scope}}",
+            "query": "{{input.query}}",
+            "limit": 10
+          }
+        },
+        {
+          "use": "source.search",
+          "with": {
+            "projectId": "{{input.projectId}}",
+            "query": "{{input.query}}",
+            "limit": 10
+          }
+        }
+      ]
+    }
+  ]
+}

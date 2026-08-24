@@ -1,0 +1,134 @@
+:root {
+  --sc-canvas: #080a0d;
+  --sc-surface: #11151a;
+  --sc-ink: #f2f4ed;
+  --sc-ink-soft: #8f9892;
+  --sc-accent: #c8f45d;
+  --sc-accent-ink: #111507;
+  --sc-font-display: system-ui, sans-serif;
+  --sc-font-text: system-ui, sans-serif;
+  --sc-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --sc-gutter: clamp(16px, 4vw, 64px);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+}
+
+img,
+svg {
+  max-width: 100%;
+}
+
+.sc-wrap {
+  width: min(1240px, calc(100% - (2 * var(--sc-gutter))));
+  margin-inline: auto;
+}
+
+.sc-section {
+  position: relative;
+}
+
+[data-sc-act="pin"] {
+  position: relative;
+  height: calc(var(--sc-span, 2) * 100svh);
+}
+
+[data-sc-act="pin"] > [data-sc-stage] {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+}
+
+[data-sc-progress] {
+  position: fixed;
+  z-index: 999;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: var(--sc-accent);
+  transform: scaleX(var(--brace-page-progress, 0));
+  transform-origin: left center;
+  pointer-events: none;
+}
+
+.sc-grain {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.24) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.17) 0 1px, transparent 1px 4px);
+  mix-blend-mode: soft-light;
+}
+
+[data-sc-in] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 420ms var(--sc-ease-out), transform 420ms var(--sc-ease-out);
+}
+
+[data-sc-in].brace-in--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.brace-in-item {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 380ms var(--sc-ease-out), transform 380ms var(--sc-ease-out);
+}
+
+.brace-in--visible > .brace-in-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-sc-reveal] {
+  clip-path: inset(0 100% 0 0);
+  will-change: clip-path;
+}
+
+[data-sc-parallax] {
+  will-change: transform;
+}
+
+[data-sc-tilt] {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  [data-sc-in],
+  .brace-in-item {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  [data-sc-reveal] {
+    clip-path: none !important;
+  }
+
+  [data-sc-parallax],
+  [data-sc-tilt] {
+    transform: none !important;
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "name": "decision-journal",
+  "displayName": "Decision Journal",
+  "version": "1.0.0",
+  "description": "Capture a sourced project decision and return its updated timeline.",
+  "license": "MIT",
+  "distribution": "bundled",
+  "permissions": [
+    "decision:write",
+    "timeline:read"
+  ],
+  "actions": [
+    {
+      "id": "capture-decision",
+      "label": "Capture decision",
+      "description": "Record one explicit decision without inventing missing context.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "projectId": { "type": "string", "maxLength": 200 },
+          "title": { "type": "string", "maxLength": 240 },
+          "context": { "type": "string", "maxLength": 10000 },
+          "decision": { "type": "string", "maxLength": 20000 },
+          "rationale": { "type": "string", "maxLength": 10000 },
+          "alternatives": { "type": "array" }
+        },
+        "required": ["projectId", "title", "decision"],
+        "additionalProperties": false
+      },
+      "steps": [
+        {
+          "use": "decision.create",
+          "with": {
+            "projectId": "{{input.projectId}}",
+            "title": "{{input.title}}",
+            "context": "{{input.context}}",
+            "decision": "{{input.decision}}",
+            "rationale": "{{input.rationale}}",
+            "alternatives": "{{input.alternatives}}",
+            "decidedAt": "{{now}}"
+          }
+        },
+        {
+          "use": "timeline.list",
+          "with": {
+            "projectId": "{{input.projectId}}",
+            "limit": 10
+          }
+        }
+      ]
+    }
+  ]
+}

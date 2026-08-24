@@ -1,0 +1,122 @@
+{
+  "name": "brace-brain",
+  "version": "0.1.0",
+  "description": "Local-first personal AI memory layer — one memory, every AI",
+  "author": {
+    "name": "BRACE contributors",
+    "email": "brace-maintainers@users.noreply.github.com"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/GYASH28/B.R.A.C.E-brain#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GYASH28/B.R.A.C.E-brain.git"
+  },
+  "bugs": {
+    "url": "https://github.com/GYASH28/B.R.A.C.E-brain/issues"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "desktopName": "brace-brain.desktop",
+  "private": true,
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "brand:build": "node scripts/build-brand-assets.js",
+    "predev": "node scripts/prepare-dev.js",
+    "dev": "next dev --webpack -p 3000",
+    "prebuild": "node scripts/prepare-production.js",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"tests/*.test.js\"",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build && npm run electron:compile",
+    "license:audit": "node scripts/license-audit.js",
+    "package:audit": "node scripts/package-audit.js",
+    "mcp": "node scripts/mcp-server.mjs",
+    "electron:compile": "node scripts/build-electron.js",
+    "electron:dev": "concurrently -k \"npm run dev\" \"npm run electron:compile && wait-on http-get://127.0.0.1:3000 && cross-env NODE_ENV=development electron .\"",
+    "electron:e2e": "npm run electron:compile && electron scripts/electron-e2e.js",
+    "electron:mcp-smoke": "npm run electron:compile && node scripts/electron-mcp-smoke.js",
+    "electron:smoke": "node scripts/electron-smoke.js",
+    "electron:pack": "npm run build && npm run electron:compile && electron-builder --dir",
+    "electron:dist": "npm run build && npm run electron:compile && electron-builder"
+  },
+  "build": {
+    "appId": "app.brace.memory",
+    "productName": "BRACE",
+    "npmRebuild": false,
+    "asar": true,
+    "directories": {
+      "output": "dist/installer"
+    },
+    "files": [
+      "dist/electron/**/*",
+      "dist/mcp/**/*",
+      "out/**/*",
+      "examples/demo-workspace/**/*",
+      "examples/skills/**/*",
+      "package.json",
+      "!node_modules/**/*",
+      "node_modules/electron-log/**/*",
+      "node_modules/electron-log/package.json"
+    ],
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "executableName": "brace",
+      "icon": "assets/brand/brace-app-icon.png",
+      "category": "Office",
+      "syncDesktopName": true
+    },
+    "win": {
+      "target": "nsis",
+      "executableName": "BRACE",
+      "icon": "assets/brand/brace-app-icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BRACE"
+    }
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "electron-log": "^5.4.4",
+    "lucide-react": "^0.525.0",
+    "next": "^16.3.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "sharp": "0.35.3",
+    "zod": "^4.0.2",
+    "zustand": "^5.0.6"
+  },
+  "overrides": {
+    "postcss": "8.5.26",
+    "nanoid": "3.3.18",
+    "sharp": "0.35.3"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
+    "electron": "^43.4.1",
+    "electron-builder": "^26.15.3",
+    "esbuild": "^0.28.1",
+    "eslint": "^9",
+    "eslint-config-next": "^16.3.2",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "wait-on": "^9.1.0"
+  }
+}

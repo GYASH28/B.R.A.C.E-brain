@@ -1,0 +1,47 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const test = require("node:test");
+
+const root = path.resolve(__dirname, "..");
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+
+test("product navigation maps to implemented memory workflows", () => {
+  const app = read("src/components/brace/brace-app.tsx");
+  for (const label of [
+    "Overview",
+    "Recall",
+    "Memories",
+    "Timeline",
+    "Graph",
+    "Projects",
+    "Skills",
+    "Connections",
+    "Settings",
+  ]) {
+    assert.match(app, new RegExp(`label: "${label}"`));
+  }
+  for (const capability of [
+    "Explore synthetic demo",
+    "Import a project",
+    "Recall with provenance",
+    "Record decision",
+    "Install manifest",
+    "Create SQLite backup",
+    "Export portable JSON",
+    "Delete all",
+  ]) {
+    assert.match(app, new RegExp(capability));
+  }
+});
+
+test("browser preview is visibly synthetic and desktop mutations do not silently fake success", () => {
+  const preview = read("src/lib/brace/browser-preview.ts");
+  const store = read("src/lib/brace/store.ts");
+
+  assert.match(preview, /Northstar \(synthetic demo\)/);
+  assert.match(preview, /environment: "browser-preview"/);
+  assert.match(store, /Memory editing is available in the desktop app/);
+  assert.match(store, /Project import is available in the desktop app/);
+  assert.match(store, /Skill installation is available in the desktop app/);
+});

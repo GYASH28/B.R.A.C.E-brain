@@ -1,0 +1,47 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const test = require("node:test");
+
+const root = path.resolve(__dirname, "..");
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
+
+test("Electron renderer is isolated behind a narrow BRACE bridge", () => {
+  const main = read("electron/main.ts");
+  const preload = read("electron/preload.ts");
+
+  assert.match(main, /contextIsolation:\s*true/);
+  assert.match(main, /nodeIntegration:\s*false/);
+  assert.match(main, /sandbox:\s*true/);
+  assert.match(main, /webSecurity:\s*true/);
+  assert.match(main, /setWindowOpenHandler\(\(\) => \(\{ action: "deny" \}\)\)/);
+  assert.match(main, /setPermissionRequestHandler/);
+  assert.match(main, /will-attach-webview/);
+  assert.match(main, /Content-Security-Policy/);
+  assert.match(main, /candidate\.startsWith/);
+
+  for (const operation of [
+    "getBraceSnapshot",
+    "searchBrace",
+    "createBraceMemory",
+    "forgetBraceMemory",
+    "addBraceProject",
+    "installBraceSkill",
+    "exportBraceData",
+    "backupBraceData",
+    "deleteAllBraceData",
+  ]) {
+    assert.match(preload, new RegExp(`${operation}:`));
+  }
+  assert.doesNotMatch(preload, /shell|exec|spawn|readFile|writeFile|openExternal/);
+});
+
+test("desktop storage is external and startup contains no machine path fallback", () => {
+  const service = read("electron/memory-service.ts");
+  const main = read("electron/main.ts");
+
+  assert.match(service, /options\.dataRoot \|\| defaultDataRoot\(\)/);
+  assert.match(service, /brace\.sqlite3/);
+  assert.doesNotMatch(main, /BRAIN_VAULT_DIR|REQUESTED_VAULT|LEGACY_VAULT/);
+  assert.doesNotMatch(main, /local-api|agent-runtime|backup-manager/);
+});

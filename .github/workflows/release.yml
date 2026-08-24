@@ -1,0 +1,90 @@
+name: Release candidate
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  linux:
+    name: Linux packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run license:audit
+      - run: npm run verify
+      - run: xvfb-run -a npm run electron:e2e
+      - run: xvfb-run -a npm run electron:mcp-smoke
+      - run: npx --no-install electron-builder --linux AppImage deb --publish never
+      - run: npm run package:audit -- dist/installer/linux-unpacked/resources/app.asar
+      - run: xvfb-run -a npm run electron:smoke -- dist/installer/BRACE-0.1.0.AppImage
+      - run: xvfb-run -a node scripts/electron-mcp-smoke.js dist/installer/BRACE-0.1.0.AppImage
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: linux-packages
+          path: |
+            dist/installer/BRACE-0.1.0.AppImage
+            dist/installer/brace-brain_0.1.0_amd64.deb
+          if-no-files-found: error
+
+  windows:
+    name: Windows package
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run license:audit
+      - run: npm run verify
+      - run: npm run electron:e2e
+      - run: npm run electron:mcp-smoke
+      - run: npx --no-install electron-builder --win nsis --publish never
+      - run: npm run package:audit -- "dist/installer/win-unpacked/resources/app.asar"
+      - run: npm run electron:smoke -- "dist/installer/win-unpacked/BRACE.exe"
+      - run: node scripts/electron-mcp-smoke.js "dist/installer/win-unpacked/BRACE.exe"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-package
+          path: dist/installer/BRACE Setup 0.1.0.exe
+          if-no-files-found: error
+
+  publish:
+    name: Publish prerelease
+    needs: [linux, windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: release-files
+          merge-multiple: true
+      - name: Generate SBOM and checksums
+        shell: bash
+        run: |
+          npm sbom --sbom-format cyclonedx > release-files/brace-0.1.0.cdx.json
+          find release-files -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's#  release-files/#  #' > release-files/SHA256SUMS.txt
+      - name: Create GitHub prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release-files/* --prerelease --verify-tag --title "BRACE 0.1.0 preview" --notes-file docs/RELEASE_NOTES_0.1.0.md

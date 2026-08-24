@@ -75,6 +75,7 @@
     "win": {
       "target": "nsis",
       "executableName": "BRACE",
+      "artifactName": "BRACE-Setup-${version}.${ext}",
       "icon": "assets/brand/brace-app-icon.ico"
     },
     "nsis": {

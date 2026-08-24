@@ -35,9 +35,17 @@ const executable = path.resolve(
 const token = `smoke-${Date.now()}-${process.pid}`;
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "brace-package-smoke-"));
 const configRoot = path.join(temporaryRoot, "config");
-const logPaths = ["brace-brain", "BRACE", "brace"].map((directory) =>
-  path.join(configRoot, directory, "logs", "main.log"),
-);
+
+function findLogFiles(directory) {
+  if (!fs.existsSync(directory)) return [];
+  const files = [];
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const candidate = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...findLogFiles(candidate));
+    else if (entry.name.toLowerCase() === "main.log") files.push(candidate);
+  }
+  return files;
+}
 
 if (!fs.existsSync(executable)) {
   throw new Error(`Packaged executable not found: ${executable}`);
@@ -51,7 +59,7 @@ const childArguments = [
 const child = spawn(executable, childArguments, {
   cwd: path.dirname(executable),
   windowsHide: true,
-  stdio: "ignore",
+  stdio: ["ignore", "ignore", "pipe"],
   env: {
     ...process.env,
     BRACE_DATA_DIR: path.join(temporaryRoot, "data"),
@@ -67,6 +75,10 @@ const child = spawn(executable, childArguments, {
         }),
   },
 });
+let stderrOutput = "";
+child.stderr.on("data", (chunk) => {
+  stderrOutput = `${stderrOutput}${chunk}`.slice(-4_000);
+});
 
 const timeout = setTimeout(() => {
   child.kill();
@@ -77,8 +89,8 @@ const timeout = setTimeout(() => {
 child.on("exit", (code) => {
   clearTimeout(timeout);
   const elapsedMs = Date.now() - startedAt;
+  const logPaths = findLogFiles(temporaryRoot);
   const log = logPaths
-    .filter(fs.existsSync)
     .map((logPath) => fs.readFileSync(logPath, "utf8"))
     .join("\n");
   const ready = log.includes(`Smoke ready ${token}`);
@@ -92,6 +104,8 @@ child.on("exit", (code) => {
     rendererLoaded: loaded,
     shellReady: ready,
     loadFailed,
+    logsFound: logPaths.map((logPath) => path.relative(temporaryRoot, logPath)),
+    stderr: stderrOutput.trim() || null,
   };
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   if (!ready || !loaded || loadFailed || elapsedMs > SMOKE_TIMEOUT_MS) {

@@ -59,13 +59,13 @@ Provider errors are bounded but may include a short provider response. Do not pu
 ## MCP client cannot connect
 
 - Copy the installed executable path from **Connections**.
-- Keep `--mcp` as one argument, not part of the command string.
+- Keep the entire generated platform-specific argument and environment block unchanged.
 - Restart the client after editing configuration.
 - Run `brace_status` first.
 - Confirm desktop and client use the same operating-system user and data override.
 - Check stderr for `BRACE MCP server is listening on stdio.`
 
-Do not run the packaged executable through `npm`. Source checkouts can use `npm run mcp`; installers use the executable with `--mcp`.
+Do not run the packaged executable through `npm`. Source checkouts can use `npm run mcp`; installed builds should use the exact configuration shown in **Connections**.
 
 ## MCP can read but cannot write
 

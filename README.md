@@ -78,7 +78,7 @@ The demo is idempotent, clearly labelled, and stored in the same local applicati
 
 ## Connect an AI through MCP
 
-The packaged executable can launch the MCP server directly. Open **Connections** in BRACE and copy the exact configuration for your installation:
+The packaged executable can launch the MCP server directly. Open **Connections** in BRACE and copy the exact platform-specific configuration for your installation. Linux uses the following form; Windows generates the bundled-server path and required Electron Node-mode environment automatically:
 
 ```json
 {

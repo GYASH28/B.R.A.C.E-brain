@@ -334,7 +334,10 @@ export function serveBraceStdio(options = {}) {
   return { handle, close };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+if (
+  process.env.BRACE_MCP_DIRECT === "1" ||
+  (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
+) {
   const running = serveBraceStdio();
   console.error("BRACE MCP server is listening on stdio.");
   const shutdown = () => {

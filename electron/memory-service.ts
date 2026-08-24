@@ -126,6 +126,7 @@ export class BraceMemoryService {
   }
 
   snapshot() {
+    const windowsMcp = process.platform === "win32";
     return {
       environment: "desktop",
       storage: {
@@ -134,7 +135,12 @@ export class BraceMemoryService {
       },
       connections: {
         command: this.executablePath,
-        args: ["--mcp"],
+        args: windowsMcp
+          ? [path.join(this.appPath, "dist", "mcp", "brace-mcp.cjs")]
+          : ["--mcp"],
+        env: windowsMcp
+          ? { ELECTRON_RUN_AS_NODE: "1", BRACE_MCP_DIRECT: "1" }
+          : undefined,
       },
       stats: this.store.stats(),
       projects: this.store.listProjects(),

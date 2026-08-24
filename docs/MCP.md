@@ -10,7 +10,7 @@ Primary implementation references:
 
 ## Packaged desktop configuration
 
-Open **Connections** in BRACE and copy the generated configuration. It uses the installed executable itself:
+Open **Connections** in BRACE and copy the generated configuration. It uses the installed executable itself. On Linux, the generated block is:
 
 ```json
 {
@@ -24,6 +24,8 @@ Open **Connections** in BRACE and copy the generated configuration. It uses the 
 ```
 
 The `--mcp` launcher mode starts the bundled stdio server without creating an Electron window.
+
+On Windows, Electron GUI executables do not reliably preserve redirected stdio. BRACE therefore generates a Windows-specific configuration that runs the bundled MCP file through the same executable's Node mode. Keep the generated `args`, `ELECTRON_RUN_AS_NODE`, and `BRACE_MCP_DIRECT` values unchanged. These two variables select the transport entrypoint; they do not enable memory writes.
 
 ## Source checkout configuration
 
@@ -125,7 +127,7 @@ Search BRACE before asking me to repeat durable project context. Keep BRACE memo
 If a client cannot connect:
 
 1. Copy the exact executable path from the Connections screen.
-2. Keep `--mcp` as a separate argument.
+2. Keep every generated argument and environment value unchanged; Linux uses `--mcp`, while Windows uses the bundled server path and Node-mode variables.
 3. Restart the client after editing its configuration.
 4. Check the client's MCP stderr log for a BRACE startup message.
 5. Run `brace_status` before testing search.

@@ -33,22 +33,51 @@ async function run() {
 
   const client = new Client({ name: "brace-electron-smoke", version: "1.0.0" });
   const sandboxArguments = process.platform === "linux" ? ["--no-sandbox"] : [];
+  const windowsMcpScript = packagedExecutable
+    ? path.join(
+        path.dirname(packagedExecutable),
+        "resources",
+        "app.asar",
+        "dist",
+        "mcp",
+        "brace-mcp.cjs",
+      )
+    : path.join(root, "dist", "mcp", "brace-mcp.cjs");
+  const windowsNodeMode =
+    process.platform === "win32" || process.env.BRACE_MCP_NODE_MODE_SMOKE === "1";
   const transport = new StdioClientTransport({
     command: packagedExecutable || electronPath,
-    args: packagedExecutable
-      ? [...sandboxArguments, "--mcp"]
-      : [...sandboxArguments, root, "--mcp"],
+    args: windowsNodeMode
+      ? [windowsMcpScript]
+      : packagedExecutable
+        ? [...sandboxArguments, "--mcp"]
+        : [...sandboxArguments, root, "--mcp"],
     cwd: root,
     env: {
       ...process.env,
       BRACE_DATABASE_PATH: databasePath,
       BRACE_MCP_WRITE: "0",
+      ...(windowsNodeMode
+        ? { ELECTRON_RUN_AS_NODE: "1", BRACE_MCP_DIRECT: "1" }
+        : {}),
     },
     stderr: "pipe",
   });
+  let serverStderr = "";
+  transport.stderr?.on("data", (chunk) => {
+    serverStderr += chunk.toString();
+  });
 
   try {
-    await client.connect(transport);
+    try {
+      await client.connect(transport);
+    } catch (error) {
+      const detail = serverStderr.trim();
+      throw new Error(
+        `Electron MCP connection failed${detail ? `: ${detail}` : "."}`,
+        { cause: error },
+      );
+    }
     const result = await client.callTool({
       name: "brace_search",
       arguments: { query: "Electron executable MCP" },

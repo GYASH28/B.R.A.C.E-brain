@@ -124,7 +124,7 @@ export interface BraceSnapshot {
     config: { enabled: boolean; endpoint: string; model: string };
   };
   storage?: { directory: string; database: string };
-  connections?: { command: string; args: string[] };
+  connections?: { command: string; args: string[]; env?: Record<string, string> };
   environment?: "desktop" | "browser-preview";
 }
 

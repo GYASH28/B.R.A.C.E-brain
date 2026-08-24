@@ -184,7 +184,8 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <span>06</span>
             <div><p>MCP CONNECTION</p><h2>Give an AI read-only recall.</h2></div>
           </header>
-          <p>Open <strong>Connections</strong> inside BRACE. It shows the exact executable command for your installation. Paste the generated block into an MCP-compatible client's configuration.</p>
+          <p>Open <strong>Connections</strong> inside BRACE. It shows the exact platform-specific executable command for your installation. Paste the generated block into an MCP-compatible client's configuration.</p>
+          <p class="guide-note"><strong>Use the generated block.</strong> Linux uses the compact <code>--mcp</code> form shown below. Windows adds a bundled-server path and two Electron Node-mode environment values so redirected MCP stdio works reliably; those values do not enable memory writes.</p>
           <pre><code>{
   "mcpServers": {
     "brace": {

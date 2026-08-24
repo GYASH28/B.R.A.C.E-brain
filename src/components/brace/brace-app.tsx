@@ -707,6 +707,7 @@ function ConnectionsView() {
       brace: {
         command: snapshot?.connections?.command || "<path-to-BRACE-executable>",
         args: snapshot?.connections?.args || ["--mcp"],
+        ...(snapshot?.connections?.env ? { env: snapshot.connections.env } : {}),
       },
     },
   }, null, 2);

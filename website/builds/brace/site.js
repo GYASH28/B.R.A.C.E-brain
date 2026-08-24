@@ -3,7 +3,7 @@
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
-  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest/download";
+  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.2.0";
   const downloads = {
     windows: `${releaseBase}/BRACE-Setup-0.2.0.exe`,
     linux: `${releaseBase}/BRACE-0.2.0.AppImage`,

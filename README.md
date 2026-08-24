@@ -28,7 +28,7 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 
 ## Install
 
-Download a package from the [latest release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/latest):
+Download a package from the [BRACE 0.2.0 release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.2.0):
 
 - **Windows:** `BRACE-Setup-0.2.0.exe`
 - **Debian / Ubuntu:** `brace-brain_0.2.0_amd64.deb`

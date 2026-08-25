@@ -1,7 +1,12 @@
 {
   "framework": null,
-  "cleanUrls": true,
-  "trailingSlash": true,
+  "rewrites": [
+    {"source": "/", "destination": "/index.html"},
+    {"source": "/guide", "destination": "/guide/index.html"},
+    {"source": "/guide/", "destination": "/guide/index.html"},
+    {"source": "/how-to", "destination": "/how-to/index.html"},
+    {"source": "/how-to/", "destination": "/how-to/index.html"}
+  ],
   "headers": [
     {
       "source": "/assets/brace-opening.mp4",

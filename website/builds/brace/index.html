@@ -14,9 +14,18 @@
   <link rel="stylesheet" href="motion.css">
   <link rel="stylesheet" href="site.css">
 </head>
-<body>
+<body class="has-opening-film">
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="opening" aria-hidden="true"><div class="opening-mark"><span>B</span><i></i></div><p>BRACE</p></div>
+  <div class="opening-film" id="opening-film" aria-label="BRACE opening film">
+    <video autoplay muted playsinline preload="auto" aria-hidden="true">
+      <source src="assets/brace-opening-portrait.mp4" type="video/mp4" media="(max-width: 760px)">
+      <source src="assets/brace-opening.mp4" type="video/mp4">
+    </video>
+    <div class="opening-film-chrome">
+      <span><i></i> LOCAL MEMORY / INITIALIZED</span>
+      <button type="button" data-skip-opening>Skip intro <kbd>Esc</kbd></button>
+    </div>
+  </div>
   <div class="atmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="sc-grain" aria-hidden="true"></div>
   <div data-sc-progress aria-hidden="true"></div>
@@ -29,6 +38,7 @@
       <a href="#recall" aria-label="Recall"><i></i><span>Recall</span></a>
       <a href="#boundary" aria-label="Privacy"><i></i><span>Privacy</span></a>
       <a href="#product" aria-label="Product"><i></i><span>Product</span></a>
+      <a href="guide/" aria-label="Beginner guide"><i></i><span>Guide</span></a>
     </nav>
     <a class="rail-download" href="#download" aria-label="Download BRACE">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg><span>Download BRACE</span>
@@ -106,7 +116,7 @@
         <div class="boundary-copy" data-sc-cue="0 0.78 0 0.24">
           <p class="section-kicker">THE LOCAL BOUNDARY</p><h2>Your files stay files.<br>Your memory stays local.</h2>
           <p>BRACE indexes sources in place, stores runtime state outside the installed app, and keeps network access explicit.</p>
-          <a href="how-to/#privacy">Inspect the privacy model</a>
+          <a href="guide/#privacy">Inspect the privacy model</a>
         </div>
         <div class="vault-assembly" data-sc-reveal="iris" data-sc-reveal-at="0.08 0.66">
           <div class="vault-ring vault-ring--one" aria-hidden="true"></div><div class="vault-ring vault-ring--two" aria-hidden="true"></div>
@@ -130,7 +140,7 @@
           <figure class="proof-frame" data-proof="recall" data-sc-tilt="3"><div class="window-bar"><span><i></i><i></i><i></i></span><b>RECALL</b><em>LEXICAL</em></div><img src="assets/app-recall.png" width="1440" height="960" alt="BRACE recall separating memories and source evidence"><figcaption><strong>Recall with receipts</strong><span>Durable memories and raw source evidence remain visibly different.</span></figcaption></figure>
           <figure class="proof-frame" data-proof="graph" data-sc-tilt="3"><div class="window-bar"><span><i></i><i></i><i></i></span><b>CONSTELLATION</b><em>INTERACTIVE</em></div><img src="assets/app-graph.png" width="1440" height="960" alt="BRACE interactive memory constellation"><figcaption><strong>Follow the relationship</strong><span>Keyboard-selectable nodes, type filters, zoom, and a readable adjacency inspector.</span></figcaption></figure>
           <figure class="proof-frame" data-proof="timeline" data-sc-tilt="3"><div class="window-bar"><span><i></i><i></i><i></i></span><b>TIMELINE</b><em>DURABLE</em></div><img src="assets/app-timeline.png" width="1440" height="960" alt="BRACE decision timeline with synthetic data"><figcaption><strong>Keep the reason, not only the result</strong><span>Decisions and evidence stay attached to the moment they changed.</span></figcaption></figure>
-          <aside class="proof-outro"><strong>The product is inspectable before you install it.</strong><a href="how-to/">See every workflow</a></aside>
+          <aside class="proof-outro"><strong>The product is inspectable before you install it.</strong><a href="guide/">Open the beginner guide</a></aside>
         </div>
         <div class="rail-meter" aria-hidden="true"><i></i></div>
       </div>
@@ -143,20 +153,25 @@
           <canvas id="download-field" aria-hidden="true"></canvas>
           <div class="download-copy" data-sc-cue="0 1 0 0">
             <img src="assets/brace-logo.svg" width="84" height="84" alt=""><p class="section-kicker">YOUR MEMORY. STILL YOURS.</p><h2>Bring the context<br>home.</h2>
-            <p>Choose your system. BRACE starts with an empty private database, and the synthetic demo is always optional.</p>
-            <div class="detected-download">
-              <span id="detected-label">DETECTING YOUR SYSTEM</span>
-              <a data-primary-download href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.3.0">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg>
-                <span><small id="primary-platform">BRACE 0.3.0</small><strong>Download BRACE</strong></span><b id="primary-format">Choose package</b>
-              </a>
+            <p>Windows and Linux are first-class releases. Both start with an empty private database, and the synthetic demo is always optional.</p>
+            <div class="platform-downloads" aria-label="Download BRACE for Windows or Linux">
+              <article class="platform-download" data-platform-card="windows">
+                <header><span>WIN</span><div><small>WINDOWS 10 / 11</small><h3>BRACE for Windows</h3></div><b data-device-badge>THIS DEVICE</b></header>
+                <p>A familiar installer with Start menu shortcuts and a clean uninstall path.</p>
+                <div class="platform-actions">
+                  <a class="platform-primary" data-download="windows" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0/BRACE-Setup-0.3.0.exe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg><span><strong>Download installer</strong><small>BRACE 0.3.0 · x64 .exe</small></span></a>
+                  <a class="platform-guide" href="guide/#install">Install guide</a>
+                </div>
+              </article>
+              <article class="platform-download" data-platform-card="linux">
+                <header><span>LNX</span><div><small>LINUX X86_64</small><h3>BRACE for Linux</h3></div><b data-device-badge>THIS DEVICE</b></header>
+                <p>Choose a portable AppImage or the native Debian / Ubuntu package.</p>
+                <div class="platform-actions platform-actions--linux">
+                  <a class="platform-primary" data-download="linux" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0/BRACE-0.3.0.AppImage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg><span><strong>AppImage</strong><small>Portable · x86_64</small></span></a>
+                  <a class="platform-secondary" data-download="deb" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0/brace-brain_0.3.0_amd64.deb"><strong>.deb</strong><small>Debian / Ubuntu</small></a>
+                </div>
+              </article>
             </div>
-            <div class="download-alternatives" aria-label="Other download formats">
-              <a data-download="windows" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0/BRACE-Setup-0.3.0.exe"><span>Windows</span><b>.exe</b></a>
-              <a data-download="linux" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0/BRACE-0.3.0.AppImage"><span>Linux</span><b>AppImage</b></a>
-              <a data-download="deb" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0/brace-brain_0.3.0_amd64.deb"><span>Debian</span><b>.deb</b></a>
-            </div>
-            <p class="download-hint"><strong>Ubuntu or Debian?</strong> Choose the <b>.deb</b> for the fastest native startup. Use the AppImage when you need a portable package.</p>
             <div class="release-proof"><span><i></i> VERSIONED ASSETS</span><span><i></i> SHA-256 MANIFEST</span><span><i></i> CYCLONEDX SBOM</span><a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.3.0">Release details</a></div>
           </div>
         </div>
@@ -168,7 +183,7 @@
   <footer>
     <a class="footer-brand" href="#opening-act"><img src="assets/brace-logo.svg" width="34" height="34" alt=""><span>BRACE</span></a>
     <p>Your AI memory belongs to you.</p>
-    <nav aria-label="Project links"><a href="how-to/">How to use</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain">Source</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain/security">Security</a></nav>
+    <nav aria-label="Project links"><a href="guide/">Beginner guide</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain">Source</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain/security">Security</a></nav>
   </footer>
   <noscript><p class="noscript">BRACE remains downloadable without JavaScript. The interactive memory story is optional.</p></noscript>
   <script src="motion.js"></script>

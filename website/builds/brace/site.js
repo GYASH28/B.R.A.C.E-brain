@@ -4,6 +4,37 @@
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
   const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
   const clamp = (value, minimum = 0, maximum = 1) => Math.min(maximum, Math.max(minimum, value));
+
+  const openingFilm = document.querySelector("#opening-film");
+  const openingVideo = openingFilm?.querySelector("video");
+  let openingClosed = false;
+
+  function closeOpeningFilm({remember = true} = {}) {
+    if (!openingFilm || openingClosed) return;
+    openingClosed = true;
+    openingFilm.classList.add("is-exiting");
+    document.body.classList.remove("has-opening-film");
+    openingVideo?.pause();
+    if (remember) {
+      try { sessionStorage.setItem("brace-opening-seen", "1"); } catch {}
+    }
+    setTimeout(() => openingFilm.remove(), reduce.matches ? 0 : 700);
+  }
+
+  let openingSeen = false;
+  try { openingSeen = sessionStorage.getItem("brace-opening-seen") === "1"; } catch {}
+  if (reduce.matches || openingSeen) closeOpeningFilm({remember: openingSeen});
+  else if (openingVideo) {
+    openingVideo.addEventListener("ended", () => closeOpeningFilm(), {once: true});
+    openingVideo.addEventListener("error", () => closeOpeningFilm({remember: false}), {once: true});
+    openingVideo.play().catch(() => setTimeout(() => closeOpeningFilm({remember: false}), 1200));
+    setTimeout(() => closeOpeningFilm(), 6800);
+  } else closeOpeningFilm({remember: false});
+  document.querySelector("[data-skip-opening]")?.addEventListener("click", () => closeOpeningFilm());
+  addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !openingClosed) closeOpeningFilm();
+  });
+
   const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0";
   const downloads = {
     windows: {
@@ -37,15 +68,8 @@
   });
 
   if (detected) {
-    const item = downloads[detected];
-    document.querySelector(`[data-download="${detected}"]`)?.classList.add("is-recommended");
-    const primary = document.querySelector("[data-primary-download]");
-    if (primary) primary.href = item.url;
-    document.querySelector("#detected-label").textContent = "RECOMMENDED FOR THIS DEVICE";
-    document.querySelector("#primary-platform").textContent = item.platform;
-    document.querySelector("#primary-format").textContent = item.format;
-  } else {
-    document.querySelector("#detected-label").textContent = "CHOOSE YOUR SYSTEM";
+    const platform = detected === "windows" ? "windows" : "linux";
+    document.querySelector(`[data-platform-card="${platform}"]`)?.classList.add("is-recommended");
   }
 
   if (window.ScrollCraft) {
@@ -54,7 +78,8 @@
 
   const navigationLinks = Array.from(document.querySelectorAll(".glass-rail nav a"));
   const navigationSections = navigationLinks
-    .map((link) => document.querySelector(link.getAttribute("href")))
+    .filter((link) => link.hash)
+    .map((link) => document.querySelector(link.hash))
     .filter(Boolean);
   const navigationObserver = new IntersectionObserver((entries) => {
     const active = entries
@@ -75,6 +100,7 @@
   const downloadStage = document.querySelector(".download-stage");
   const boundaryAct = document.querySelector("#boundary");
   const boundaryStage = document.querySelector(".boundary-stage");
+  const narrowViewport = window.matchMedia("(max-width: 760px)");
   let lensInside = false;
   let lensInfluence = 0;
   let frameQueued = false;
@@ -91,7 +117,7 @@
     splitStage.dataset.scVerifyState = `split:${Math.round(split)}:${lensInside ? "lens" : "idle"}`;
 
     const downloadProgress = progressOf(downloadAct);
-    const downloadSplit = reduce.matches ? 0 : clamp(52 - downloadProgress * 52, 0, 52);
+    const downloadSplit = reduce.matches || narrowViewport.matches ? 0 : clamp(52 - downloadProgress * 52, 0, 52);
     downloadStage.style.setProperty("--download-split", `${downloadSplit.toFixed(2)}%`);
     downloadStage.dataset.scVerifyState = `download:${Math.round(downloadSplit)}`;
 

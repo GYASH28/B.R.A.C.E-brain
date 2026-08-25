@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">B.R.A.C.E Neural Brace</title>
+  <desc id="desc">Two luminous protective braces surround a four-node neural core.</desc>
+  <defs>
+    <linearGradient id="tile" x1="28" y1="18" x2="226" y2="238" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0a1430"/>
+      <stop offset="0.55" stop-color="#050a1d"/>
+      <stop offset="1" stop-color="#030714"/>
+    </linearGradient>
+    <radialGradient id="field" cx="0" cy="0" r="1" gradientTransform="translate(128 128) rotate(90) scale(104)">
+      <stop stop-color="#172554" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#020617" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="leftBrace" x1="34" y1="48" x2="111" y2="206" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#a78bfa"/>
+      <stop offset="0.52" stop-color="#7c3aed"/>
+      <stop offset="1" stop-color="#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="rightBrace" x1="145" y1="48" x2="222" y2="206" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67e8f9"/>
+      <stop offset="0.52" stop-color="#06b6d4"/>
+      <stop offset="1" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="neural" x1="83" y1="83" x2="176" y2="176" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#c4b5fd"/>
+      <stop offset="0.48" stop-color="#8b5cf6"/>
+      <stop offset="0.52" stop-color="#22d3ee"/>
+      <stop offset="1" stop-color="#67e8f9"/>
+    </linearGradient>
+    <radialGradient id="core" cx="0" cy="0" r="1" gradientTransform="translate(128 128) rotate(90) scale(17)">
+      <stop stop-color="#fff7c2"/>
+      <stop offset="0.58" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#f59e0b"/>
+    </radialGradient>
+    <filter id="braceGlow" x="-35%" y="-25%" width="170%" height="150%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="coreGlow" x="-100%" y="-100%" width="300%" height="300%" color-interpolation-filters="sRGB">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect x="6" y="6" width="244" height="244" rx="57" fill="url(#tile)"/>
+  <rect x="7" y="7" width="242" height="242" rx="56" fill="none" stroke="#334155" stroke-opacity="0.62" stroke-width="2"/>
+  <rect x="12" y="12" width="232" height="232" rx="51" fill="url(#field)"/>
+
+  <path d="M106 43 58 78c-7 5-11 13-11 22v13l-18 15 18 15v13c0 9 4 17 11 22l48 35v-32l-31-23v-16l-17-14 17-14V98l31-23V43Z" fill="#7c3aed" opacity="0.24" filter="url(#braceGlow)"/>
+  <path d="M106 43 58 78c-7 5-11 13-11 22v13l-18 15 18 15v13c0 9 4 17 11 22l48 35v-32l-31-23v-16l-17-14 17-14V98l31-23V43Z" fill="url(#leftBrace)"/>
+  <path d="M106 48 63 80c-6 4-10 12-10 20v16l-15 12 15 12v16c0 8 4 16 10 20l43 32" fill="none" stroke="#ddd6fe" stroke-opacity="0.42" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="m150 43 48 35c7 5 11 13 11 22v13l18 15-18 15v13c0 9-4 17-11 22l-48 35v-32l31-23v-16l17-14-17-14V98l-31-23V43Z" fill="#06b6d4" opacity="0.24" filter="url(#braceGlow)"/>
+  <path d="m150 43 48 35c7 5 11 13 11 22v13l18 15-18 15v13c0 9-4 17-11 22l-48 35v-32l31-23v-16l17-14-17-14V98l-31-23V43Z" fill="url(#rightBrace)"/>
+  <path d="m150 48 43 32c6 4 10 12 10 20v16l15 12-15 12v16c0 8-4 16-10 20l-43 32" fill="none" stroke="#cffafe" stroke-opacity="0.48" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <path d="M128 82v92M82 128h92" stroke="#1e293b" stroke-width="15" stroke-linecap="round" opacity="0.8"/>
+  <path d="M128 82v92M82 128h92" stroke="url(#neural)" stroke-width="8" stroke-linecap="round" filter="url(#braceGlow)"/>
+  <circle cx="128" cy="82" r="11" fill="#a78bfa"/>
+  <circle cx="82" cy="128" r="11" fill="#8b5cf6"/>
+  <circle cx="174" cy="128" r="11" fill="#22d3ee"/>
+  <circle cx="128" cy="174" r="11" fill="#38bdf8"/>
+  <circle cx="128" cy="128" r="19" fill="#f59e0b" opacity="0.28" filter="url(#coreGlow)"/>
+  <circle cx="128" cy="128" r="14" fill="url(#core)" stroke="#fff7c2" stroke-width="2"/>
+</svg>

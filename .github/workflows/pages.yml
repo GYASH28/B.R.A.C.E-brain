@@ -47,6 +47,7 @@ jobs:
           cp website/builds/brace/motion.js _site/
           cp website/builds/brace/favicon.ico _site/
           cp -R website/builds/brace/assets _site/
+          cp -R website/builds/brace/guide _site/
           cp -R website/builds/brace/how-to _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

@@ -20,8 +20,8 @@ const targets = [
   { name: "launch-boundary", path: "/", viewport: { width: 1440, height: 900 }, selector: "#boundary", keyboard: false },
   { name: "launch-product", path: "/", viewport: { width: 1440, height: 900 }, selector: "#product", keyboard: false },
   { name: "launch-download", path: "/", viewport: { width: 1440, height: 900 }, selector: "#download", keyboard: false },
-  { name: "guide-desktop", path: "/how-to/", viewport: { width: 1440, height: 900 } },
-  { name: "guide-mobile", path: "/how-to/", viewport: { width: 390, height: 844 } },
+  { name: "guide-desktop", path: "/guide/", viewport: { width: 1440, height: 900 } },
+  { name: "guide-mobile", path: "/guide/", viewport: { width: 390, height: 844 } },
 ];
 
 const report = { standard: "WCAG 2.2 AA", generatedAt: new Date().toISOString(), pages: [] };

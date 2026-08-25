@@ -1,6 +1,17 @@
-# BRACE
+<p align="center">
+  <img src="assets/brand/brace-app-icon.svg" width="104" height="104" alt="BRACE logo">
+</p>
 
-**One memory. Every AI.**
+<h1 align="center">BRACE</h1>
+
+<p align="center"><strong>One memory. Every AI.</strong></p>
+
+<p align="center">
+  <a href="https://b-r-a-c-e-brain.vercel.app/">Website</a> ·
+  <a href="https://b-r-a-c-e-brain.vercel.app/guide/">Beginner guide</a> ·
+  <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.3.0">Download 0.3.0</a> ·
+  <a href="docs/README.md">Documentation</a>
+</p>
 
 [![CI](https://github.com/GYASH28/B.R.A.C.E-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/GYASH28/B.R.A.C.E-brain/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/GYASH28/B.R.A.C.E-brain/actions/workflows/codeql.yml/badge.svg)](https://github.com/GYASH28/B.R.A.C.E-brain/actions/workflows/codeql.yml)
@@ -9,6 +20,14 @@
 BRACE is a local-first personal AI memory layer for people who work across multiple AI tools. It turns selected project files, explicit decisions, durable memories, evidence, timelines, and relationships into one provenance-backed store. MCP-compatible clients can recall the same context without a BRACE cloud account or hosted middleman.
 
 > Release status: **0.3.0 preview**. Linux is locally smoke-tested. Windows is built and tested by the repository's native GitHub Actions runner. Packages are not yet code-signed.
+
+| If you want to… | Start here |
+| --- | --- |
+| Install BRACE | [Windows and Linux downloads](https://b-r-a-c-e-brain.vercel.app/#download) |
+| Understand the first run | [Beginner guide](https://b-r-a-c-e-brain.vercel.app/guide/) |
+| Connect an AI client | [MCP guide](docs/MCP.md) |
+| Understand what stays local | [Privacy model](docs/PRIVACY.md) |
+| Contribute safely | [Contributor guide](CONTRIBUTING.md) and [repository map](docs/REPOSITORY_MAP.md) |
 
 ![BRACE Overview using the synthetic Northstar workspace](artifacts/screenshots/app-overview.png)
 
@@ -36,7 +55,7 @@ Download a package from the [BRACE 0.3.0 release](https://github.com/GYASH28/B.R
 
 Verify the artifact against `SHA256SUMS.txt` in the release before running it. The preview installers are not code-signed, so the operating system may display an unknown-publisher warning.
 
-For the full first-run walkthrough, see the [beginner How-to](website/builds/brace/how-to/index.html) or the [source getting-started guide](docs/GETTING_STARTED.md).
+For the full first-run walkthrough, use the [live beginner guide](https://b-r-a-c-e-brain.vercel.app/guide/), its [website source](website/builds/brace/guide/index.html), or the deeper [getting-started guide](docs/GETTING_STARTED.md).
 
 ## Run from source
 
@@ -50,7 +69,7 @@ Requirements:
 git clone https://github.com/GYASH28/B.R.A.C.E-brain.git
 cd B.R.A.C.E-brain
 npm ci
-npm test
+npm run verify
 npm run electron:dev
 ```
 
@@ -63,6 +82,17 @@ npm run build
 npm run electron:compile
 npm run electron:e2e
 npm run electron:mcp-smoke
+```
+
+The launch site has a separate static-site test boundary:
+
+```bash
+cd website/builds/brace
+npm ci
+npm run serve
+# In another terminal:
+npm run audit:interactions
+npm run audit:a11y
 ```
 
 ## First run
@@ -158,6 +188,7 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md), [DATA_MODEL.md](docs/DATA_MODEL.md)
 
 ## Documentation
 
+- [Documentation hub](docs/README.md)
 - [Getting started](docs/GETTING_STARTED.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Data model and lifecycle](docs/DATA_MODEL.md)
@@ -170,6 +201,11 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md), [DATA_MODEL.md](docs/DATA_MODEL.md)
 - [Roadmap](ROADMAP.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
+- [Repository map](docs/REPOSITORY_MAP.md)
+
+## Repository layout
+
+Application behavior is split across the framework-agnostic memory core, the hardened Electron boundary, and the browser-safe renderer. Release scripts, synthetic examples, maintained documentation, and the production website each have explicit homes. See the [repository map](docs/REPOSITORY_MAP.md) for ownership and data-safety rules, and [website/README.md](website/README.md) for the launch-site workflow and interaction contract.
 
 ## Honest limitations
 

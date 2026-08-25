@@ -36,6 +36,7 @@ jobs:
           trap 'kill "$site_pid"' EXIT
           curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
           npm run audit:a11y --prefix website/builds/brace
+          npm run audit:interactions --prefix website/builds/brace
       - name: Stage public site only
         shell: bash
         run: |
@@ -47,6 +48,7 @@ jobs:
           cp website/builds/brace/motion.js _site/
           cp website/builds/brace/favicon.ico _site/
           cp -R website/builds/brace/assets _site/
+          cp -R website/builds/brace/vendor _site/
           cp -R website/builds/brace/guide _site/
           cp -R website/builds/brace/how-to _site/
           touch _site/.nojekyll

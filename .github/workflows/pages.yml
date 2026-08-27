@@ -69,6 +69,8 @@ jobs:
                 _site/guide/liquid-glass.css \
                 _site/guide/responsive-fixes.css \
                 _site/guide/experience-v3.css \
+                _site/guide/experience-v4.css \
+                _site/guide/experience-v4-layout.css \
                 _site/guide/guide-base.css \
                 _site/guide/guide-v3.css \
                 _site/guide/guide-fixes.css \

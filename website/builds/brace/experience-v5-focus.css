@@ -1,6 +1,7 @@
 /* BRACE V5 focus pass: first hero + final download conversion surface.
    This layer only resolves geometry/UX inherited from the semantic base.
-   GitHub Pages concatenates it into the single production stylesheet. */
+   GitHub Pages concatenates it into the single production stylesheet.
+   Focus candidate: hero/download geometry verified by dedicated CI audit. */
 
 /* -------------------------------------------------------------------------
    HERO — keep the two-sided story, but give every object a predictable lane.

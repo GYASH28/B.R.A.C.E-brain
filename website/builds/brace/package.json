@@ -5,7 +5,8 @@
   "scripts": {
     "serve": "python3 -m http.server 4517 --bind 127.0.0.1",
     "audit:a11y": "node scripts/accessibility.mjs",
-    "audit:interactions": "node scripts/interactions.mjs"
+    "audit:interactions": "node scripts/interactions.mjs",
+    "audit:layout": "node scripts/layout.mjs"
   },
   "devDependencies": {
     "animejs": "^3.2.2",

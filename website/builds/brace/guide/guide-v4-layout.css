@@ -1,0 +1,22 @@
+/* Guide V4 geometry guardrails. Production flattens this into guide.css. */
+.guide-shot { width: 100%; }
+
+@media (min-width: 821px) {
+  .guide-hero .guide-wrap,
+  .guide-layout { margin-inline: auto !important; }
+}
+
+@media (max-width: 620px) {
+  .guide-route,
+  .guide-layout,
+  .guide-step,
+  .guide-shot,
+  .feature-walkthrough,
+  .platform-grid,
+  .choice-list,
+  .do-dont,
+  .shortcut-deck,
+  .permission-table,
+  .guide-step pre,
+  .guide-step details { max-width: 100%; }
+}

@@ -1,0 +1,573 @@
+/* BRACE liquid-glass refinement layer.
+   Intentionally loaded after the production styles so the interaction contract
+   stays intact while surfaces, focus, motion and guide hierarchy are refined. */
+
+:root {
+  --liquid-bg: rgba(8, 18, 31, 0.42);
+  --liquid-bg-soft: rgba(10, 24, 42, 0.30);
+  --liquid-bg-strong: rgba(11, 24, 41, 0.58);
+  --liquid-line: rgba(213, 235, 255, 0.18);
+  --liquid-line-hot: rgba(222, 243, 255, 0.34);
+  --liquid-highlight: rgba(255, 255, 255, 0.16);
+  --liquid-highlight-soft: rgba(255, 255, 255, 0.065);
+  --liquid-shadow: 0 26px 70px rgba(0, 5, 16, 0.34), 0 8px 24px rgba(0, 5, 16, 0.20);
+  --liquid-shadow-hover: 0 34px 90px rgba(0, 5, 18, 0.43), 0 12px 30px rgba(0, 5, 18, 0.24);
+  --liquid-edge: inset 0 1px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 0 rgba(125, 211, 252, 0.045);
+  --liquid-blur: 30px;
+  --liquid-radius: 22px;
+  --liquid-ease: cubic-bezier(.16, 1, .3, 1);
+
+  /* Existing BRACE surfaces become more transparent without losing contrast. */
+  --surface: rgba(12, 25, 43, 0.48);
+  --line: rgba(205, 229, 255, 0.17);
+  --line-strong: rgba(205, 232, 255, 0.33);
+  --glass: linear-gradient(145deg, rgba(255,255,255,.12), rgba(255,255,255,.032) 40%, rgba(76,145,205,.075));
+}
+
+body {
+  background:
+    radial-gradient(circle at 82% 10%, rgba(83, 160, 224, 0.10), transparent 31rem),
+    radial-gradient(circle at 14% 58%, rgba(158, 130, 228, 0.075), transparent 34rem),
+    linear-gradient(155deg, #05080f 0%, #07111d 46%, #05080f 100%);
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 62% 36%, rgba(125, 211, 252, 0.035), transparent 28%),
+    radial-gradient(circle at 35% 82%, rgba(196, 181, 253, 0.026), transparent 30%);
+}
+
+/* Crisp, visible focus against translucent surfaces. */
+:focus-visible {
+  outline-color: rgba(151, 225, 255, 0.96);
+  outline-width: 2px;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 5px rgba(125, 211, 252, 0.10);
+}
+
+/* Surface language ------------------------------------------------------- */
+.glass-rail,
+.interaction-dock,
+.source-receipt,
+.recall-console,
+.recall-pipeline,
+.constellation-lab,
+.constellation-inspector,
+.vault-layer,
+.vault-readout,
+.proof-frame,
+.package-advisor,
+.platform-download,
+.command-dialog,
+.dialog-panel,
+.guide-bar,
+.guide-toc,
+.guide-shot,
+.platform-grid > section,
+.choice-list > li,
+.shortcut-deck > p,
+.instruction-list > li,
+.feature-walkthrough > article,
+.do-dont > div,
+.permission-table,
+.guide-step details,
+.guide-step pre {
+  border-color: var(--liquid-line) !important;
+  background-color: var(--liquid-bg) !important;
+  box-shadow: var(--liquid-edge), var(--liquid-shadow);
+  -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(168%);
+  backdrop-filter: blur(var(--liquid-blur)) saturate(168%);
+}
+
+.glass-rail,
+.interaction-dock,
+.guide-bar,
+.guide-toc,
+.source-receipt,
+.constellation-inspector,
+.package-advisor {
+  background-image:
+    linear-gradient(145deg, rgba(255,255,255,.105), rgba(255,255,255,.024) 44%, rgba(95,162,222,.07)),
+    radial-gradient(circle at 24% -10%, rgba(255,255,255,.10), transparent 38%);
+}
+
+.glass-rail {
+  width: 64px;
+  border-radius: 24px;
+  background-color: rgba(7, 18, 31, 0.43) !important;
+  box-shadow: var(--liquid-edge), 0 28px 86px rgba(0, 4, 14, 0.38);
+}
+
+.glass-rail::before,
+.interaction-dock::before,
+.guide-bar::before,
+.guide-toc::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(112deg, rgba(255,255,255,.11), transparent 24%, transparent 73%, rgba(125,211,252,.055));
+  opacity: .72;
+}
+
+.glass-rail::before { inset: 1px; }
+.interaction-dock::before,
+.guide-toc::before { inset: 0; }
+.guide-bar::before { inset: 0; border-radius: 0; }
+
+.glass-rail > *,
+.interaction-dock > *,
+.guide-bar > *,
+.guide-toc > * { position: relative; z-index: 1; }
+
+/* Navigation feels like a physical glass control rather than a flat icon. */
+.glass-rail nav a,
+.rail-download,
+.interaction-dock button,
+.constellation-toolbar button,
+.evidence-controls button,
+.query-chips button,
+.proof-controls button,
+.package-advisor button,
+.guide-route a,
+.guide-toc a,
+.bar-action,
+.copy-code,
+.platform-guide,
+.platform-primary {
+  transition:
+    color 220ms ease,
+    border-color 260ms ease,
+    background-color 260ms ease,
+    box-shadow 320ms var(--liquid-ease),
+    transform 320ms var(--liquid-ease),
+    filter 320ms var(--liquid-ease),
+    opacity 220ms ease;
+}
+
+.glass-rail nav a:hover,
+.glass-rail nav a[aria-current="true"] {
+  background: linear-gradient(145deg, rgba(150, 225, 255, .12), rgba(255,255,255,.025));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 9px 24px rgba(0,5,18,.22);
+  transform: translateY(-1px);
+}
+
+.rail-download {
+  border-color: rgba(138, 218, 255, .34);
+  background: linear-gradient(145deg, rgba(125,211,252,.19), rgba(70,128,186,.075));
+}
+
+.interaction-dock {
+  border: 1px solid var(--liquid-line) !important;
+  border-radius: 18px !important;
+  background-color: rgba(8, 18, 31, 0.40) !important;
+  overflow: hidden;
+}
+
+.interaction-dock button {
+  background: rgba(255,255,255,.018) !important;
+}
+.interaction-dock button:hover {
+  background: rgba(125,211,252,.075) !important;
+  color: var(--ink);
+}
+
+/* High-value interactive work surfaces ---------------------------------- */
+.recall-console,
+.recall-pipeline,
+.constellation-lab,
+.proof-frame,
+.platform-download {
+  background-image:
+    linear-gradient(142deg, rgba(255,255,255,.07), rgba(255,255,255,.015) 43%, rgba(76,145,205,.045)),
+    radial-gradient(circle at 86% 0%, rgba(125,211,252,.055), transparent 30%);
+}
+
+.recall-console,
+.recall-pipeline,
+.constellation-lab {
+  border-radius: 24px !important;
+}
+
+.recall-input-well {
+  border-color: rgba(212, 237, 255, .19) !important;
+  background: rgba(3, 11, 22, .34) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.075), inset 0 0 0 1px rgba(255,255,255,.012);
+  -webkit-backdrop-filter: blur(18px) saturate(155%);
+  backdrop-filter: blur(18px) saturate(155%);
+}
+
+.recall-input-well:focus-within {
+  border-color: rgba(125,211,252,.45) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 0 0 4px rgba(125,211,252,.065), 0 18px 45px rgba(0,5,18,.22);
+}
+
+.pipeline-source,
+.pipeline-memory,
+.retrieval-receipt {
+  background-color: rgba(7, 18, 31, .34) !important;
+  border-color: rgba(204, 230, 255, .15) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(155%);
+  backdrop-filter: blur(20px) saturate(155%);
+}
+
+.constellation-board {
+  background:
+    radial-gradient(circle at 50% 46%, rgba(125,211,252,.055), transparent 34%),
+    linear-gradient(rgba(213,235,255,.026) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(213,235,255,.022) 1px, transparent 1px),
+    rgba(3, 11, 22, .24) !important;
+  background-size: auto, 44px 44px, 44px 44px, auto !important;
+}
+
+.constellation-node {
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  transition: transform 320ms var(--liquid-ease), border-color 220ms ease, background-color 220ms ease, box-shadow 320ms var(--liquid-ease), opacity 220ms ease;
+}
+.constellation-node:hover,
+.constellation-node.is-selected {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 14px 34px rgba(0,5,18,.28);
+}
+
+.source-receipt,
+.vault-layer {
+  background-color: rgba(9, 22, 39, .43) !important;
+  box-shadow: var(--liquid-edge), 0 18px 45px rgba(0,4,14,.26);
+}
+
+.vault-layer:hover,
+.vault-layer.is-selected,
+.source-receipt:hover {
+  border-color: rgba(168, 226, 255, .36) !important;
+  background-color: rgba(16, 36, 58, .52) !important;
+}
+
+.proof-frame {
+  overflow: hidden;
+  border-radius: 24px !important;
+  box-shadow: var(--liquid-edge), 0 32px 82px rgba(0,4,14,.38) !important;
+}
+.proof-frame img,
+.hero-product img,
+.guide-shot img,
+.feature-walkthrough img {
+  transition: transform 700ms var(--liquid-ease), filter 500ms ease;
+}
+.proof-frame:hover img,
+.guide-shot:hover img,
+.feature-walkthrough > article:hover img {
+  transform: scale(1.012);
+  filter: saturate(1.045) contrast(1.015);
+}
+
+.window-bar {
+  background: rgba(7, 17, 29, .56) !important;
+  border-color: rgba(212, 237, 255, .13) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+
+.package-advisor,
+.platform-download {
+  border-radius: 21px !important;
+}
+.platform-download:hover {
+  border-color: rgba(176, 229, 255, .31) !important;
+}
+.platform-primary {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), 0 14px 30px rgba(0,5,18,.22);
+}
+.platform-primary:hover {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.27), 0 18px 42px rgba(0,5,18,.30);
+}
+
+/* Main-site section continuity: fade harsh boundaries into one atmosphere. */
+.recall-act,
+.constellation-act {
+  background-color: transparent !important;
+}
+.recall-act {
+  background-image: linear-gradient(180deg, rgba(5,8,15,.90), rgba(6,13,23,.76) 42%, rgba(5,8,15,.78)) !important;
+}
+.constellation-act {
+  background-image: radial-gradient(circle at 70% 44%, rgba(117, 186, 235, .055), transparent 34rem) !important;
+}
+
+/* Beginner guide --------------------------------------------------------- */
+.guide-body {
+  --brace-line: rgba(205, 230, 255, 0.14);
+  --brace-line-strong: rgba(205, 230, 255, 0.27);
+  background: transparent !important;
+}
+
+.guide-bar {
+  height: 68px;
+  border-bottom-color: var(--liquid-line) !important;
+  background-color: rgba(7, 16, 28, .48) !important;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.025), 0 18px 52px rgba(0,4,14,.28);
+}
+.guide-bar.is-scrolled {
+  background-color: rgba(7, 16, 28, .62) !important;
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,.035), 0 22px 62px rgba(0,4,14,.36);
+}
+
+.guide-bar > nav a:hover,
+.guide-bar > nav a[aria-current="true"] { color: #eef9ff; }
+
+.bar-action {
+  border: 1px solid rgba(125,211,252,.25) !important;
+  background: linear-gradient(145deg, rgba(125,211,252,.15), rgba(76,145,205,.055)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 10px 24px rgba(0,5,18,.18);
+}
+
+.guide-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom-color: rgba(205,230,255,.12) !important;
+  background:
+    radial-gradient(circle at 76% 30%, rgba(125,211,252,.12), transparent 27rem),
+    radial-gradient(circle at 18% 72%, rgba(196,181,253,.075), transparent 25rem),
+    linear-gradient(rgba(212,237,255,.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212,237,255,.022) 1px, transparent 1px),
+    linear-gradient(150deg, rgba(7,17,29,.84), rgba(5,8,15,.94)) !important;
+  background-size: auto, auto, 54px 54px, 54px 54px, auto !important;
+}
+.guide-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto -12% -45% 42%;
+  height: 70%;
+  pointer-events: none;
+  background: radial-gradient(ellipse, rgba(125,211,252,.075), transparent 66%);
+  filter: blur(18px);
+}
+.guide-hero .guide-wrap { position: relative; z-index: 1; }
+
+.guide-hero h1 {
+  color: #f4f9ff !important;
+  text-shadow: 0 20px 62px rgba(0,5,18,.28);
+}
+.guide-lede { color: rgba(217, 231, 245, .64) !important; }
+
+.guide-route {
+  border-color: rgba(205,230,255,.14) !important;
+  background: rgba(8, 19, 33, .24);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  backdrop-filter: blur(20px) saturate(150%);
+}
+.guide-route a {
+  border-color: rgba(205,230,255,.12) !important;
+  color: rgba(218, 232, 246, .60) !important;
+}
+.guide-route a:hover,
+.guide-route a:focus-visible {
+  color: #f5fbff !important;
+  background: rgba(125,211,252,.07) !important;
+}
+.guide-route span,
+.step-header p,
+.surface-kicker { color: rgba(137, 216, 255, .78) !important; }
+
+.guide-toc {
+  border-radius: 18px !important;
+  background-color: rgba(8, 19, 33, .42) !important;
+}
+.guide-toc a { border: 1px solid transparent; }
+.guide-toc a:hover,
+.guide-toc a[aria-current="true"] {
+  color: #f2f9ff !important;
+  border-color: rgba(125,211,252,.12);
+  background: rgba(125,211,252,.075) !important;
+  transform: translateX(2px);
+}
+
+.step-header > span {
+  border-color: rgba(125,211,252,.25) !important;
+  color: rgba(166,227,255,.85) !important;
+  background: linear-gradient(145deg, rgba(125,211,252,.105), rgba(255,255,255,.018)) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 10px 28px rgba(0,5,18,.18);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+.guide-step + .guide-step { border-top-color: rgba(205,230,255,.115) !important; }
+.guide-step > p,
+.guide-step li,
+.details-body p { color: rgba(211, 225, 239, .66); }
+
+.guide-shot,
+.platform-grid > section,
+.choice-list > li,
+.shortcut-deck > p,
+.instruction-list > li,
+.feature-walkthrough > article,
+.do-dont > div,
+.permission-table,
+.guide-step details,
+.guide-step pre {
+  border-radius: 17px !important;
+  background-image: linear-gradient(145deg, rgba(255,255,255,.055), rgba(255,255,255,.012) 46%, rgba(91,153,211,.035));
+}
+
+.guide-shot {
+  overflow: hidden;
+  box-shadow: var(--liquid-edge), 0 28px 70px rgba(0,4,14,.30) !important;
+}
+.guide-shot figcaption {
+  border-color: rgba(205,230,255,.12) !important;
+  background: rgba(7,17,29,.48) !important;
+}
+
+.guide-note {
+  border-color: rgba(125,211,252,.18) !important;
+  background: linear-gradient(145deg, rgba(125,211,252,.07), rgba(196,181,253,.025)) !important;
+  color: rgba(216,232,246,.70) !important;
+}
+
+.guide-step pre {
+  position: relative;
+  overflow-x: auto;
+  border-color: rgba(205,230,255,.14) !important;
+  background-color: rgba(3, 10, 19, .55) !important;
+}
+.guide-step code { color: rgba(223, 240, 252, .88); }
+.copy-code:hover {
+  border-color: rgba(125,211,252,.25) !important;
+  background: rgba(125,211,252,.075) !important;
+}
+
+.guide-step details[open] {
+  border-color: rgba(166,224,255,.24) !important;
+  box-shadow: var(--liquid-edge), 0 24px 60px rgba(0,4,14,.26);
+}
+
+.feature-walkthrough > article,
+.platform-grid > section,
+.do-dont > div,
+.choice-list > li,
+.shortcut-deck > p,
+.instruction-list > li {
+  transition: transform 420ms var(--liquid-ease), border-color 260ms ease, background-color 260ms ease, box-shadow 420ms var(--liquid-ease);
+}
+
+/* Guide progressive reveal + reading progress (classes are added by guide.js). */
+.guide-reading-progress {
+  position: fixed;
+  z-index: 120;
+  inset: 0 0 auto 0;
+  height: 2px;
+  pointer-events: none;
+  background: rgba(255,255,255,.02);
+}
+.guide-reading-progress i {
+  display: block;
+  width: calc(var(--guide-progress, 0) * 100%);
+  height: 100%;
+  transform-origin: left center;
+  background: linear-gradient(90deg, var(--signal), #d8f4ff 52%, var(--spectral));
+  box-shadow: 0 0 20px rgba(125,211,252,.38);
+  transition: width 80ms linear;
+}
+
+html.guide-enhanced [data-soft-reveal] {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0) scale(.994);
+  filter: blur(3px);
+  transition:
+    opacity 720ms var(--liquid-ease) var(--reveal-delay, 0ms),
+    transform 820ms var(--liquid-ease) var(--reveal-delay, 0ms),
+    filter 620ms ease var(--reveal-delay, 0ms);
+  will-change: opacity, transform, filter;
+}
+html.guide-enhanced [data-soft-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+}
+
+/* Hover depth is offered only to devices that actually hover. */
+@media (hover: hover) and (pointer: fine) {
+  .source-receipt:hover,
+  .platform-download:hover,
+  .guide-shot:hover,
+  .platform-grid > section:hover,
+  .choice-list > li:hover,
+  .shortcut-deck > p:hover,
+  .feature-walkthrough > article:hover,
+  .do-dont > div:hover {
+    transform: translateY(-3px);
+    border-color: var(--liquid-line-hot) !important;
+    box-shadow: var(--liquid-edge), var(--liquid-shadow-hover);
+  }
+}
+
+/* Mobile keeps the material but dials back GPU-expensive blur and depth. */
+@media (max-width: 760px) {
+  :root { --liquid-blur: 22px; --liquid-radius: 18px; }
+  .glass-rail,
+  .interaction-dock,
+  .guide-bar,
+  .guide-toc,
+  .recall-console,
+  .recall-pipeline,
+  .constellation-lab,
+  .platform-download {
+    -webkit-backdrop-filter: blur(22px) saturate(150%);
+    backdrop-filter: blur(22px) saturate(150%);
+  }
+  .guide-hero { padding-top: clamp(124px, 18vh, 168px) !important; }
+  .guide-route {
+    border: 1px solid rgba(205,230,255,.12) !important;
+    border-radius: 18px;
+    overflow: hidden;
+  }
+  .guide-route a { min-height: 50px; }
+  .proof-frame:hover img,
+  .guide-shot:hover img,
+  .feature-walkthrough > article:hover img { transform: none; }
+}
+
+@media (max-width: 520px) {
+  .guide-bar { height: 62px; background-color: rgba(7,16,28,.62) !important; }
+  .guide-toc { border-radius: 16px !important; }
+  .guide-shot,
+  .platform-grid > section,
+  .choice-list > li,
+  .shortcut-deck > p,
+  .instruction-list > li,
+  .feature-walkthrough > article,
+  .do-dont > div { border-radius: 15px !important; }
+}
+
+/* Motion preference remains authoritative. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+  }
+  html.guide-enhanced [data-soft-reveal],
+  html.guide-enhanced [data-soft-reveal].is-visible {
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    transition: none !important;
+  }
+  .proof-frame img,
+  .hero-product img,
+  .guide-shot img,
+  .feature-walkthrough img,
+  .glass-rail nav a,
+  .source-receipt,
+  .platform-download,
+  .guide-toc a {
+    transition: none !important;
+    transform: none !important;
+  }
+  .guide-reading-progress i { transition: none; }
+}

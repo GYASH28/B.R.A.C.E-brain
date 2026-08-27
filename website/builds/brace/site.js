@@ -4,6 +4,9 @@
   const script = document.createElement("script");
   script.src = new URL("site-v5.js", current?.src || location.href).href;
   script.async = false;
+  script.addEventListener("load", () => {
+    document.documentElement.dataset.braceRuntime = "v5";
+  }, { once: true });
   script.addEventListener("error", () => {
     document.body.classList.remove("has-opening-film");
     document.querySelector("#opening-film")?.remove();

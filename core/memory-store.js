@@ -5,7 +5,7 @@ const path = require("node:path");
 const { createHash, randomUUID } = require("node:crypto");
 const { DatabaseSync, backup: backupSqlite } = require("node:sqlite");
 
-const SCHEMA_VERSION = 2;
+const SCHEMA_VERSION = 3;
 const MEMORY_KINDS = new Set([
   "project",
   "decision",
@@ -119,6 +119,14 @@ function tokenJaccard(left, right) {
   let intersection = 0;
   for (const token of a) if (b.has(token)) intersection += 1;
   return intersection / (a.size + b.size - intersection);
+}
+
+function reviewPair(leftId, rightId) {
+  const pair = [String(leftId || ""), String(rightId || "")].sort();
+  if (!pair[0] || !pair[1] || pair[0] === pair[1]) {
+    throw new Error("A memory review requires two different memories.");
+  }
+  return { pairKey: sha256(JSON.stringify(pair)), leftId: pair[0], rightId: pair[1] };
 }
 
 function ensureParent(filePath) {
@@ -369,7 +377,16 @@ class MemoryStore {
           value_json TEXT NOT NULL,
           updated_at TEXT NOT NULL
         );
-        PRAGMA user_version = 2;
+        CREATE TABLE IF NOT EXISTS memory_reviews (
+          pair_key TEXT PRIMARY KEY,
+          left_memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+          right_memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+          outcome TEXT NOT NULL CHECK(outcome IN ('distinct', 'keep-left', 'keep-right')),
+          canonical_memory_id TEXT REFERENCES memories(id) ON DELETE SET NULL,
+          reviewed_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS memory_reviews_time_idx ON memory_reviews(reviewed_at DESC);
+        PRAGMA user_version = 3;
         COMMIT;
       `);
     }
@@ -412,6 +429,22 @@ class MemoryStore {
           VALUES (new.rowid, new.heading, new.content);
         END;
         PRAGMA user_version = 2;
+        COMMIT;
+      `);
+    }
+    if (current > 0 && current < 3) {
+      this.db.exec(`
+        BEGIN IMMEDIATE;
+        CREATE TABLE IF NOT EXISTS memory_reviews (
+          pair_key TEXT PRIMARY KEY,
+          left_memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+          right_memory_id TEXT NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+          outcome TEXT NOT NULL CHECK(outcome IN ('distinct', 'keep-left', 'keep-right')),
+          canonical_memory_id TEXT REFERENCES memories(id) ON DELETE SET NULL,
+          reviewed_at TEXT NOT NULL
+        );
+        CREATE INDEX IF NOT EXISTS memory_reviews_time_idx ON memory_reviews(reviewed_at DESC);
+        PRAGMA user_version = 3;
         COMMIT;
       `);
     }
@@ -809,6 +842,9 @@ class MemoryStore {
     const content = redactSecrets(String(merged.content || "").trim()).value.slice(0, 200_000);
     if (!title || !content) throw new Error("A memory requires a title and content.");
     const timestamp = nowIso();
+    const reviewRelevantChange = current.kind !== merged.kind ||
+      current.scope !== normalizeText(merged.scope || "global") ||
+      current.title !== title || current.summary !== summary || current.content !== content;
     this.db.prepare(`
       UPDATE memories SET
         kind=?, scope=?, title=?, summary=?, content=?, status=?, confidence=?,
@@ -832,6 +868,11 @@ class MemoryStore {
       merged.supersededBy || null,
       current.id,
     );
+    if (reviewRelevantChange) {
+      this.db.prepare(`
+        DELETE FROM memory_reviews WHERE left_memory_id = ? OR right_memory_id = ?
+      `).run(current.id, current.id);
+    }
     return this.getMemory(current.id);
   }
 
@@ -1236,6 +1277,134 @@ class MemoryStore {
     return suggestions.sort((left, right) => right.similarity - left.similarity).slice(0, 200);
   }
 
+  listMemoryReviewCandidates(options = {}) {
+    const limit = Math.min(200, Math.max(1, Number(options.limit) || 50));
+    const reviewed = new Set(
+      this.db.prepare("SELECT pair_key FROM memory_reviews").all().map((row) => row.pair_key),
+    );
+    return this.consolidate(options.scope || null)
+      .map((suggestion) => {
+        const pair = reviewPair(suggestion.leftId, suggestion.rightId);
+        if (reviewed.has(pair.pairKey)) return null;
+        const left = this.getMemory(suggestion.leftId);
+        const right = this.getMemory(suggestion.rightId);
+        if (!left || !right || left.status !== "active" || right.status !== "active") return null;
+        return {
+          pairKey: pair.pairKey,
+          similarity: suggestion.similarity,
+          left,
+          right,
+          signal: left.duplicateOf === right.id || right.duplicateOf === left.id
+            ? "captured-overlap"
+            : "content-similarity",
+        };
+      })
+      .filter(Boolean)
+      .slice(0, limit);
+  }
+
+  memoryQuality(options = {}) {
+    const active = Number(this.db.prepare(
+      "SELECT count(*) AS count FROM memories WHERE status='active'",
+    ).get().count);
+    const linked = Number(this.db.prepare(`
+      SELECT count(*) AS count FROM memories
+      WHERE status='active' AND (source_id IS NOT NULL OR source_uri IS NOT NULL)
+    `).get().count);
+    const highConfidence = Number(this.db.prepare(`
+      SELECT count(*) AS count FROM memories WHERE status='active' AND confidence >= 0.8
+    `).get().count);
+    const limit = Math.min(200, Math.max(1, Number(options.limit) || 50));
+    const allCandidates = this.listMemoryReviewCandidates({ limit: 200 });
+    return {
+      active,
+      pendingReview: allCandidates.length,
+      linked,
+      highConfidence,
+      linkedPercent: active ? Math.round((linked / active) * 100) : 100,
+      highConfidencePercent: active ? Math.round((highConfidence / active) * 100) : 100,
+      candidates: allCandidates.slice(0, limit),
+    };
+  }
+
+  resolveMemoryReview(input) {
+    const outcome = String(input?.outcome || "");
+    if (!new Set(["distinct", "keep-left", "keep-right"]).has(outcome)) {
+      throw new Error("Choose whether to keep the left memory, keep the right memory, or keep both.");
+    }
+    const requestedLeft = this.getMemory(String(input?.leftId || ""));
+    const requestedRight = this.getMemory(String(input?.rightId || ""));
+    if (!requestedLeft || !requestedRight) throw new Error("Both review memories must exist.");
+    if (requestedLeft.status !== "active" || requestedRight.status !== "active") {
+      throw new Error("This review pair is no longer active. Refresh the queue.");
+    }
+    if (requestedLeft.scope !== requestedRight.scope || requestedLeft.kind !== requestedRight.kind) {
+      throw new Error("Only memories with the same scope and type can be resolved together.");
+    }
+    const pair = reviewPair(requestedLeft.id, requestedRight.id);
+    const pending = this.listMemoryReviewCandidates({ limit: 200 })
+      .some((candidate) => candidate.pairKey === pair.pairKey);
+    if (!pending) throw new Error("This pair is not in the active memory review queue.");
+    const canonical = outcome === "keep-left"
+      ? requestedLeft
+      : outcome === "keep-right"
+        ? requestedRight
+        : null;
+    const superseded = outcome === "keep-left"
+      ? requestedRight
+      : outcome === "keep-right"
+        ? requestedLeft
+        : null;
+    const storedOutcome = canonical
+      ? canonical.id === pair.leftId ? "keep-left" : "keep-right"
+      : "distinct";
+    const reviewedAt = nowIso();
+    this.transaction(() => {
+      if (superseded && canonical) {
+        this.db.prepare(`
+          UPDATE memories SET status='superseded', superseded_by=?, updated_at=? WHERE id=?
+        `).run(canonical.id, reviewedAt, superseded.id);
+      }
+      this.db.prepare(`
+        INSERT INTO memory_reviews(
+          pair_key, left_memory_id, right_memory_id, outcome, canonical_memory_id, reviewed_at
+        ) VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(pair_key) DO UPDATE SET
+          outcome=excluded.outcome,
+          canonical_memory_id=excluded.canonical_memory_id,
+          reviewed_at=excluded.reviewed_at
+      `).run(
+        pair.pairKey,
+        pair.leftId,
+        pair.rightId,
+        storedOutcome,
+        canonical?.id || null,
+        reviewedAt,
+      );
+      this.insertEvent({
+        eventType: outcome === "distinct" ? "memory.reviewed" : "memory.superseded",
+        occurredAt: reviewedAt,
+        title: outcome === "distinct"
+          ? "Memory overlap reviewed"
+          : `Superseded: ${superseded.title}`,
+        summary: outcome === "distinct"
+          ? `Kept “${requestedLeft.title}” and “${requestedRight.title}” as distinct memories.`
+          : `Replaced by ${canonical.title}`,
+        memoryId: superseded?.id || requestedLeft.id,
+        metadata: {
+          reviewPair: pair.pairKey,
+          outcome: storedOutcome,
+          canonicalMemoryId: canonical?.id || null,
+        },
+      });
+    });
+    return {
+      outcome,
+      canonicalMemoryId: canonical?.id || null,
+      supersededMemoryId: superseded?.id || null,
+    };
+  }
+
   supersedeMemory(memoryId, replacementId) {
     if (memoryId === replacementId) throw new Error("A memory cannot supersede itself.");
     const memory = this.getMemory(memoryId);
@@ -1397,6 +1566,12 @@ class MemoryStore {
       timeline: this.listTimeline({ limit: 500 }),
       entities: this.db.prepare("SELECT * FROM entities ORDER BY name").all(),
       relations: this.db.prepare("SELECT * FROM relations ORDER BY created_at").all(),
+      memoryReviews: this.db.prepare(`
+        SELECT pair_key AS pairKey, left_memory_id AS leftMemoryId,
+          right_memory_id AS rightMemoryId, outcome,
+          canonical_memory_id AS canonicalMemoryId, reviewed_at AS reviewedAt
+        FROM memory_reviews ORDER BY reviewed_at DESC
+      `).all(),
       skills: this.db.prepare(`
         SELECT id, name, version, manifest_json, enabled, permissions_json,
           checksum, installed_at, updated_at FROM skills ORDER BY name
@@ -1428,6 +1603,7 @@ class MemoryStore {
         "events",
         "decisions",
         "evidence",
+        "memory_reviews",
         "memories",
         "source_chunks",
         "sources",

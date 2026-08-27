@@ -1,9 +1,9 @@
-import { app, BrowserWindow, dialog, net, protocol } from "electron";
+import { app, BrowserWindow, dialog, protocol } from "electron";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { pathToFileURL } from "node:url";
 import log from "electron-log";
 import { BraceMemoryService, registerBraceMemoryIpc } from "./memory-service";
+import { createSecureAssetResponse } from "./secure-asset-response";
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -30,6 +30,10 @@ let mainWindow: BrowserWindow | null = null;
 let memoryService: BraceMemoryService | null = null;
 let smokeShellReady = false;
 let smokeRendererLoaded = false;
+let smokeRendererInteractive = false;
+let smokeRendererState = "not-loaded";
+let smokeFailure: string | null = null;
+const smokeConsoleErrors: string[] = [];
 
 log.transports.file.level = "info";
 log.info("Starting BRACE local-first memory runtime.");
@@ -44,63 +48,91 @@ app.on("second-instance", () => {
 });
 
 function finishSmokeWhenReady() {
-  if (!smokeToken || !smokeShellReady || !smokeRendererLoaded) return;
+  if (
+    !smokeToken ||
+    !smokeShellReady ||
+    !smokeRendererLoaded ||
+    !smokeRendererInteractive ||
+    smokeFailure
+  ) return;
   if (smokeResultPath) {
     fs.writeFileSync(smokeResultPath, JSON.stringify({
       token: smokeToken,
       shellReady: true,
       rendererLoaded: true,
+      rendererInteractive: true,
+      rendererState: smokeRendererState,
       loadFailed: false,
+      consoleErrors: smokeConsoleErrors,
     }));
   }
   setTimeout(() => app.quit(), 250);
 }
 
-function contentType(filePath: string) {
-  return (
-    {
-      ".html": "text/html; charset=utf-8",
-      ".js": "text/javascript; charset=utf-8",
-      ".css": "text/css; charset=utf-8",
-      ".json": "application/json; charset=utf-8",
-      ".svg": "image/svg+xml",
-      ".png": "image/png",
-      ".ico": "image/x-icon",
-      ".woff": "font/woff",
-      ".woff2": "font/woff2",
-    }[path.extname(filePath).toLowerCase()] || "application/octet-stream"
-  );
+function failSmoke(reason: string) {
+  if (!smokeToken || smokeFailure) return;
+  smokeFailure = reason;
+  log.error(`Smoke failed: ${reason}`);
+  if (smokeResultPath) {
+    fs.writeFileSync(smokeResultPath, JSON.stringify({
+      token: smokeToken,
+      shellReady: smokeShellReady,
+      rendererLoaded: smokeRendererLoaded,
+      rendererInteractive: false,
+      rendererState: smokeRendererState,
+      loadFailed: true,
+      renderError: reason,
+      consoleErrors: smokeConsoleErrors,
+    }));
+  }
+  setTimeout(() => app.quit(), 250);
 }
 
-async function serveAsset(filePath: string) {
-  const response = await net.fetch(pathToFileURL(filePath).toString());
-  const headers = new Headers(response.headers);
-  headers.set("Content-Type", contentType(filePath));
-  headers.set(
-    "Content-Security-Policy",
-    "default-src 'self' brain:; script-src 'self' brain:; style-src 'self' brain: 'unsafe-inline'; img-src 'self' brain: data: blob:; font-src 'self' brain: data:; connect-src 'self' brain:; object-src 'none'; frame-src 'none'; worker-src 'self' brain: blob:; base-uri 'none'; form-action 'self'",
-  );
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers,
-  });
+async function monitorSmokeRenderer() {
+  if (!smokeToken || !mainWindow) return;
+  const deadline = Date.now() + 30_000;
+  while (mainWindow && !mainWindow.isDestroyed() && Date.now() < deadline) {
+    try {
+      const state = await mainWindow.webContents.executeJavaScript(
+        "document.querySelector('[data-brace-state]')?.getAttribute('data-brace-state') || 'missing'",
+        true,
+      );
+      smokeRendererState = typeof state === "string" ? state : "invalid";
+      if (smokeRendererState === "ready") {
+        smokeRendererInteractive = true;
+        log.info(`BRACE interface interactive in ${Date.now() - startupStartedAt}ms.`);
+        finishSmokeWhenReady();
+        return;
+      }
+      if (smokeRendererState === "error") {
+        failSmoke("The renderer entered its startup error state.");
+        return;
+      }
+    } catch (error) {
+      failSmoke(error instanceof Error ? error.message : "Renderer readiness check failed.");
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  failSmoke(`The renderer did not become interactive (last state: ${smokeRendererState}).`);
 }
 
 function registerAppProtocol() {
   const outputRoot = path.resolve(app.getAppPath(), "out");
   protocol.handle("brain", (request) => {
     const url = new URL(request.url);
+    if (url.hostname !== "app") {
+      return new Response("Not found", { status: 404 });
+    }
     let pathname = decodeURIComponent(url.pathname || "/index.html");
     if (pathname === "/" || pathname === "") pathname = "/index.html";
     const candidate = path.resolve(outputRoot, pathname.replace(/^\/+/, ""));
-    let filePath =
+    const filePath =
       candidate.startsWith(`${outputRoot}${path.sep}`) &&
-      fs.existsSync(candidate) &&
-      fs.statSync(candidate).isFile()
+      fs.existsSync(candidate)
         ? candidate
         : path.join(outputRoot, "index.html");
-    return serveAsset(filePath);
+    return createSecureAssetResponse(filePath);
   });
 }
 
@@ -155,7 +187,17 @@ function createWindow() {
     smokeRendererLoaded = true;
     log.info(`BRACE renderer loaded in ${Date.now() - startupStartedAt}ms.`);
     if (smokeToken) log.info(`Smoke loaded ${smokeToken}`);
-    finishSmokeWhenReady();
+    void monitorSmokeRenderer();
+  });
+  mainWindow.webContents.on("console-message", (event) => {
+    if (!smokeToken || event.level !== "error") return;
+    smokeConsoleErrors.push(event.message || "Unknown renderer console error");
+  });
+  mainWindow.webContents.on("preload-error", (_event, preloadPath, error) => {
+    failSmoke(`Preload failed (${preloadPath}): ${error.message}`);
+  });
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    failSmoke(`Renderer process exited: ${details.reason}.`);
   });
   mainWindow.webContents.on(
     "did-fail-load",
@@ -164,12 +206,7 @@ function createWindow() {
         `Renderer load failed (${errorCode}) ${errorDescription}: ${validatedURL}`,
       );
       if (smokeResultPath && smokeToken) {
-        fs.writeFileSync(smokeResultPath, JSON.stringify({
-          token: smokeToken,
-          shellReady: smokeShellReady,
-          rendererLoaded: false,
-          loadFailed: true,
-        }));
+        failSmoke(`Renderer load failed (${errorCode}) ${errorDescription}.`);
       }
     },
   );

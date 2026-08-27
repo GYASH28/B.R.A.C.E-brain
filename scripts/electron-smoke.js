@@ -102,6 +102,11 @@ child.on("exit", (code) => {
   const markerMatches = smokeResult.token === token;
   const ready = (markerMatches && smokeResult.shellReady === true) || log.includes(`Smoke ready ${token}`);
   const loaded = (markerMatches && smokeResult.rendererLoaded === true) || log.includes(`Smoke loaded ${token}`);
+  const interactive = markerMatches && smokeResult.rendererInteractive === true;
+  const rendererState = markerMatches ? smokeResult.rendererState || null : null;
+  const consoleErrors = markerMatches && Array.isArray(smokeResult.consoleErrors)
+    ? smokeResult.consoleErrors
+    : [];
   const recent = log.slice(Math.max(0, log.lastIndexOf(token) - 2_000));
   const loadFailed = (markerMatches && smokeResult.loadFailed === true) || recent.includes("Renderer load failed");
   const result = {
@@ -109,13 +114,25 @@ child.on("exit", (code) => {
     elapsedMs,
     processExitCode: code,
     rendererLoaded: loaded,
+    rendererInteractive: interactive,
+    rendererState,
     shellReady: ready,
     loadFailed,
+    renderError: markerMatches ? smokeResult.renderError || null : null,
+    consoleErrors,
     logsFound: logPaths.map((logPath) => path.relative(temporaryRoot, logPath)),
     stderr: stderrOutput.trim() || null,
   };
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
-  if (!ready || !loaded || loadFailed || elapsedMs > SMOKE_TIMEOUT_MS) {
+  if (
+    !ready ||
+    !loaded ||
+    !interactive ||
+    rendererState !== "ready" ||
+    loadFailed ||
+    consoleErrors.length > 0 ||
+    elapsedMs > SMOKE_TIMEOUT_MS
+  ) {
     process.exitCode = 1;
   }
   fs.rmSync(temporaryRoot, {

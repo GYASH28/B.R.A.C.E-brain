@@ -145,6 +145,7 @@ export class BraceMemoryService {
       stats: this.store.stats(),
       projects: this.store.listProjects(),
       memories: this.store.listMemories({ limit: 100 }),
+      memoryQuality: this.store.memoryQuality({ limit: 50 }),
       timeline: this.store.listTimeline({ limit: 100 }),
       graph: this.store.graph({ limit: 500 }),
       skills: this.store.listSkills().map((skill: any) => ({
@@ -318,6 +319,11 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
   ipcMain.handle("brace:get-memory", (_event, id: string) => service.store.getMemory(String(id || ""), { includeEvidence: true }));
   ipcMain.handle("brace:create-memory", (_event, input: any) => service.store.createMemory(input || {}));
   ipcMain.handle("brace:update-memory", (_event, id: string, changes: any) => service.store.updateMemory(String(id || ""), changes || {}));
+  ipcMain.handle("brace:resolve-memory-review", (_event, input: any) => service.store.resolveMemoryReview({
+    leftId: String(input?.leftId || ""),
+    rightId: String(input?.rightId || ""),
+    outcome: String(input?.outcome || ""),
+  }));
   ipcMain.handle("brace:forget-memory", (_event, id: string) => service.forgetMemory(String(id || "")));
   ipcMain.handle("brace:add-evidence", (_event, id: string, input: any) => service.store.addEvidence(String(id || ""), input || {}));
   ipcMain.handle("brace:list-timeline", (_event, options: any) => service.store.listTimeline(options || {}));

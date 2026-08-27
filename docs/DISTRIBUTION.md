@@ -1,17 +1,17 @@
 # Distribution and verification
 
-BRACE 0.3.0 targets 64-bit Linux and Windows.
+BRACE 0.4.0 targets 64-bit Linux and Windows.
 
 ## Release artifacts
 
 | Platform | Artifact | Packaging |
 | --- | --- | --- |
-| Linux | `BRACE-0.3.0.AppImage` | Portable AppImage |
-| Debian / Ubuntu | `brace-brain_0.3.0_amd64.deb` | Debian package |
-| Windows | `BRACE-Setup-0.3.0.exe` | Per-user NSIS installer |
+| Linux | `BRACE-0.4.0.AppImage` | Portable AppImage |
+| Debian / Ubuntu | `brace-brain_0.4.0_amd64.deb` | Debian package |
+| Windows | `BRACE-Setup-0.4.0.exe` | Per-user NSIS installer |
 
 Tagged releases also include `SHA256SUMS.txt`.
-They also include a CycloneDX dependency SBOM named `brace-0.3.0.cdx.json`.
+They also include a CycloneDX dependency SBOM named `brace-0.4.0.cdx.json`.
 
 ## Build locally
 
@@ -55,7 +55,7 @@ The tagged-release workflow runs native jobs and attaches their output to a prer
 Run a package against disposable XDG directories:
 
 ```bash
-npm run electron:smoke -- "dist/installer/BRACE-0.3.0.AppImage"
+npm run electron:smoke -- "dist/installer/BRACE-0.4.0.AppImage"
 ```
 
 The smoke harness starts the application with a unique token, waits for both renderer and shell readiness in the local log, checks that the process exits, and removes the temporary profile.
@@ -77,7 +77,7 @@ Before release:
 
 The NSIS installer is per-user, does not require elevation, permits choosing an install directory, and creates Start-menu and optional desktop shortcuts.
 
-The 0.3.0 installer is not code-signed. Users should verify its SHA-256 digest and expect Windows SmartScreen to show an unknown-publisher warning.
+The 0.4.0 installer is not code-signed. Users should verify its SHA-256 digest and expect Windows SmartScreen to show an unknown-publisher warning.
 
 ## Linux behavior
 
@@ -85,7 +85,7 @@ The AppImage is suitable for distributions with the required FUSE compatibility 
 
 ## Signing and provenance
 
-0.3.0 does not claim code-signing, notarization, or reproducible byte-for-byte builds. GitHub Actions records the source ref and native runner logs. Future releases should add signing and artifact attestations before introducing automatic updates.
+0.4.0 does not claim code-signing, notarization, or reproducible byte-for-byte builds. GitHub Actions records the source ref and native runner logs. Future releases should add signing and artifact attestations before introducing automatic updates.
 
 ## Release procedure
 
@@ -93,7 +93,7 @@ The AppImage is suitable for distributions with the required FUSE compatibility 
 2. Run the full local quality gate and privacy scan.
 3. Commit and push `main`.
 4. Wait for Linux and Windows CI to pass.
-5. Tag the package version (for example `v0.3.0`) and push the tag.
+5. Tag the package version (for example `v0.4.0`) and push the tag.
 6. Wait for native release jobs.
 7. Verify attached hashes and inspect the GitHub prerelease page.
 8. Keep the release marked prerelease until community testing and code signing mature.

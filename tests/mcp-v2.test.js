@@ -75,7 +75,7 @@ test("official MCP v2 stdio server exposes structured read-only memory tools", a
   assert.match(searched.content[0].text, /Keep indexing offline/);
 
   const resource = await client.readResource({ uri: "brace://status" });
-  assert.match(resource.contents[0].text, /"schemaVersion": 2/);
+  assert.match(resource.contents[0].text, /"schemaVersion": 3/);
   await client.close();
 });
 

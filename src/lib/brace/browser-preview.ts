@@ -10,7 +10,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     database: "brace.sqlite3",
   },
   stats: {
-    schemaVersion: 2,
+    schemaVersion: 3,
     projects: 1,
     sources: 3,
     sourceChunks: 11,
@@ -97,6 +97,15 @@ export const browserPreviewSnapshot: BraceSnapshot = {
       redacted: false,
     },
   ],
+  memoryQuality: {
+    active: 3,
+    pendingReview: 0,
+    linked: 2,
+    highConfidence: 2,
+    linkedPercent: 67,
+    highConfidencePercent: 67,
+    candidates: [],
+  },
   timeline: [
     {
       id: "event-decision",

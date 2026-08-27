@@ -53,6 +53,24 @@ export interface BraceProject {
   last_indexed_at: string | null;
 }
 
+export interface MemoryReviewCandidate {
+  pairKey: string;
+  similarity: number;
+  signal: "captured-overlap" | "content-similarity";
+  left: BraceMemory;
+  right: BraceMemory;
+}
+
+export interface MemoryQuality {
+  active: number;
+  pendingReview: number;
+  linked: number;
+  highConfidence: number;
+  linkedPercent: number;
+  highConfidencePercent: number;
+  candidates: MemoryReviewCandidate[];
+}
+
 export interface TimelineEvent {
   id: string;
   eventType: string;
@@ -116,6 +134,7 @@ export interface BraceSnapshot {
   };
   projects: BraceProject[];
   memories: BraceMemory[];
+  memoryQuality: MemoryQuality;
   timeline: TimelineEvent[];
   graph: { nodes: GraphNode[]; edges: GraphEdge[] };
   skills: BraceSkill[];
@@ -158,6 +177,11 @@ export interface BraceElectronApi {
   getBraceMemory: (id: string) => Promise<BraceMemory | null>;
   createBraceMemory: (input: Record<string, unknown>) => Promise<unknown>;
   updateBraceMemory: (id: string, changes: Record<string, unknown>) => Promise<unknown>;
+  resolveBraceMemoryReview: (input: {
+    leftId: string;
+    rightId: string;
+    outcome: "distinct" | "keep-left" | "keep-right";
+  }) => Promise<unknown>;
   forgetBraceMemory: (id: string) => Promise<boolean>;
   addBraceEvidence: (id: string, input: Record<string, unknown>) => Promise<unknown>;
   createBraceDecision: (input: Record<string, unknown>) => Promise<unknown>;

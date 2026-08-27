@@ -2,10 +2,10 @@
 
 "use strict";
 
-const { app, BrowserWindow, net, protocol } = require("electron");
+const { app, BrowserWindow, protocol } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
-const { pathToFileURL } = require("node:url");
+const { createSecureAssetResponse } = require("../electron/secure-asset-response");
 
 const root = path.resolve(__dirname, "..");
 if (!process.env.BRACE_E2E_USER_DATA) {
@@ -123,16 +123,18 @@ async function run() {
   const outputRoot = path.join(root, "out");
   protocol.handle("brain", (request) => {
     const url = new URL(request.url);
+    if (url.hostname !== "app") {
+      return new Response("Not found", { status: 404 });
+    }
     let pathname = decodeURIComponent(url.pathname || "/index.html");
     if (pathname === "/" || pathname === "") pathname = "/index.html";
     const candidate = path.resolve(outputRoot, pathname.replace(/^\/+/, ""));
     const filePath =
       candidate.startsWith(`${outputRoot}${path.sep}`) &&
-      fs.existsSync(candidate) &&
-      fs.statSync(candidate).isFile()
+      fs.existsSync(candidate)
         ? candidate
         : path.join(outputRoot, "index.html");
-    return net.fetch(pathToFileURL(filePath).toString());
+    return createSecureAssetResponse(filePath);
   });
 
   let window = null;
@@ -188,6 +190,34 @@ async function run() {
   await setInput(window, "#quick-content", "Every native release artifact keeps an immutable SHA-256 checksum beside its download link.");
   await clickText(window, "Save memory");
   await waitFor(window, "document.body.innerText.includes('Memory saved locally.') && !document.querySelector('[aria-labelledby=\"quick-capture-title\"]')");
+
+  service.store.createMemory({
+    kind: "procedure",
+    scope: "global",
+    title: "Verify each release checksum before install",
+    summary: "Compare each downloaded artifact with its published SHA-256 checksum.",
+    content: "Compare each downloaded release artifact with the published SHA-256 checksum before installation.",
+  });
+  service.store.createMemory({
+    kind: "procedure",
+    scope: "global",
+    title: "Verify every release checksum before install",
+    summary: "Compare every downloaded artifact with its published SHA-256 checksum.",
+    content: "Compare every downloaded release artifact with the published SHA-256 checksum before installation.",
+  });
+  await window.reload();
+  await waitFor(window, "document.body.innerText.includes('Your context, ready when AI needs it.')");
+  await clickText(window, "Memories");
+  await window.webContents.executeJavaScript(
+    "document.querySelector('button[aria-label=\"Open memory review queue\"]')?.click()",
+  );
+  await waitFor(window, "document.body.innerText.includes('Possible overlap') && document.body.innerText.includes('Keep both as distinct')");
+  const memoryReview = await screenshot(window, "app-memory-review");
+  const reviewBefore = service.snapshot().memoryQuality.pendingReview;
+  await clickText(window, "Keep both as distinct");
+  await waitFor(window, "document.body.innerText.includes('Review queue is clear.') && document.body.innerText.includes('intentionally distinct')");
+  const reviewResolved = service.snapshot().memoryQuality.pendingReview === 0 &&
+    service.store.listTimeline().some((event) => event.eventType === "memory.reviewed");
 
   await clickText(window, "Recall");
   await setInput(window, "input[placeholder^='What did we decide']", "canonical source files");
@@ -257,12 +287,14 @@ async function run() {
     profileIsTemporary: service.databasePath.startsWith(userData),
     databaseExists,
     stats: snapshot.stats,
-    screenshots: [onboarding, overview, commands, capture, recall, timeline, graph, skills, settings].map((target) =>
+    screenshots: [onboarding, overview, commands, capture, memoryReview, recall, timeline, graph, skills, settings].map((target) =>
       process.env.CI ? path.basename(target) : path.relative(root, target),
     ),
     graphInteraction,
     connectionReady,
     preferenceReady,
+    reviewBefore,
+    reviewResolved,
     consoleErrors,
   };
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -270,7 +302,7 @@ async function run() {
     !report.profileIsTemporary ||
     !databaseExists ||
     snapshot.stats.projects !== 1 ||
-    snapshot.stats.memories !== 4 ||
+    snapshot.stats.memories !== 6 ||
     snapshot.stats.decisions !== 1 ||
     !graphInteraction.selectedSource ||
     !graphInteraction.zoomed ||
@@ -278,6 +310,8 @@ async function run() {
     !graphInteraction.flowLayout ||
     !connectionReady ||
     !preferenceReady ||
+    reviewBefore !== 1 ||
+    !reviewResolved ||
     consoleErrors.length
   ) {
     process.exitCode = 1;

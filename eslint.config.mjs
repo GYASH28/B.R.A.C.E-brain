@@ -52,6 +52,8 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "out/**",
     "build/**",
     "dist/**",
+    "**/.vercel/**",
+    "website/**/vendor/**",
     "public/graph-simulation.worker.js",
     "external-tools/**",
     "_BRACE_DATA/**",

@@ -8,6 +8,7 @@ export type BraceView =
   | "home"
   | "search"
   | "memories"
+  | "review"
   | "timeline"
   | "graph"
   | "projects"
@@ -34,6 +35,11 @@ interface BraceState {
   initializeDemo: () => Promise<void>;
   search: (query?: string) => Promise<void>;
   createMemory: (input: Record<string, unknown>) => Promise<void>;
+  resolveMemoryReview: (input: {
+    leftId: string;
+    rightId: string;
+    outcome: "distinct" | "keep-left" | "keep-right";
+  }) => Promise<void>;
   forgetMemory: (id: string) => Promise<void>;
   createDecision: (input: Record<string, unknown>) => Promise<void>;
   addProject: () => Promise<void>;
@@ -125,6 +131,20 @@ export const useBrace = create<BraceState>((set, get) => {
         await api.createBraceMemory(input);
         await refresh();
         set({ notice: "Memory saved locally." });
+      }),
+    resolveMemoryReview: async (input) =>
+      perform("Resolving memory review…", async () => {
+        const api = desktop();
+        if (!api?.resolveBraceMemoryReview) {
+          throw new Error("Memory review is available in the desktop app.");
+        }
+        await api.resolveBraceMemoryReview(input);
+        await refresh();
+        set({
+          notice: input.outcome === "distinct"
+            ? "Both memories were kept as intentionally distinct."
+            : "The selected memory is now canonical. The other remains recoverable as superseded.",
+        });
       }),
     forgetMemory: async (id) =>
       perform("Forgetting memory…", async () => {

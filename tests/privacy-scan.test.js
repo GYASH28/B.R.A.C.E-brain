@@ -7,6 +7,7 @@ const root = path.resolve(__dirname, "..");
 const excluded = new Set([
   ".git",
   ".next",
+  ".vercel",
   "node_modules",
   "out",
   "dist",

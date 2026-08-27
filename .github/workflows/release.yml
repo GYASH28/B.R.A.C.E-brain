@@ -82,7 +82,7 @@ jobs:
         shell: bash
         run: |
           release_version="${GITHUB_REF_NAME#v}"
-          npm sbom --sbom-format cyclonedx > "release-files/brace-${release_version}.cdx.json"
+          npm sbom --sbom-format cyclonedx --sbom-type application | node scripts/normalize-sbom.js > "release-files/brace-${release_version}.cdx.json"
           find release-files -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's#  release-files/#  #' > release-files/SHA256SUMS.txt
       - name: Create GitHub prerelease
         shell: bash

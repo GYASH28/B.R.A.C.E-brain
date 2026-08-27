@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("brace:create-memory", input),
   updateBraceMemory: (id: string, changes: unknown) =>
     ipcRenderer.invoke("brace:update-memory", id, changes),
+  resolveBraceMemoryReview: (input: unknown) =>
+    ipcRenderer.invoke("brace:resolve-memory-review", input),
   forgetBraceMemory: (id: string) =>
     ipcRenderer.invoke("brace:forget-memory", id),
   addBraceEvidence: (id: string, input: unknown) =>

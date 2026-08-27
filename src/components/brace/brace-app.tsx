@@ -179,14 +179,17 @@ export function BraceApp() {
     return () => window.removeEventListener("keydown", handler);
   }, [setView]);
 
-  if (loading || !snapshot) return <LoadingScreen />;
+  if (loading) return <LoadingScreen />;
+  if (!snapshot) {
+    return <StartupFailure error={error} onRetry={() => void bootstrap()} />;
+  }
 
   const isEmpty = snapshot.environment === "desktop" &&
     snapshot.stats.projects === 0 && snapshot.stats.memories === 0;
   if (isEmpty) return <Onboarding />;
 
   return (
-    <div className="brace-app flex h-[100dvh] overflow-hidden text-[#f4f1eb]">
+    <div data-brace-state="ready" className="brace-app flex h-[100dvh] overflow-hidden text-[#f4f1eb]">
       <div className="brace-ambient" aria-hidden="true"><i /><i /><i /></div>
       <aside
         className={`brace-sidebar relative z-20 flex shrink-0 flex-col transition-[width] duration-300 ${collapsed ? "w-[76px]" : "w-[238px]"}`}
@@ -210,7 +213,7 @@ export function BraceApp() {
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="BRACE navigation">
           {nav.map((item) => {
-            const active = view === item.view;
+            const active = view === item.view || (item.view === "memories" && view === "review");
             const Icon = item.icon;
             return (
               <button
@@ -272,6 +275,7 @@ export function BraceApp() {
           {view === "home" && <Overview />}
           {view === "search" && <SearchView />}
           {view === "memories" && <MemoriesView />}
+          {view === "review" && <MemoryReviewView />}
           {view === "timeline" && <TimelineView />}
           {view === "graph" && <GraphView />}
           {view === "projects" && <ProjectsView />}
@@ -307,7 +311,7 @@ function BraceMark() {
 
 function LoadingScreen() {
   return (
-    <div className="brace-opening" role="status" aria-live="polite">
+    <div data-brace-state="loading" className="brace-opening" role="status" aria-live="polite">
       <div className="brace-opening-orbits" aria-hidden="true"><i /><i /><i /></div>
       <div className="brace-opening-copy">
         <div className="mx-auto mb-6"><BraceMark /></div>
@@ -321,10 +325,28 @@ function LoadingScreen() {
   );
 }
 
+function StartupFailure({ error, onRetry }: { error: string | null; onRetry: () => void }) {
+  return (
+    <div data-brace-state="error" className="brace-opening" role="alert">
+      <div className="brace-opening-orbits" aria-hidden="true"><i /><i /><i /></div>
+      <div className="brace-opening-copy">
+        <div className="mx-auto mb-6"><BraceMark /></div>
+        <span>LOCAL MEMORY NEEDS ATTENTION</span>
+        <h1>BRACE could not open<br />your local index.</h1>
+        <p>{error || "The desktop runtime did not return a valid memory snapshot."}</p>
+        <button type="button" onClick={onRetry} className="brace-primary mx-auto mt-7 h-11 px-5">
+          <RefreshCw className="h-4 w-4" /> Try again
+        </button>
+        <p className="mt-4 text-[11px] text-white/35">Your source files were not changed.</p>
+      </div>
+    </div>
+  );
+}
+
 function Onboarding() {
   const { initializeDemo, addProject, operation, error, clearMessage } = useBrace();
   return (
-    <div className="brace-onboarding relative flex min-h-[100dvh] overflow-hidden text-[#eef7ff]">
+    <div data-brace-state="ready" className="brace-onboarding relative flex min-h-[100dvh] overflow-hidden text-[#eef7ff]">
       <div className="brace-onboarding-light pointer-events-none absolute inset-0" />
       <div className="relative mx-auto flex w-full max-w-6xl flex-col px-7 py-8 lg:px-12">
         <header className="flex items-center gap-3">
@@ -571,12 +593,17 @@ function Overview() {
         </button>
 
         <div className="brace-vitals" aria-label="Memory health">
-          <div className="vitals-heading"><span>LOCAL INDEX</span><strong>Healthy <i /></strong></div>
+          <div className="vitals-heading"><span>LOCAL INDEX</span><strong>{snapshot.memoryQuality.pendingReview ? "Review ready" : "Healthy"} <i /></strong></div>
           {stats.map(([label, value, Icon], index) => (
             <button key={label} type="button" onClick={() => setView(index === 0 ? "memories" : index === 2 ? "timeline" : index === 3 ? "graph" : "projects")} className="vital-row">
               <span><Icon className="h-4 w-4" />{label}</span><strong>{value.toLocaleString()}</strong><i style={{ "--vital": `${Math.min(100, 28 + value * 12)}%` } as React.CSSProperties} />
             </button>
           ))}
+          <button type="button" onClick={() => setView("review")} className="vital-row">
+            <span><Archive className="h-4 w-4" />review queue</span>
+            <strong>{snapshot.memoryQuality.pendingReview.toLocaleString()}</strong>
+            <i style={{ "--vital": `${snapshot.memoryQuality.pendingReview ? 72 : 100}%` } as React.CSSProperties} />
+          </button>
           <button type="button" onClick={() => setView("search")} className="vitals-recall"><Search className="h-4 w-4" /> Ask your memory <ArrowRight className="ml-auto h-4 w-4" /></button>
         </div>
       </section>
@@ -691,13 +718,13 @@ function SearchView() {
 }
 
 function MemoriesView() {
-  const { snapshot, setSelectedMemory } = useBrace();
+  const { snapshot, setSelectedMemory, setView } = useBrace();
   const [composerOpen, setComposerOpen] = useState(false);
   const [filter, setFilter] = useState("all");
   if (!snapshot) return null;
   const memories = filter === "all" ? snapshot.memories : snapshot.memories.filter((memory) => memory.kind === filter);
   return (
-    <Page eyebrow="Durable context" title="Memory" description="Concise facts, lessons, procedures, warnings, and preferences—kept separate from raw source material." actions={<button type="button" onClick={() => setComposerOpen((value) => !value)} className="brace-primary h-10 px-4"><Plus className="h-4 w-4" />Remember</button>}>
+    <Page eyebrow="Durable context" title="Memory" description="Concise facts, lessons, procedures, warnings, and preferences—kept separate from raw source material." actions={<><button type="button" aria-label="Open memory review queue" onClick={() => setView("review")} className="brace-secondary h-10 px-4"><Archive className="h-4 w-4" />Review queue{snapshot.memoryQuality.pendingReview > 0 && <span className="rounded-full bg-sky-300/15 px-1.5 py-0.5 text-[9px] text-sky-100">{snapshot.memoryQuality.pendingReview}</span>}</button><button type="button" onClick={() => setComposerOpen((value) => !value)} className="brace-primary h-10 px-4"><Plus className="h-4 w-4" />Remember</button></>}>
       {composerOpen && <MemoryComposer onClose={() => setComposerOpen(false)} />}
       <div className="mb-4 flex flex-wrap gap-2">
         {["all", "project", "decision", "lesson", "warning", "preference", "fact", "procedure"].map((kind) => (
@@ -716,6 +743,96 @@ function MemoriesView() {
       </div>
       {!memories.length && <div className="brace-card py-16 text-center text-sm text-white/32">No memories in this category.</div>}
     </Page>
+  );
+}
+
+function MemoryReviewView() {
+  const { snapshot, resolveMemoryReview, setSelectedMemory, setView, operation } = useBrace();
+  if (!snapshot) return null;
+  const quality = snapshot.memoryQuality;
+  return (
+    <Page
+      eyebrow="Memory intelligence"
+      title="Keep your memory precise."
+      description="BRACE flags likely overlap without auto-merging. You decide which memory becomes canonical, or confirm that both express distinct truths."
+      actions={<button type="button" onClick={() => setView("memories")} className="brace-secondary h-10 px-4"><Brain className="h-4 w-4" />Back to memory</button>}
+    >
+      <div className="mb-5 grid gap-3 sm:grid-cols-3">
+        <QualityMetric label="Needs review" value={quality.pendingReview} detail="Potentially overlapping pairs" tone={quality.pendingReview ? "attention" : "good"} />
+        <QualityMetric label="Provenance linked" value={`${quality.linkedPercent}%`} detail={`${quality.linked} of ${quality.active} active memories`} tone="neutral" />
+        <QualityMetric label="High confidence" value={`${quality.highConfidencePercent}%`} detail={`${quality.highConfidence} at 80% or above`} tone="neutral" />
+      </div>
+
+      {quality.candidates.length ? (
+        <div className="space-y-4" aria-label="Memory review queue">
+          {quality.candidates.map((candidate, index) => (
+            <article key={candidate.pairKey} className="brace-card overflow-hidden">
+              <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.06] px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-300/15 bg-sky-300/[0.06] font-mono text-[10px] text-sky-100/65">{String(index + 1).padStart(2, "0")}</span>
+                  <div><h2 className="text-sm font-semibold">Possible overlap</h2><p className="mt-0.5 text-[10px] text-white/30">{candidate.signal === "captured-overlap" ? "Detected during capture" : "Detected by local content comparison"}</p></div>
+                </div>
+                <span className="rounded-full border border-violet-300/15 bg-violet-300/[0.06] px-2.5 py-1 text-[10px] font-medium text-violet-100/65">{Math.round(candidate.similarity * 100)}% lexical overlap</span>
+              </header>
+              <div className="grid lg:grid-cols-2">
+                <ReviewMemory
+                  side="left"
+                  memory={candidate.left}
+                  onInspect={() => setSelectedMemory(candidate.left)}
+                  onKeep={() => void resolveMemoryReview({ leftId: candidate.left.id, rightId: candidate.right.id, outcome: "keep-left" })}
+                  disabled={Boolean(operation)}
+                />
+                <ReviewMemory
+                  side="right"
+                  memory={candidate.right}
+                  onInspect={() => setSelectedMemory(candidate.right)}
+                  onKeep={() => void resolveMemoryReview({ leftId: candidate.left.id, rightId: candidate.right.id, outcome: "keep-right" })}
+                  disabled={Boolean(operation)}
+                />
+              </div>
+              <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.06] bg-white/[0.012] px-5 py-3">
+                <p className="max-w-2xl text-[10px] leading-5 text-white/28">Choosing a canonical memory keeps both records in SQLite; the other leaves active recall as superseded.</p>
+                <button
+                  type="button"
+                  disabled={Boolean(operation)}
+                  onClick={() => void resolveMemoryReview({ leftId: candidate.left.id, rightId: candidate.right.id, outcome: "distinct" })}
+                  className="brace-secondary h-9 px-3 disabled:opacity-40"
+                >
+                  <CircleDot className="h-3.5 w-3.5" />Keep both as distinct
+                </button>
+              </footer>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <section className="brace-card py-20 text-center">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.06] text-emerald-200"><Check className="h-6 w-6" /></span>
+          <h2 className="mt-5 text-lg font-semibold">Review queue is clear.</h2>
+          <p className="mx-auto mt-2 max-w-md text-xs leading-5 text-white/35">No unresolved near-duplicate pairs are active. BRACE will surface new candidates here instead of merging them silently.</p>
+          <button type="button" onClick={() => setView("memories")} className="brace-primary mx-auto mt-6 h-10 px-4"><Plus className="h-4 w-4" />Capture a memory</button>
+        </section>
+      )}
+    </Page>
+  );
+}
+
+function QualityMetric({ label, value, detail, tone }: { label: string; value: string | number; detail: string; tone: "attention" | "good" | "neutral" }) {
+  const color = tone === "attention" ? "text-amber-200" : tone === "good" ? "text-emerald-200" : "text-sky-100";
+  return <div className="brace-card p-4"><p className="brace-label">{label}</p><strong className={`mt-2 block text-2xl font-medium tracking-[-0.04em] ${color}`}>{value}</strong><p className="mt-1 text-[10px] text-white/28">{detail}</p></div>;
+}
+
+function ReviewMemory({ side, memory, onInspect, onKeep, disabled }: { side: "left" | "right"; memory: BraceMemory; onInspect: () => void; onKeep: () => void; disabled: boolean }) {
+  return (
+    <section className={`p-5 ${side === "right" ? "border-t border-white/[0.06] lg:border-l lg:border-t-0" : ""}`}>
+      <div className="flex items-center justify-between gap-3"><span className={`rounded-md border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider ${kindTone[memory.kind]}`}>{memory.kind}</span><span className="text-[10px] text-white/25">{Math.round(memory.confidence * 100)}% confidence</span></div>
+      <h3 className="mt-4 text-[15px] font-semibold leading-5 text-white/90">{memory.title}</h3>
+      <p className="mt-2 min-h-15 text-xs leading-5 text-white/40">{memory.summary}</p>
+      <div className="mt-4 flex items-center gap-2 text-[10px] text-white/24"><FileText className="h-3 w-3" /><span className="truncate">{shortUri(memory.sourceUri)}</span><span>·</span><span>{formatDate(memory.updatedAt)}</span></div>
+      <div className="mt-5 flex flex-wrap gap-2">
+        <button type="button" onClick={onKeep} disabled={disabled} aria-label={`Keep ${memory.title} as canonical`} className="brace-primary h-9 px-3 disabled:opacity-40"><Check className="h-3.5 w-3.5" />Keep this memory</button>
+        <button type="button" onClick={onInspect} className="brace-secondary h-9 px-3">Inspect</button>
+      </div>
+    </section>
   );
 }
 

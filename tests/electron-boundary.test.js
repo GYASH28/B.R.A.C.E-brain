@@ -9,6 +9,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 test("Electron renderer is isolated behind a narrow BRACE bridge", () => {
   const main = read("electron/main.ts");
   const preload = read("electron/preload.ts");
+  const assets = read("electron/secure-asset-response.js");
 
   assert.match(main, /contextIsolation:\s*true/);
   assert.match(main, /nodeIntegration:\s*false/);
@@ -17,13 +18,20 @@ test("Electron renderer is isolated behind a narrow BRACE bridge", () => {
   assert.match(main, /setWindowOpenHandler\(\(\) => \(\{ action: "deny" \}\)\)/);
   assert.match(main, /setPermissionRequestHandler/);
   assert.match(main, /will-attach-webview/);
-  assert.match(main, /Content-Security-Policy/);
+  assert.match(main, /createSecureAssetResponse/);
+  assert.match(main, /url\.hostname !== "app"/);
+  assert.match(main, /smokeRendererInteractive/);
+  assert.match(main, /data-brace-state/);
+  assert.match(assets, /Content-Security-Policy/);
+  assert.match(assets, /inlineScriptHashes/);
+  assert.doesNotMatch(assets, /script-src[^;]*unsafe-inline/);
   assert.match(main, /candidate\.startsWith/);
 
   for (const operation of [
     "getBraceSnapshot",
     "searchBrace",
     "createBraceMemory",
+    "resolveBraceMemoryReview",
     "forgetBraceMemory",
     "addBraceProject",
     "installBraceSkill",

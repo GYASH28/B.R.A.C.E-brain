@@ -58,9 +58,15 @@ test("premium workspace interactions remain real, keyboard reachable, and locall
     "Graph layout",
     "Make the workspace fit you",
     "Stored in your local database",
+    "Memory intelligence",
+    "Keep both as distinct",
+    "review queue",
+    "LOCAL MEMORY NEEDS ATTENTION",
+    "Try again",
   ]) {
     assert.match(app, new RegExp(capability, "i"));
   }
+  assert.match(app, /data-brace-state="(?:loading|ready|error)"/);
   assert.match(app, /ctrlKey.*key\.toLowerCase\(\) === "k"/s);
   assert.match(app, /ctrlKey.*key\.toLowerCase\(\) === "n"/s);
   assert.match(app, /data-node-index/);

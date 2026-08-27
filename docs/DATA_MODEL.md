@@ -1,6 +1,6 @@
 # Data model and memory lifecycle
 
-Schema version 2 is stored in SQLite and migrated transactionally by `MemoryStore`. WAL mode supports safe concurrent readers from the desktop and MCP processes.
+Schema version 3 is stored in SQLite and migrated transactionally by `MemoryStore`. WAL mode supports safe concurrent readers from the desktop and MCP processes.
 
 ## Tables
 
@@ -17,6 +17,7 @@ Schema version 2 is stored in SQLite and migrated transactionally by `MemoryStor
 | `events` | Timeline of real product actions | Append-oriented, cleared by delete-all |
 | `entities` | Deterministically extracted tags and wiki-link topics | Rebuildable or explicitly related |
 | `relations` | Typed edges between projects, sources, memories, decisions, and entities | Follows endpoint lifecycle |
+| `memory_reviews` | Resolved overlap pairs and the chosen canonical memory, without duplicated content | Removed with either memory or delete-all |
 | `skills` | Normalized manifest, install path, permissions, status, checksum | User-controlled |
 | `settings` | Versioned local configuration | User-controlled |
 
@@ -44,7 +45,9 @@ Before storage, BRACE:
 3. normalizes content for exact hashing;
 4. reuses an existing active exact duplicate;
 5. records a near-duplicate candidate without auto-merging;
-6. inserts FTS content, relationships, and a timeline event.
+6. lets the user resolve that pair by keeping either record as canonical or confirming both as distinct;
+7. persists the review outcome so the same pair is not suggested again;
+8. inserts FTS content, relationships, and a timeline event.
 
 BRACE does not store raw chain-of-thought. Users and authorized clients should write concise durable outcomes, not hidden model reasoning.
 
@@ -62,7 +65,7 @@ Supersession retains the old record with a pointer to the new one. It is appropr
 
 Forgetting removes the memory's content, summary, source excerpt, evidence, FTS record, and vector. BRACE retains only a non-sensitive tombstone with an identifier, forgotten status, and audit timestamps. Search excludes it.
 
-Delete-all is broader: it removes projects, sources, chunks, memories, decisions, events, entities, relations, skills, and settings while leaving a valid empty schema. Imported project originals remain untouched.
+Delete-all is broader: it removes projects, sources, chunks, memories, review outcomes, decisions, events, entities, relations, skills, and settings while leaving a valid empty schema. Imported project originals remain untouched.
 
 ## Retrieval
 

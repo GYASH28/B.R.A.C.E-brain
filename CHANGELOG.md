@@ -6,8 +6,31 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Planned
 
-- Collect structured feedback from the 0.3.0 preview.
+- Collect structured feedback from the 0.4.0 preview.
 - Add native signing and update-channel work when maintainers have signing infrastructure.
+
+## [0.4.0] - 2026-08-27
+
+### Added
+
+- Added a persistent local memory-review workbench for near-duplicate records, with explicit keep-left, keep-right, and keep-both outcomes.
+- Added provenance-link and confidence coverage signals to the desktop memory-health surface.
+
+### Changed
+
+- Supersession from the review queue now preserves the noncanonical record for recovery while removing it from active recall.
+- Advanced the SQLite data schema to version 3 with transactional migration of review outcomes.
+- Packaged asset delivery now derives strict CSP hashes from the exact exported Next.js bootstrap scripts and rejects non-app `brain:` origins.
+
+### Fixed
+
+- Fixed the packaged desktop app remaining on its startup sequence because its strict CSP blocked React hydration.
+- Startup snapshot failures now produce a visible, retryable local error state instead of an endless loading screen.
+- Removed the deprecated ASAR `fs.Stats` path from packaged asset delivery.
+
+### Verified
+
+- Native package smoke tests now require an interactive renderer state with no console errors; a window merely loading is no longer considered a pass.
 
 ## [0.3.0] - 2026-08-25
 
@@ -60,7 +83,8 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Removed private seed data, machine-specific paths, legacy local servers, arbitrary plugin execution, and broad renderer privileges from the public candidate.
 - Added secret-pattern tests, dependency auditing, strict embedding endpoint validation, sandboxed rendering, CSP, and repository hygiene controls.
 
-[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0
 [0.3.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.3.0
 [0.2.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.2.0
 [0.1.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.1.0

@@ -56,7 +56,7 @@ test("structured memories survive restart with provenance and evidence", (contex
   assert.equal(memory.sourceId, source.id);
   assert.equal(memory.evidence.length, 1);
   assert.equal(memory.evidence[0].outcome, "promoted");
-  assert.equal(reopened.stats().schemaVersion, 2);
+  assert.equal(reopened.stats().schemaVersion, 3);
   reopened.close();
 });
 
@@ -80,7 +80,65 @@ test("exact duplicates reuse the active record and near duplicates are reviewabl
   assert.equal(exact.memory.id, first.memory.id);
   assert.equal(near.duplicate, false);
   assert.equal(near.duplicateCandidate.id, first.memory.id);
-  assert.ok(store.consolidate("project:demo").length >= 1);
+  const unrelated = store.createMemory({
+    kind: "lesson",
+    scope: "project:demo",
+    title: "Prefer narrow project imports",
+    summary: "Specific roots keep provenance understandable.",
+    content: "Import one specific project root rather than an entire drive or home directory.",
+  }).memory;
+  const candidate = store.listMemoryReviewCandidates({ scope: "project:demo" })[0];
+  assert.equal(candidate.left.id === first.memory.id || candidate.right.id === first.memory.id, true);
+  assert.equal(candidate.signal, "captured-overlap");
+  assert.equal(store.memoryQuality().pendingReview, 1);
+  assert.throws(() => store.resolveMemoryReview({
+    leftId: first.memory.id,
+    rightId: unrelated.id,
+    outcome: "keep-left",
+  }), /not in the active memory review queue/);
+  const result = store.resolveMemoryReview({
+    leftId: candidate.left.id,
+    rightId: candidate.right.id,
+    outcome: "distinct",
+  });
+  assert.equal(result.outcome, "distinct");
+  assert.deepEqual(store.listMemoryReviewCandidates({ scope: "project:demo" }), []);
+  assert.ok(store.listTimeline().some((event) => event.eventType === "memory.reviewed"));
+  store.updateMemory(near.memory.id, { summary: `${near.memory.summary} Refined after review.` });
+  assert.equal(store.listMemoryReviewCandidates({ scope: "project:demo" }).length, 1);
+});
+
+test("review resolution keeps one canonical memory without deleting the other", (context) => {
+  const { store } = fixture(context);
+  const first = store.createMemory({
+    kind: "procedure",
+    scope: "project:review",
+    title: "Verify the release checksum",
+    summary: "Check the published checksum before installation.",
+    content: "Compare every release artifact with its published SHA-256 checksum before installing it.",
+  }).memory;
+  store.createMemory({
+    kind: "procedure",
+    scope: "project:review",
+    title: "Verify each release checksum",
+    summary: "Check every published checksum before installation.",
+    content: "Compare each release artifact against the published SHA-256 checksum before installing it.",
+  });
+  const candidate = store.listMemoryReviewCandidates({ scope: "project:review" })[0];
+  const canonical = candidate.left.id === first.id ? candidate.left : candidate.right;
+  const superseded = candidate.left.id === canonical.id ? candidate.right : candidate.left;
+  const outcome = candidate.left.id === canonical.id ? "keep-left" : "keep-right";
+  const result = store.resolveMemoryReview({
+    leftId: candidate.left.id,
+    rightId: candidate.right.id,
+    outcome,
+  });
+  assert.equal(result.canonicalMemoryId, canonical.id);
+  assert.equal(store.getMemory(canonical.id).status, "active");
+  assert.equal(store.getMemory(superseded.id).status, "superseded");
+  assert.equal(store.getMemory(superseded.id).supersededBy, canonical.id);
+  assert.equal(store.getMemory(superseded.id).content.length > 0, true);
+  assert.deepEqual(store.listMemoryReviewCandidates({ scope: "project:review" }), []);
 });
 
 test("search reports lexical mode unless real model vectors are supplied", (context) => {
@@ -209,7 +267,7 @@ test("deleteAll removes user content without invalidating the schema", (context)
   store.createMemory({ kind: "fact", title: "Delete me", content: "Synthetic data", projectId: project.id });
   store.deleteAll();
   assert.deepEqual(store.stats(), {
-    schemaVersion: 2,
+    schemaVersion: 3,
     projects: 0,
     sources: 0,
     sourceChunks: 0,
@@ -240,7 +298,8 @@ test("version-one databases migrate source chunks without losing memories", (con
   `);
   store.close();
   const migrated = new MemoryStore(databasePath);
-  assert.equal(migrated.stats().schemaVersion, 2);
+  assert.equal(migrated.stats().schemaVersion, 3);
+  assert.deepEqual(migrated.listMemoryReviewCandidates(), []);
   assert.equal(migrated.getMemory(memory.id).title, "Migration fixture");
   assert.deepEqual(migrated.searchSources("anything").results, []);
   migrated.close();

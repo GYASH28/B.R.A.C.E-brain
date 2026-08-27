@@ -37,20 +37,20 @@
     if (event.key === "Escape" && !openingClosed) closeOpeningFilm();
   });
 
-  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.3.0";
+  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.4.0";
   const downloads = {
     windows: {
-      url: `${releaseBase}/BRACE-Setup-0.3.0.exe`,
+      url: `${releaseBase}/BRACE-Setup-0.4.0.exe`,
       platform: "Windows 10 / 11",
       format: ".exe installer",
     },
     linux: {
-      url: `${releaseBase}/BRACE-0.3.0.AppImage`,
+      url: `${releaseBase}/BRACE-0.4.0.AppImage`,
       platform: "Linux x86_64",
       format: "AppImage",
     },
     deb: {
-      url: `${releaseBase}/brace-brain_0.3.0_amd64.deb`,
+      url: `${releaseBase}/brace-brain_0.4.0_amd64.deb`,
       platform: "Debian / Ubuntu",
       format: ".deb package",
     },

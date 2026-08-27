@@ -10,9 +10,9 @@ This roadmap is directional, not a promise of dates. Privacy, data portability, 
 - Improve large-project indexing benchmarks and cancellation feedback.
 - Add an in-app disclosure before configuring any non-loopback embedding provider.
 
-## 0.2 memory quality
+## 0.4 memory quality
 
-- Review queue for near-duplicate and potentially superseded memories.
+- Review queue for near-duplicate and potentially superseded memories. **Implemented for the next release.**
 - Better evidence promotion and rejection workflows.
 - Saved recall filters and scoped evaluation sets.
 - Graph inspection controls that remain deterministic and explainable.

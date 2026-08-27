@@ -24,9 +24,7 @@
   left: clamp(24px, 5.2cqw, 64px) !important;
 }
 
-.split-copy p {
-  margin-bottom: 14px;
-}
+.split-copy p { margin-bottom: 14px; }
 
 .split-copy h1,
 .split-copy h2 {
@@ -43,9 +41,7 @@
   line-height: 1.58;
 }
 
-.split-side--remember .split-copy {
-  max-width: min(470px, 69cqw);
-}
+.split-side--remember .split-copy { max-width: min(470px, 69cqw); }
 
 .hero-product-cue {
   top: auto;
@@ -60,26 +56,10 @@
   transform: perspective(1400px) rotateY(-4.5deg) rotateX(1.8deg);
 }
 
-.hero-product .window-bar {
-  height: 38px;
-}
-
-.receipt-source {
-  top: 17%;
-  right: clamp(18px, 4cqw, 54px);
-}
-
-.receipt-memory {
-  left: clamp(18px, 4.8cqw, 58px);
-  bottom: clamp(18px, 4vh, 42px);
-}
-
-/* The recovery UI belongs to the forgotten side. Keeping it close to that
-   edge makes the action legible instead of looking like a floating footer. */
-.recovery-console {
-  left: clamp(18px, 2vw, 30px);
-  bottom: clamp(18px, 3vh, 30px);
-}
+.hero-product .window-bar { height: 38px; }
+.receipt-source { top: 17%; right: clamp(18px, 4cqw, 54px); }
+.receipt-memory { left: clamp(18px, 4.8cqw, 58px); bottom: clamp(18px, 4vh, 42px); }
+.recovery-console { left: clamp(18px, 2vw, 30px); bottom: clamp(18px, 3vh, 30px); }
 
 @container (max-width: 560px) {
   .split-copy {
@@ -88,30 +68,17 @@
     right: 16px;
   }
   .split-copy h1,
-  .split-copy h2 {
-    font-size: clamp(2.4rem, 13.4cqw, 4.55rem);
-  }
-  .split-copy > span {
-    max-width: 25ch;
-    font-size: 11.5px;
-  }
-  .hero-product-cue {
-    right: 16px;
-    width: min(86cqw, 420px);
-  }
+  .split-copy h2 { font-size: clamp(2.4rem, 13.4cqw, 4.55rem); }
+  .split-copy > span { max-width: 25ch; font-size: 11.5px; }
+  .hero-product-cue { right: 16px; width: min(86cqw, 420px); }
   .source-receipt { display: none; }
 }
 
 @container (max-width: 380px) {
   .split-copy h1,
-  .split-copy h2 {
-    font-size: clamp(2rem, 14cqw, 3.15rem);
-  }
+  .split-copy h2 { font-size: clamp(2rem, 14cqw, 3.15rem); }
   .split-copy > span { display: none; }
-  .hero-product-cue {
-    width: min(82cqw, 300px);
-    opacity: .58;
-  }
+  .hero-product-cue { width: min(82cqw, 300px); opacity: .58; }
 }
 
 @container (max-width: 285px) {
@@ -135,9 +102,7 @@
 }
 
 .download-forget,
-.download-divider {
-  display: none !important;
-}
+.download-divider { display: none !important; }
 
 .download-memory {
   position: absolute;
@@ -167,9 +132,7 @@
   mask-image: radial-gradient(circle at 50% 45%, #000 8%, rgba(0,0,0,.72) 46%, transparent 86%);
 }
 
-#download-field {
-  opacity: .42;
-}
+#download-field { opacity: .42; }
 
 .download-copy {
   position: relative;
@@ -190,9 +153,7 @@
 .download-copy > .section-kicker,
 .download-copy > h2,
 .download-copy > p:not(.section-kicker),
-.download-copy > .package-advisor {
-  grid-column: 1;
-}
+.download-copy > .package-advisor { grid-column: 1; }
 
 .download-copy > img {
   grid-row: 1;
@@ -202,10 +163,7 @@
   margin: 0 0 18px;
 }
 
-.download-copy > .section-kicker {
-  grid-row: 2;
-  justify-self: start;
-}
+.download-copy > .section-kicker { grid-row: 2; justify-self: start; }
 
 .download-copy h2 {
   grid-row: 3;
@@ -240,14 +198,8 @@
   text-align: left;
 }
 
-.package-advisor > span {
-  grid-column: 1 / -1;
-}
-
-.package-advisor > div {
-  justify-self: start;
-}
-
+.package-advisor > span { grid-column: 1 / -1; }
+.package-advisor > div { justify-self: start; }
 .package-advisor > p {
   min-width: 0;
   max-width: 30ch !important;
@@ -275,28 +227,14 @@
   border-radius: 21px;
 }
 
-.platform-download > p {
-  margin: 14px 0 16px;
-  font-size: 10.5px;
-  line-height: 1.55;
-}
-
+.platform-download > p { margin: 14px 0 16px; font-size: 10.5px; line-height: 1.55; }
 .platform-actions,
-.platform-actions--linux {
-  grid-template-columns: minmax(0,1fr) 132px;
-  gap: 9px;
-}
-
+.platform-actions--linux { grid-template-columns: minmax(0,1fr) 132px; gap: 9px; }
 .platform-primary,
 .platform-secondary,
-.platform-guide {
-  min-height: 58px;
-}
-
+.platform-guide { min-height: 58px; }
 .platform-guide,
-.platform-secondary {
-  min-width: 0;
-}
+.platform-secondary { min-width: 0; }
 
 .release-proof {
   grid-column: 1 / -1;
@@ -308,74 +246,46 @@
   border-top: 1px solid rgba(211,239,255,.075);
 }
 
-/* The two package cards should read as a pair, not as different-height tiles. */
-.platform-downloads > .platform-download {
-  height: 100%;
-}
+.platform-downloads > .platform-download { height: 100%; }
 
 @media (max-width: 1120px) and (min-width: 901px) {
-  .download-stage {
-    padding-inline: 28px;
-  }
+  .download-stage { padding-inline: 28px; }
   .download-copy {
     width: min(100%, 1060px);
     grid-template-columns: minmax(270px, .72fr) minmax(500px, 1.28fr);
     column-gap: 30px;
   }
-  .download-copy h2 {
-    font-size: clamp(3.7rem, 6.3vw, 5.25rem);
-  }
-  .download-copy > img {
-    width: 58px;
-    height: 58px;
-    margin-bottom: 13px;
-  }
-  .download-copy > p:not(.section-kicker) {
-    margin-bottom: 17px;
-    font-size: 12.5px;
-  }
+  .download-copy h2 { font-size: clamp(3.7rem, 6.3vw, 5.25rem); }
+  .download-copy > img { width: 58px; height: 58px; margin-bottom: 13px; }
+  .download-copy > p:not(.section-kicker) { margin-bottom: 17px; font-size: 12.5px; }
   .package-advisor { padding: 10px; }
   .platform-download { min-height: 196px; padding: 18px; }
   .platform-download > p { margin-block: 11px 13px; }
 }
 
 @media (max-height: 780px) and (min-width: 901px) {
-  .download-stage {
-    padding-top: 88px;
-    padding-bottom: 18px;
-  }
-  .download-copy > img {
-    width: 50px;
-    height: 50px;
-    margin-bottom: 9px;
-  }
-  .download-copy h2 {
-    margin: 10px 0 13px;
-    font-size: clamp(3.5rem, 5.7vw, 5.4rem);
-  }
-  .download-copy > p:not(.section-kicker) {
-    margin-bottom: 13px;
-    line-height: 1.55;
-  }
-  .package-advisor { padding: 9px 10px; }
-  .platform-download { min-height: 180px; padding: 16px 18px; }
-  .platform-download header > span { width: 38px; height: 38px; }
-  .platform-download > p { margin: 9px 0 11px; }
+  .download-stage { padding-top: 84px; padding-bottom: 14px; }
+  .download-copy > img { width: 44px; height: 44px; margin-bottom: 7px; }
+  .download-copy .section-kicker { font-size: 8px; }
+  .download-copy h2 { margin: 8px 0 10px; font-size: clamp(3.1rem, 5.1vw, 4.65rem); }
+  .download-copy > p:not(.section-kicker) { margin-bottom: 10px; font-size: 11.5px; line-height: 1.48; }
+  .package-advisor { padding: 8px 9px; gap: 7px 9px; }
+  .package-advisor button { min-height: 32px; }
+  .platform-download { min-height: 166px; padding: 14px 16px; }
+  .platform-download header > span { width: 36px; height: 36px; }
+  .platform-download header h3 { margin-top: 3px; font-size: 14px; }
+  .platform-download > p { margin: 7px 0 9px; line-height: 1.42; }
   .platform-primary,
   .platform-secondary,
-  .platform-guide { min-height: 52px; }
-  .release-proof { margin-top: 14px; padding-top: 11px; }
+  .platform-guide { min-height: 48px; }
+  .release-proof { margin-top: 10px; padding-top: 9px; }
 }
 
 /* -------------------------------------------------------------------------
    COMPACT / PHONE — the fixed bottom rail is part of the layout budget.
    ------------------------------------------------------------------------- */
 @media (max-width: 900px) {
-  .download-stage {
-    display: block;
-    padding: 104px var(--v5-gutter) 122px;
-  }
-
+  .download-stage { display: block; padding: 104px var(--v5-gutter) 122px; }
   .download-memory {
     position: relative;
     inset: auto !important;
@@ -385,208 +295,65 @@
       radial-gradient(circle at 78% 12%, rgba(94,181,255,.11), transparent 24rem),
       linear-gradient(180deg, #06111f, #02050b);
   }
-
-  .download-copy {
-    width: 100%;
-    display: block;
-    text-align: left;
-  }
-
-  .download-copy > img {
-    width: 62px;
-    height: 62px;
-    margin: 0 0 17px;
-  }
-
+  .download-copy { width: 100%; display: block; text-align: left; }
+  .download-copy > img { width: 62px; height: 62px; margin: 0 0 17px; }
   .download-copy > .section-kicker { justify-self: auto; }
-
-  .download-copy h2 {
-    max-width: 7.4ch;
-    margin: 15px 0 18px;
-    font-size: clamp(4rem, 11vw, 6.4rem);
-  }
-
-  .download-copy > p:not(.section-kicker) {
-    max-width: 50ch;
-    margin: 0 0 24px;
-  }
-
-  .package-advisor {
-    max-width: 620px;
-    margin: 0 0 24px;
-  }
-
-  .platform-downloads {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap: 12px;
-  }
-
-  .platform-download {
-    min-height: 250px;
-    height: auto !important;
-  }
-
-  .release-proof {
-    justify-content: flex-start;
-    margin-top: 22px;
-  }
+  .download-copy h2 { max-width: 7.4ch; margin: 15px 0 18px; font-size: clamp(4rem, 11vw, 6.4rem); }
+  .download-copy > p:not(.section-kicker) { max-width: 50ch; margin: 0 0 24px; }
+  .package-advisor { max-width: 620px; margin: 0 0 24px; }
+  .platform-downloads { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+  .platform-download { min-height: 250px; height: auto !important; }
+  .release-proof { justify-content: flex-start; margin-top: 22px; }
 }
 
 @media (max-width: 760px) {
   :root { --mobile-rail-clearance: calc(88px + env(safe-area-inset-bottom)); }
-
-  .split-stage {
-    grid-template-rows: 39% 61%;
-  }
-
-  .memory-divider {
-    top: 39%;
-  }
-
-  .split-copy {
-    top: 18px;
-    left: 18px !important;
-    right: 16px;
-    max-width: 330px;
-  }
-
+  .split-stage { grid-template-rows: 39% 61%; }
+  .memory-divider { top: 39%; }
+  .split-copy { top: 18px; left: 18px !important; right: 16px; max-width: 330px; }
   .split-copy h1,
-  .split-copy h2 {
-    margin-bottom: 9px;
-    font-size: clamp(2.25rem, 11.4vw, 3.65rem);
-  }
+  .split-copy h2 { margin-bottom: 9px; font-size: clamp(2.25rem, 11.4vw, 3.65rem); }
+  .hero-product-cue { right: 14px; bottom: var(--mobile-rail-clearance); width: min(66%, 300px); }
+  .recovery-console { left: 14px; top: calc(39% - 40px); bottom: auto; }
 
-  .hero-product-cue {
-    right: 14px;
-    bottom: var(--mobile-rail-clearance);
-    width: min(66%, 300px);
-  }
-
-  .recovery-console {
-    left: 14px;
-    top: calc(39% - 40px);
-    bottom: auto;
-  }
-
-  .download-stage {
-    padding: 92px 16px calc(112px + env(safe-area-inset-bottom));
-  }
-
-  .download-copy > img {
-    width: 54px;
-    height: 54px;
-  }
-
-  .download-copy h2 {
-    font-size: clamp(3.55rem, 15.5vw, 5.6rem);
-  }
-
-  .download-copy > p:not(.section-kicker) {
-    font-size: 13px;
-  }
-
-  .package-advisor {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 9px;
-  }
-
+  .download-stage { padding: 92px 16px calc(112px + env(safe-area-inset-bottom)); }
+  .download-copy > img { width: 54px; height: 54px; }
+  .download-copy h2 { font-size: clamp(3.55rem, 15.5vw, 5.6rem); }
+  .download-copy > p:not(.section-kicker) { font-size: 13px; }
+  .package-advisor { display: grid; grid-template-columns: 1fr; gap: 9px; }
   .package-advisor > span,
   .package-advisor > div,
-  .package-advisor > p {
-    grid-column: 1;
-  }
-
-  .package-advisor > div {
-    width: 100%;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .package-advisor button {
-    min-height: 42px;
-  }
-
-  .package-advisor > p {
-    max-width: none !important;
-  }
-
-  .platform-downloads {
-    grid-template-columns: 1fr;
-  }
-
-  .platform-download {
-    min-height: 0;
-    padding: 19px;
-  }
-
+  .package-advisor > p { grid-column: 1; }
+  .package-advisor > div { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .package-advisor button { min-height: 42px; }
+  .package-advisor > p { max-width: none !important; }
+  .platform-downloads { grid-template-columns: 1fr; }
+  .platform-download { min-height: 0; padding: 19px; }
   .platform-actions,
-  .platform-actions--linux {
-    grid-template-columns: minmax(0,1fr) 116px;
-  }
-
+  .platform-actions--linux { grid-template-columns: minmax(0,1fr) 116px; }
   .platform-primary,
   .platform-secondary,
-  .platform-guide {
-    min-height: 56px;
-  }
-
-  .release-proof {
-    gap: 9px 13px;
-    padding-top: 14px;
-  }
+  .platform-guide { min-height: 56px; }
+  .release-proof { gap: 9px 13px; padding-top: 14px; }
 }
 
 @media (max-width: 430px) {
   .split-copy h1,
-  .split-copy h2 {
-    font-size: clamp(2.05rem, 11vw, 3rem);
-  }
-
-  .split-copy > span {
-    font-size: 9.5px;
-  }
-
-  .hero-product-cue {
-    width: min(58%, 232px);
-    bottom: calc(90px + env(safe-area-inset-bottom));
-  }
-
-  .recovery-console {
-    top: calc(39% - 38px);
-    padding: 7px 9px;
-  }
-
-  .download-copy h2 {
-    font-size: clamp(3.2rem, 15vw, 4.9rem);
-  }
-
-  .platform-download header {
-    grid-template-columns: 42px minmax(0,1fr) auto;
-    gap: 10px;
-  }
-
+  .split-copy h2 { font-size: clamp(2.05rem, 11vw, 3rem); }
+  .split-copy > span { font-size: 9.5px; }
+  .hero-product-cue { width: min(58%, 232px); bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .recovery-console { top: calc(39% - 38px); padding: 7px 9px; }
+  .download-copy h2 { font-size: clamp(3.2rem, 15vw, 4.9rem); }
+  .platform-download header { grid-template-columns: 42px minmax(0,1fr) auto; gap: 10px; }
   .platform-actions,
-  .platform-actions--linux {
-    grid-template-columns: 1fr;
-  }
-
+  .platform-actions--linux { grid-template-columns: 1fr; }
   .platform-guide,
-  .platform-secondary {
-    min-height: 48px;
-  }
-
-  .release-proof {
-    font-size: 7px;
-  }
+  .platform-secondary { min-height: 48px; }
+  .release-proof { font-size: 7px; }
 }
 
 @media (max-width: 760px) and (max-height: 740px) {
   .split-copy > span { display: none; }
-  .hero-product-cue {
-    width: min(54%, 210px);
-    bottom: calc(84px + env(safe-area-inset-bottom));
-  }
+  .hero-product-cue { width: min(54%, 210px); bottom: calc(84px + env(safe-area-inset-bottom)); }
   .recovery-console > span { display: none; }
 }

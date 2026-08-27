@@ -1,16 +1,53 @@
 /* V4 geometry guardrails. Kept separate from visual language so layout QA can
    evolve independently; production concatenates it into the single site.css. */
-@media (min-width: 761px) {
-  .split-copy { top: 13%; }
-  .hero-product-cue { width: min(72%, 760px); }
+
+/* Desktop hero: text and product occupy explicitly separate vertical zones. */
+@media (min-width: 1081px) {
+  .split-copy {
+    top: 9%;
+    width: min(390px, 55%);
+  }
+  .split-copy h1,
+  .split-copy h2 {
+    font-size: clamp(3.7rem, 5.7vw, 6.9rem);
+  }
+  .split-copy > span {
+    max-width: 27ch;
+  }
+  .hero-product-cue {
+    right: 5%;
+    bottom: 3.5%;
+    width: min(56%, 610px);
+  }
 }
 
-@media (max-width: 1080px) and (min-width: 761px) {
-  .boundary-stage { min-height: 1080px; }
+/* Tablet: give the story and vault their own vertical bands instead of letting
+   viewport-relative absolute positioning make them collide. */
+@media (min-width: 761px) and (max-width: 1080px) {
+  .split-copy {
+    top: 9%;
+    width: min(330px, 57%);
+  }
+  .split-copy h1,
+  .split-copy h2 {
+    font-size: clamp(3rem, 5.25vw, 4.7rem);
+  }
+  .split-copy > span {
+    max-width: 25ch;
+  }
+  .hero-product-cue {
+    right: 4%;
+    bottom: 4%;
+    width: min(52%, 460px);
+  }
+
+  .boundary-stage {
+    min-height: 1360px;
+  }
   .boundary-copy {
     left: var(--v4-edge);
     right: var(--v4-edge);
-    top: 118px;
+    top: 88px;
     width: auto;
     max-width: 650px;
     transform: none !important;
@@ -18,9 +55,56 @@
   .vault-assembly {
     left: 50%;
     right: auto;
-    top: auto;
-    bottom: 54px;
-    width: min(760px, 82vw);
-    transform: translateX(-50%) !important;
+    top: 670px;
+    bottom: auto;
+    width: min(680px, 86vw);
+    transform: translateX(-50%) scale(.76) !important;
+    transform-origin: center top;
+  }
+}
+
+/* Mobile: each headline is sized to its own half of the split. The previous
+   vw-based width made remembered-side text escape the viewport entirely. */
+@media (max-width: 760px) {
+  .split-stage {
+    --split: 50%;
+  }
+  .split-copy {
+    top: 18%;
+    width: calc(100% - 30px);
+  }
+  .split-copy--forget,
+  .split-copy--remember {
+    left: 15px;
+  }
+  .split-copy h1,
+  .split-copy h2 {
+    font-size: clamp(1.9rem, 8.8vw, 2.9rem);
+    line-height: .88;
+    letter-spacing: -.07em;
+  }
+  .split-copy > span {
+    max-width: 17ch;
+    font-size: 10.5px;
+    line-height: 1.5;
+  }
+  .hero-product-cue {
+    right: 5%;
+    bottom: 8%;
+    width: 90%;
+  }
+
+  .boundary-stage {
+    min-height: 1220px;
+  }
+  .boundary-copy {
+    top: 82px;
+  }
+  .vault-assembly {
+    top: 660px;
+    bottom: auto;
+    width: 100vw;
+    transform: translateX(-50%) scale(.70) !important;
+    transform-origin: center top;
   }
 }

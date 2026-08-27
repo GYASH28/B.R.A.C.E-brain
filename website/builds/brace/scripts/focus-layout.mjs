@@ -118,13 +118,14 @@ async function assertDownload(page, width) {
     if (Math.abs((copy.left + copy.right) / 2 - (stage.left + stage.right) / 2) > 3) {
       issues.push("download composition is not centered on stage");
     }
+    if (copy.top < stage.top - 2 || copy.bottom > stage.bottom + 2) issues.push("download composition escaped pinned stage vertically");
     if (cards.length === 2 && Math.abs(cards[0].width - cards[1].width) > 3) issues.push("download cards have different widths");
   } else if (memory.position === "absolute") {
     issues.push("compact download memory remained absolute");
   }
 
   cards.forEach((card, index) => {
-    if (card.left < -2 || card.right > innerWidth + 2) issues.push(`download card ${index} out of viewport`);
+    if (card.left < -2 || card.right > width + 2) issues.push(`download card ${index} out of viewport`);
   });
   actions.forEach((entry, index) => {
     if (!entry.parent) return;

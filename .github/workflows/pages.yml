@@ -36,18 +36,21 @@ jobs:
           trap 'kill "$site_pid"' EXIT
           curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
           npm run audit:a11y --prefix website/builds/brace
+          npm run audit:layout --prefix website/builds/brace
           npm run audit:interactions --prefix website/builds/brace
       - name: Stage optimized public site
         shell: bash
         run: |
           mkdir -p _site
           cp website/builds/brace/index.html _site/
-          # The live site receives one flattened stylesheet. Source CSS remains
-          # organized in design layers, but production pays no @import requests.
+          # The live site receives one flattened stylesheet. Source layers stay
+          # maintainable while production pays zero chained @import requests.
           cat website/builds/brace/site-base.css \
               website/builds/brace/liquid-glass.css \
               website/builds/brace/responsive-fixes.css \
-              website/builds/brace/experience-v3.css > _site/site.css
+              website/builds/brace/experience-v3.css \
+              website/builds/brace/experience-v4.css \
+              website/builds/brace/experience-v4-layout.css > _site/site.css
           cp website/builds/brace/site.js _site/
           cp website/builds/brace/motion.css _site/
           cp website/builds/brace/motion.js _site/
@@ -56,17 +59,19 @@ jobs:
           cp -R website/builds/brace/vendor _site/
           cp -R website/builds/brace/guide _site/
           # Guide HTML already loads ../site.css. Flatten only guide-specific
-          # layout into its one local stylesheet to avoid duplicate style loads.
+          # layers into one local guide stylesheet.
           cat website/builds/brace/guide/guide-base.css \
               website/builds/brace/guide/guide-v3.css \
-              website/builds/brace/guide/guide-fixes.css > _site/guide/guide.css
+              website/builds/brace/guide/guide-fixes.css \
+              website/builds/brace/guide/guide-v4.css > _site/guide/guide.css
           rm -f _site/guide/site-base.css \
                 _site/guide/liquid-glass.css \
                 _site/guide/responsive-fixes.css \
                 _site/guide/experience-v3.css \
                 _site/guide/guide-base.css \
                 _site/guide/guide-v3.css \
-                _site/guide/guide-fixes.css
+                _site/guide/guide-fixes.css \
+                _site/guide/guide-v4.css
           cp -R website/builds/brace/how-to _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

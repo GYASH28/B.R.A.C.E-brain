@@ -874,7 +874,7 @@ summary:focus-visible,
   outline-offset: 3px;
 }
 
-/* Arctic Glass guide layer — shared with the launch surface. */
+/* Arctic Glass guide layer, shared with the launch surface. */
 .guide-body::before {
   content: "";
   position: fixed;

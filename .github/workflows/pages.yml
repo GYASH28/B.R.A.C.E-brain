@@ -58,12 +58,15 @@ jobs:
           # Guide HTML already loads ../site.css. Flatten only guide-specific
           # layout into its one local stylesheet to avoid duplicate style loads.
           cat website/builds/brace/guide/guide-base.css \
-              website/builds/brace/guide/guide-v3.css > _site/guide/guide.css
+              website/builds/brace/guide/guide-v3.css \
+              website/builds/brace/guide/guide-fixes.css > _site/guide/guide.css
           rm -f _site/guide/site-base.css \
                 _site/guide/liquid-glass.css \
                 _site/guide/responsive-fixes.css \
+                _site/guide/experience-v3.css \
                 _site/guide/guide-base.css \
-                _site/guide/guide-v3.css
+                _site/guide/guide-v3.css \
+                _site/guide/guide-fixes.css
           cp -R website/builds/brace/how-to _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

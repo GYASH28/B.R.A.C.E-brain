@@ -1,0 +1,9 @@
+/* Small source/audit guard rails for the V3 guide layout. */
+html:has(body.guide-body),body.guide-body{overflow-x:clip}
+.guide-layout,.guide-article,.guide-step,.feature-walkthrough,.feature-walkthrough>article{min-width:0;max-width:100%}
+.guide-step pre,.permission-table{max-width:100%;overflow:auto}
+@media(max-width:700px){
+  .guide-hero,.guide-layout,.guide-article,.guide-step{max-width:100vw}
+  .guide-route{max-width:100%}
+  .feature-walkthrough>article img{min-width:0;width:100%}
+}

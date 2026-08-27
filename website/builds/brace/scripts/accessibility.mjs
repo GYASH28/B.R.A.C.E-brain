@@ -65,8 +65,12 @@ try {
   for (const target of targets) {
     const page = await browser.newPage({ viewport: target.viewport, reducedMotion: target.reducedMotion || "reduce" });
     const consoleErrors = [];
+    const httpErrors = [];
     page.on("console", (message) => {
       if (message.type() === "error") consoleErrors.push(message.text());
+    });
+    page.on("response", (response) => {
+      if (response.status() >= 400) httpErrors.push(`${response.status()} ${response.url()}`);
     });
     await page.goto(`${base}${target.path}`, { waitUntil: "networkidle" });
     if (target.selector) {
@@ -104,6 +108,7 @@ try {
       structure,
       keyboard,
       consoleErrors,
+      httpErrors,
     });
     await page.close();
   }
@@ -120,15 +125,17 @@ const summary = report.pages.map((page) => ({
   unlabeledFields: page.structure.unlabeledFields,
   focusFailures: page.keyboard?.missingIndicator.length || 0,
   consoleErrors: page.consoleErrors.length,
+  httpErrors: page.httpErrors.length,
 }));
 process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
 
 const failures = report.pages
-  .filter((page) => page.violations.length || page.consoleErrors.length)
+  .filter((page) => page.violations.length || page.consoleErrors.length || page.httpErrors.length)
   .map((page) => ({
     page: page.name,
     violations: page.violations,
     consoleErrors: page.consoleErrors,
+    httpErrors: page.httpErrors,
   }));
 if (failures.length) {
   process.stdout.write(`Accessibility diagnostics:\n${JSON.stringify(failures, null, 2)}\n`);
@@ -141,6 +148,7 @@ const failed = report.pages.some((page) =>
   || page.structure.unlabeledFields
   || page.structure.horizontalOverflow > 1
   || page.keyboard?.missingIndicator.length
-  || page.consoleErrors.length,
+  || page.consoleErrors.length
+  || page.httpErrors.length,
 );
 if (failed) process.exitCode = 1;

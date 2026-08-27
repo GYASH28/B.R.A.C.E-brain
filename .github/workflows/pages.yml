@@ -48,7 +48,8 @@ jobs:
           # stylesheet with no chained import requests.
           cat website/builds/brace/site-base.css \
               website/builds/brace/experience-v5.css \
-              website/builds/brace/experience-v5-focus.css > _site/site.css
+              website/builds/brace/experience-v5-focus.css \
+              website/builds/brace/experience-v5-focus-guards.css > _site/site.css
           cp website/builds/brace/site.js _site/
           cp website/builds/brace/site-v5.js _site/
           cp website/builds/brace/motion.css _site/
@@ -76,7 +77,8 @@ jobs:
                 _site/guide/experience-v4.css \
                 _site/guide/experience-v4-layout.css \
                 _site/guide/experience-v5.css \
-                _site/guide/experience-v5-focus.css
+                _site/guide/experience-v5-focus.css \
+                _site/guide/experience-v5-focus-guards.css
           cp -R website/builds/brace/how-to _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

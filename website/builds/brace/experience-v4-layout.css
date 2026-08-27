@@ -1,7 +1,8 @@
 /* V4 geometry guardrails. Kept separate from visual language so layout QA can
    evolve independently; production concatenates it into the single site.css. */
 @media (min-width: 761px) {
-  .split-copy { top: 18%; }
+  .split-copy { top: 13%; }
+  .hero-product-cue { width: min(72%, 760px); }
 }
 
 @media (max-width: 1080px) and (min-width: 761px) {

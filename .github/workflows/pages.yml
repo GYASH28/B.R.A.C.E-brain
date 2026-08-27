@@ -56,15 +56,17 @@ jobs:
           cp -R website/builds/brace/vendor _site/
           cp -R website/builds/brace/guide _site/
           # Guide HTML already loads ../site.css. Keep only its semantic base and
-          # V5 editorial layer in the deployed local stylesheet.
+          # V5 editorial/geometry layers in the deployed local stylesheet.
           cat website/builds/brace/guide/guide-base.css \
-              website/builds/brace/guide/guide-v5.css > _site/guide/guide.css
+              website/builds/brace/guide/guide-v5.css \
+              website/builds/brace/guide/guide-v5-guards.css > _site/guide/guide.css
           rm -f _site/guide/guide-base.css \
                 _site/guide/guide-v3.css \
                 _site/guide/guide-fixes.css \
                 _site/guide/guide-v4.css \
                 _site/guide/guide-v4-layout.css \
                 _site/guide/guide-v5.css \
+                _site/guide/guide-v5-guards.css \
                 _site/guide/site-base.css \
                 _site/guide/liquid-glass.css \
                 _site/guide/responsive-fixes.css \

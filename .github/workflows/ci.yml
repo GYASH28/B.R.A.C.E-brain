@@ -45,7 +45,7 @@ jobs:
         run: npm run electron:mcp-smoke
 
   website:
-    name: Website and accessibility
+    name: Website, layout, and accessibility
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,3 +63,5 @@ jobs:
           trap 'kill "$site_pid"' EXIT
           curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
           npm run audit:a11y --prefix website/builds/brace
+          npm run audit:layout --prefix website/builds/brace
+          npm run audit:interactions --prefix website/builds/brace

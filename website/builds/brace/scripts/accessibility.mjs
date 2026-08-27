@@ -123,6 +123,17 @@ const summary = report.pages.map((page) => ({
 }));
 process.stdout.write(`${JSON.stringify(summary, null, 2)}\n`);
 
+const failures = report.pages
+  .filter((page) => page.violations.length || page.consoleErrors.length)
+  .map((page) => ({
+    page: page.name,
+    violations: page.violations,
+    consoleErrors: page.consoleErrors,
+  }));
+if (failures.length) {
+  process.stdout.write(`Accessibility diagnostics:\n${JSON.stringify(failures, null, 2)}\n`);
+}
+
 const failed = report.pages.some((page) =>
   page.violations.length
   || page.structure.h1 !== 1

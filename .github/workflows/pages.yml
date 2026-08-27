@@ -37,12 +37,16 @@ jobs:
           curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
           npm run audit:a11y --prefix website/builds/brace
           npm run audit:interactions --prefix website/builds/brace
-      - name: Stage public site only
+      - name: Stage optimized public site
         shell: bash
         run: |
           mkdir -p _site
           cp website/builds/brace/index.html _site/
-          cp website/builds/brace/site.css _site/
+          # Production CSS is flattened so the live site has no chained @imports.
+          # The source layers remain maintainable, but they add zero runtime requests.
+          cat website/builds/brace/site-base.css \
+              website/builds/brace/liquid-glass.css \
+              website/builds/brace/responsive-fixes.css > _site/site.css
           cp website/builds/brace/site.js _site/
           cp website/builds/brace/motion.css _site/
           cp website/builds/brace/motion.js _site/
@@ -50,6 +54,13 @@ jobs:
           cp -R website/builds/brace/assets _site/
           cp -R website/builds/brace/vendor _site/
           cp -R website/builds/brace/guide _site/
+          # The guide already loads ../site.css, so only its guide-specific base
+          # is needed here. This removes duplicate liquid-glass CSS at runtime.
+          cp website/builds/brace/guide/guide-base.css _site/guide/guide.css
+          rm -f _site/guide/site-base.css \
+                _site/guide/liquid-glass.css \
+                _site/guide/responsive-fixes.css \
+                _site/guide/guide-base.css
           cp -R website/builds/brace/how-to _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

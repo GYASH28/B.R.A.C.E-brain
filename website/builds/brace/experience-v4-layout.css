@@ -1,0 +1,25 @@
+/* V4 geometry guardrails. Kept separate from visual language so layout QA can
+   evolve independently; production concatenates it into the single site.css. */
+@media (min-width: 761px) {
+  .split-copy { top: 18%; }
+}
+
+@media (max-width: 1080px) and (min-width: 761px) {
+  .boundary-stage { min-height: 1080px; }
+  .boundary-copy {
+    left: var(--v4-edge);
+    right: var(--v4-edge);
+    top: 118px;
+    width: auto;
+    max-width: 650px;
+    transform: none !important;
+  }
+  .vault-assembly {
+    left: 50%;
+    right: auto;
+    top: auto;
+    bottom: 54px;
+    width: min(760px, 82vw);
+    transform: translateX(-50%) !important;
+  }
+}

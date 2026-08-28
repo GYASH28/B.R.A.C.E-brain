@@ -6,7 +6,7 @@ This guide covers a source checkout. If you downloaded an installer, launch BRAC
 
 - Node.js 24 or newer
 - npm
-- Linux or Windows for the packaged 0.4.0 desktop
+- Linux or Windows for the packaged 0.5.0 desktop
 - A graphical desktop session for Electron
 
 Optional:
@@ -118,7 +118,14 @@ If Ollama is down or returns incompatible vectors, BRACE completes lexical searc
 
 ## Connect an AI
 
-Open **Connections** and copy the generated executable configuration. MCP starts read-only. See [MCP.md](MCP.md) before enabling write flags.
+Open **Connections**. BRACE detects Codex CLI, Claude Code, and Antigravity and can configure a local `brace` MCP entry after you choose one of two scopes:
+
+- **Read-only** can search, inspect, and create a session-start brief.
+- **Remember** adds non-destructive durable memory, decision, skill, and session-handoff tools. Forgetting remains disabled.
+
+BRACE previews the boundary, backs up an existing client config, runs only the client-specific setup command, and verifies that the BRACE entry exists before showing **Configured**. Run one turn in **AI Workspace** to verify the live client and provider path. Results are kept in local conversation history, but nothing becomes durable memory until you choose **Retain latest answer**.
+
+Any other stdio MCP client can use the exact manual configuration shown in Connections. See [MCP.md](MCP.md) before enabling write flags or sending private retrieved context to a model provider.
 
 ## Back up before experimenting
 

@@ -141,7 +141,9 @@ async function run() {
   const service = new BraceMemoryService({
     userDataPath: userData,
     dataRoot: path.join(userData, "brace-data"),
-    executablePath: process.execPath,
+    executablePath: process.platform === "win32"
+      ? "C:\\Program Files\\BRACE\\BRACE.exe"
+      : "/opt/BRACE/brace",
     appPath: root,
     getWindow: () => window,
   });
@@ -207,7 +209,7 @@ async function run() {
   });
   await window.reload();
   await waitFor(window, "document.body.innerText.includes('Your context, ready when AI needs it.')");
-  await clickText(window, "Memories");
+  await clickText(window, "Memory");
   await window.webContents.executeJavaScript(
     "document.querySelector('button[aria-label=\"Open memory review queue\"]')?.click()",
   );
@@ -231,7 +233,7 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Keep imported files canonical')");
   const timeline = await screenshot(window, "app-timeline");
 
-  await clickText(window, "Graph");
+  await clickText(window, "Knowledge map");
   await waitFor(window, "document.querySelector('svg[aria-label*=\"knowledge nodes\"]')");
   const graphInteraction = await window.webContents.executeJavaScript(`
     (async () => {
@@ -246,13 +248,19 @@ async function run() {
       document.querySelector('.graph-node.is-selected')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 120));
       const afterKeyboard = document.querySelector('.graph-node.is-selected')?.getAttribute('aria-label');
-      Array.from(document.querySelectorAll('.graph-layout button')).find((button) => button.textContent?.trim() === 'Flow')?.click();
-      await new Promise((resolve) => setTimeout(resolve, 120));
+      const presetResults = {};
+      for (const preset of ['Rings', 'Living', 'Orbit', 'Flow', 'Chronicle']) {
+        Array.from(document.querySelectorAll('.graph-layout button')).find((button) => button.textContent?.trim() === preset)?.click();
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        presetResults[preset.toLowerCase()] =
+          document.querySelector('.graph-layout button[aria-pressed="true"]')?.textContent?.trim() === preset &&
+          document.querySelector('.graph-svg')?.getAttribute('data-preset') === preset.toLowerCase();
+      }
       return {
         selectedSource,
         zoomed: document.querySelector('.graph-zoom span')?.textContent?.trim() === '112%',
         keyboardTravel: Boolean(beforeKeyboard && afterKeyboard && beforeKeyboard !== afterKeyboard),
-        flowLayout: document.querySelector('.graph-layout button[aria-pressed="true"]')?.textContent?.trim() === 'Flow',
+        presets: presetResults,
       };
     })()
   `);
@@ -264,16 +272,28 @@ async function run() {
   `);
   const graph = await screenshot(window, "app-graph");
 
+  await clickText(window, "Inbox");
+  await waitFor(window, "document.body.innerText.includes('Catch a thought') && document.body.innerText.includes('Review queue')");
+  const inbox = await screenshot(window, "app-inbox");
+
+  await clickText(window, "AI Workspace");
+  await waitFor(window, "document.body.innerText.includes('Every turn has a visible boundary') && document.body.innerText.includes('History is not memory')");
+  const aiWorkspace = await screenshot(window, "app-ai-workspace");
+
   await clickText(window, "Skills");
   await waitFor(window, "document.body.innerText.includes('Decision Journal') && document.querySelectorAll('[role=switch]').length === 2");
   const skills = await screenshot(window, "app-skills");
 
   await clickText(window, "Connections");
-  await waitFor(window, "document.body.innerText.includes('MCP stdio configuration') && document.body.innerText.includes('Read-only by default')");
+  await waitFor(window, "document.body.innerText.includes('Portable MCP configuration') && document.body.innerText.includes('Read-only by default') && document.body.innerText.includes('Codex CLI')");
   const connectionMarker = process.platform === "win32" ? "BRACE_MCP_DIRECT" : "--mcp";
   const connectionReady = await window.webContents.executeJavaScript(
     `document.body.innerText.includes(${JSON.stringify(connectionMarker)})`,
   );
+  const connectionHasWorkspacePath = await window.webContents.executeJavaScript(
+    `document.body.innerText.includes(${JSON.stringify(root)})`,
+  );
+  const connections = await screenshot(window, "app-connections");
 
   await clickText(window, "Settings");
   await waitFor(window, "document.body.innerText.includes('Make the workspace fit you')");
@@ -287,11 +307,12 @@ async function run() {
     profileIsTemporary: service.databasePath.startsWith(userData),
     databaseExists,
     stats: snapshot.stats,
-    screenshots: [onboarding, overview, commands, capture, memoryReview, recall, timeline, graph, skills, settings].map((target) =>
+    screenshots: [onboarding, overview, commands, capture, memoryReview, recall, timeline, graph, inbox, aiWorkspace, skills, connections, settings].map((target) =>
       process.env.CI ? path.basename(target) : path.relative(root, target),
     ),
     graphInteraction,
     connectionReady,
+    connectionHasWorkspacePath,
     preferenceReady,
     reviewBefore,
     reviewResolved,
@@ -307,8 +328,10 @@ async function run() {
     !graphInteraction.selectedSource ||
     !graphInteraction.zoomed ||
     !graphInteraction.keyboardTravel ||
-    !graphInteraction.flowLayout ||
+    !Object.values(graphInteraction.presets || {}).every(Boolean) ||
+    Object.keys(graphInteraction.presets || {}).length !== 5 ||
     !connectionReady ||
+    connectionHasWorkspacePath ||
     !preferenceReady ||
     reviewBefore !== 1 ||
     !reviewResolved ||

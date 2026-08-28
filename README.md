@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://b-r-a-c-e-brain.vercel.app/">Website</a> ·
   <a href="https://b-r-a-c-e-brain.vercel.app/guide/">Beginner guide</a> ·
-  <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0">Download 0.4.0</a> ·
+  <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0">Download 0.5.0</a> ·
   <a href="docs/README.md">Documentation</a>
 </p>
 
@@ -19,7 +19,7 @@
 
 BRACE is a local-first personal AI memory layer for people who work across multiple AI tools. It turns selected project files, explicit decisions, durable memories, evidence, timelines, and relationships into one provenance-backed store. MCP-compatible clients can recall the same context without a BRACE cloud account or hosted middleman.
 
-> Release status: **0.4.0 preview**. Linux is locally smoke-tested. Windows is built and tested by the repository's native GitHub Actions runner. Packages are not yet code-signed.
+> Release status: **0.5.0 preview**. Linux is locally smoke-tested. Windows is built and tested by the repository's native GitHub Actions runner. Packages are not yet code-signed.
 
 | If you want to… | Start here |
 | --- | --- |
@@ -39,6 +39,10 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 - Lexical search by default. Semantic and hybrid reciprocal-rank fusion only when a real embedding model returns compatible vectors.
 - Optional loopback Ollama embeddings and an advanced HTTPS OpenAI-compatible adapter.
 - A real decision timeline and a provenance-backed knowledge graph.
+- Five deterministic views over the same graph: **Rings**, **Living**, **Orbit**, **Flow**, and chronological **Chronicle**. Changing a view never changes the underlying memory.
+- A triage-focused **Inbox**, an evidence-aware **AI Workspace**, and explicit retention: an answer becomes durable memory only when you choose to retain it.
+- Guided, permissioned setup for **Codex CLI**, **Claude Code**, and **Antigravity**, plus exact configuration for any stdio MCP client. BRACE backs up client configuration and verifies its entry before reporting it configured.
+- Session continuity through the `brace_memory_compass` prompt and explicit `brace_session_start` / `brace_session_handoff` tools.
 - Declarative, permission-scoped BRACE Skills. No arbitrary JavaScript, shell, or dynamic code execution.
 - Official MCP v2 stdio tools with structured results and read-only defaults. Writes and destructive forgetting use separate opt-in flags.
 - A hardened Electron boundary with context isolation, sandboxing, navigation and popup denial, a narrow preload bridge, CSP, and external application-data storage.
@@ -47,11 +51,11 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 
 ## Install
 
-Download a package from the [BRACE 0.4.0 release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0):
+Download a package from the [BRACE 0.5.0 release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0):
 
-- **Windows:** `BRACE-Setup-0.4.0.exe`
-- **Debian / Ubuntu:** `brace-brain_0.4.0_amd64.deb`
-- **Other Linux distributions:** `BRACE-0.4.0.AppImage`
+- **Windows:** `BRACE-Setup-0.5.0.exe`
+- **Debian / Ubuntu:** `brace-brain_0.5.0_amd64.deb`
+- **Other Linux distributions:** `BRACE-0.5.0.AppImage`
 
 Verify the artifact against `SHA256SUMS.txt` in the release before running it. The preview installers are not code-signed, so the operating system may display an unknown-publisher warning.
 
@@ -109,6 +113,12 @@ The demo is idempotent, clearly labelled, and stored in the same local applicati
 
 ## Connect an AI through MCP
 
+Open **Connections** and choose **read-only** or **remember** next to a detected Codex CLI, Claude Code, or Antigravity installation. BRACE previews the exact authority boundary, creates a recoverable configuration backup, performs the client-specific setup, and then re-reads the file before calling it **Configured**. Running a turn in **AI Workspace** is the live connection check.
+
+Read-only clients can recall context and create a session brief. Remember access adds non-destructive durable memory and decision tools; forgetting always remains separately gated. Retrieved private context may be sent to the model provider configured by that client. BRACE never copies provider API keys and never promotes an AI answer automatically.
+
+For any other compatible client, copy the generated configuration below.
+
 The packaged executable can launch the MCP server directly. Open **Connections** in BRACE and copy the exact platform-specific configuration for your installation. Linux uses the following form; Windows generates the bundled-server path and required Electron Node-mode environment automatically:
 
 ```json
@@ -138,7 +148,7 @@ A source checkout can also run:
 
 The default exposes only read tools. To authorize a trusted client to write memory, add `BRACE_MCP_WRITE=1` to that server process. Forgetting remains unavailable unless `BRACE_MCP_DESTRUCTIVE=1` is also set.
 
-See [MCP.md](docs/MCP.md) for the tool inventory, threat model, environment variables, and client examples.
+For continuity across tools, begin with `brace_session_start` (or the `brace_memory_compass` prompt), work normally, and finish with `brace_session_handoff`. The handoff stores only the explicit durable outcome you submit. See [MCP.md](docs/MCP.md) for the complete inventory, threat model, environment variables, and client-specific setup.
 
 ## Local data boundary
 
@@ -211,10 +221,10 @@ Application behavior is split across the framework-agnostic memory core, the har
 ## Honest limitations
 
 - Preview installers are unsigned. There is no automatic update channel.
-- macOS packaging is not part of 0.4.0.
+- macOS packaging is not part of 0.5.0.
 - Full-text search works without another service; semantic ranking requires the user to run or configure an embedding provider.
 - Remote HTTPS embeddings are an advanced source-level feature. The desktop settings intentionally expose loopback Ollama only.
-- Project indexing is text-oriented and does not parse PDFs, images, audio, or proprietary document formats in 0.4.0.
+- Project indexing is text-oriented and does not parse PDFs, images, audio, or proprietary document formats in 0.5.0.
 - BRACE does not encrypt the database itself. Rely on operating-system full-disk encryption and protect exported backups.
 - MCP stdio inherits the trust of the client process that launches it. Read-only is the default, not an authentication system.
 - The knowledge graph uses deterministic entity and relationship extraction, not an opaque model. It is inspectable but intentionally conservative.

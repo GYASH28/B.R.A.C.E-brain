@@ -93,11 +93,16 @@ try {
     if (!String(await page.locator("#node-title").textContent()).includes("Architecture")) throw new Error("Selected node did not update inspector");
   });
 
-  await check("constellation reshuffle", async () => {
-    const before = await page.locator('[data-node="architecture"]').getAttribute("style");
-    await page.locator("[data-constellation-shuffle]").click();
-    const after = await page.locator('[data-node="architecture"]').getAttribute("style");
-    if (before === after) throw new Error("Node positions did not change");
+  await check("five constellation projections", async () => {
+    const positions = new Set();
+    for (const preset of ["rings", "living", "orbit", "flow", "chronicle"]) {
+      const button = page.locator(`[data-constellation-preset="${preset}"]`);
+      await button.click();
+      if (await button.getAttribute("aria-pressed") !== "true") throw new Error(`${preset} was not selected`);
+      if (await page.locator("[data-constellation-board]").getAttribute("data-preset") !== preset) throw new Error(`${preset} did not reach the board`);
+      positions.add(await page.locator('[data-node="architecture"]').getAttribute("style"));
+    }
+    if (positions.size !== 5) throw new Error("Each projection must produce a distinct node position");
   });
 
   await check("privacy vault selector", async () => {
@@ -108,7 +113,7 @@ try {
   await check("product screenshot lightbox", async () => {
     await page.locator('[data-proof="graph"] [data-proof-expand]').click();
     if (!await page.locator("#proof-dialog").evaluate((dialog) => dialog.open)) throw new Error("Product lightbox did not open");
-    if (!String(await page.locator("#proof-dialog-title").textContent()).includes("constellation")) throw new Error("Product title did not update");
+    if (!String(await page.locator("#proof-dialog-title").textContent()).includes("Five knowledge")) throw new Error("Product title did not update");
     await page.locator("#proof-dialog [data-dialog-close]").click();
   });
 

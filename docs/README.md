@@ -24,7 +24,8 @@ This directory is the maintained documentation hub for BRACE. Start with the rou
 
 - [Distribution](DISTRIBUTION.md) — package production and artifact verification.
 - [Dependency review](DEPENDENCY_REVIEW.md) — license and dependency-release gate.
-- [0.4.0 release notes](RELEASE_NOTES_0.4.0.md) — current preview release.
+- [0.5.0 release notes](RELEASE_NOTES_0.5.0.md) — current unified-product preview.
+- [0.4.0 release notes](RELEASE_NOTES_0.4.0.md) — previous memory-quality release.
 - [0.3.0 release notes](RELEASE_NOTES_0.3.0.md) — previous visual-system release.
 - [0.2.0 release notes](RELEASE_NOTES_0.2.0.md) and [0.1.0 release notes](RELEASE_NOTES_0.1.0.md) — historical context.
 

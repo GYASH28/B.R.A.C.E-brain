@@ -2,20 +2,26 @@
 
 This roadmap is directional, not a promise of dates. Privacy, data portability, and clear provenance take priority over feature count.
 
-## 0.1 preview stabilization
+## 0.5 preview stabilization
 
 - Validate Windows installer and packaged MCP behavior on more machines.
 - Add signed artifact attestations and document reproducibility constraints for every release.
-- Expand keyboard and screen-reader coverage for desktop dialogs and graph navigation.
+- Expand screen-reader journey coverage beyond the existing keyboard-reachable graph and dialog controls.
 - Improve large-project indexing benchmarks and cancellation feedback.
 - Add an in-app disclosure before configuring any non-loopback embedding provider.
 
-## 0.4 memory quality
+## Shipped in 0.5
 
-- Review queue for near-duplicate and potentially superseded memories. **Implemented for the next release.**
-- Better evidence promotion and rejection workflows.
+- Review queue for near-duplicate and potentially superseded memories.
+- Inbox triage, explicit evidence-backed recall, and AI Workspace retention.
+- Five deterministic graph projections with accessible inspection.
+- Guided Codex CLI, Claude Code, and Antigravity configuration with recoverable backups.
+- Explicit session-start and session-handoff continuity through MCP.
+
+## Next memory-quality work
+
+- Richer evidence promotion and rejection workflows.
 - Saved recall filters and scoped evaluation sets.
-- Graph inspection controls that remain deterministic and explainable.
 - Import adapters for additional plain-text knowledge tools without copying their private data into the repository.
 
 ## Later, only after the boundary is clear

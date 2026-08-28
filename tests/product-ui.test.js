@@ -9,11 +9,13 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 test("product navigation maps to implemented memory workflows", () => {
   const app = read("src/components/brace/brace-app.tsx");
   for (const label of [
-    "Overview",
+    "Command center",
+    "Knowledge map",
+    "Inbox",
+    "AI Workspace",
     "Recall",
-    "Memories",
+    "Memory",
     "Timeline",
-    "Graph",
     "Projects",
     "Skills",
     "Connections",
@@ -33,6 +35,10 @@ test("product navigation maps to implemented memory workflows", () => {
   ]) {
     assert.match(app, new RegExp(capability));
   }
+  assert.match(app, /function InboxView\(\)/);
+  assert.match(app, /function AiWorkspaceView\(\)/);
+  assert.match(app, /Retain latest answer/);
+  assert.match(app, /No answer becomes durable memory automatically/);
 });
 
 test("browser preview is visibly synthetic and desktop mutations do not silently fake success", () => {
@@ -55,7 +61,7 @@ test("premium workspace interactions remain real, keyboard reachable, and locall
     "Quick capture",
     "Capture a memory",
     "Keyboard map",
-    "Graph layout",
+    "Graph preset",
     "Make the workspace fit you",
     "Stored in your local database",
     "Memory intelligence",
@@ -72,6 +78,44 @@ test("premium workspace interactions remain real, keyboard reachable, and locall
   assert.match(app, /data-node-index/);
   assert.match(styles, /data-motion="calm"/);
   assert.match(styles, /data-contrast="high"/);
+});
+
+test("knowledge atlas exposes five truthful projections over one real graph", () => {
+  const app = read("src/components/brace/brace-app.tsx");
+  const layouts = read("src/lib/brace/graph-layouts.ts");
+  const memoryStore = read("core/memory-store.js");
+
+  for (const preset of ["rings", "living", "orbit", "flow", "chronicle"]) {
+    assert.match(layouts, new RegExp(`id: "${preset}"`));
+  }
+  assert.match(app, /graphPositions\(layout, nodes, edges, selectedId\)/);
+  assert.match(app, /localStorage\.setItem\("brace\.graph-preset"/);
+  assert.match(layouts, /timestamp/);
+  assert.match(memoryStore, /timestamp:/);
+});
+
+test("AI connections are permissioned, guided, and never silently retained", () => {
+  const app = read("src/components/brace/brace-app.tsx");
+  const connector = read("electron/connector-service.ts");
+  const service = read("electron/memory-service.ts");
+
+  for (const client of ["Codex CLI", "Claude Code", "Antigravity", "Any MCP client"]) {
+    assert.match(connector, new RegExp(client));
+  }
+  assert.match(connector, /type ConnectorAccess = "read-only" \| "remember"/);
+  assert.match(connector, /execFileAsync/);
+  assert.doesNotMatch(connector, /execSync|spawn\([^)]*shell:\s*true/);
+  assert.match(connector, /connector-backups/);
+  assert.match(connector, /if \(!this\.isConfigured\(id\)\)/);
+  assert.match(connector, /did not preserve the BRACE server entry after setup/);
+  assert.match(connector, /BRACE_MCP_WRITE/);
+  assert.match(connector, /Forgetting remains disabled/);
+  assert.match(service, /assistant\.conversations/);
+  assert.match(service, /redactSecrets\(prompt\)/);
+  assert.match(service, /clipboard\.writeText/);
+  assert.match(app, /Retrieved context may be sent to the selected provider/);
+  assert.doesNotMatch(app, /connector\.configured \? "Connected"/);
+  assert.match(app, /connector\.configured \? "Configured"/);
 });
 
 test("the rejected warm-orange brand palette cannot return", () => {

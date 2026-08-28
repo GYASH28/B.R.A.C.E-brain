@@ -37,20 +37,20 @@
     if (event.key === "Escape" && !openingClosed) closeOpeningFilm();
   });
 
-  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.4.0";
+  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.5.0";
   const downloads = {
     windows: {
-      url: `${releaseBase}/BRACE-Setup-0.4.0.exe`,
+      url: `${releaseBase}/BRACE-Setup-0.5.0.exe`,
       platform: "Windows 10 / 11",
       format: ".exe installer",
     },
     linux: {
-      url: `${releaseBase}/BRACE-0.4.0.AppImage`,
+      url: `${releaseBase}/BRACE-0.5.0.AppImage`,
       platform: "Linux x86_64",
       format: "AppImage",
     },
     deb: {
-      url: `${releaseBase}/brace-brain_0.4.0_amd64.deb`,
+      url: `${releaseBase}/brace-brain_0.5.0_amd64.deb`,
       platform: "Debian / Ubuntu",
       format: ".deb package",
     },
@@ -521,21 +521,49 @@
     if (selectedNode.classList.contains("is-filtered")) selectConstellationNode(constellationNodes.find((node) => !node.classList.contains("is-filtered")));
     drawConstellation();
   }));
-  const constellationPresets = [
-    [[48,48],[18,22],[77,20],[22,69],[74,72],[49,14],[11,47],[89,48]],
-    [[51,51],[12,33],[72,14],[27,80],[88,67],[39,12],[13,65],[84,38]],
-    [[46,46],[24,13],[86,31],[12,76],[62,83],[65,10],[11,43],[91,62]],
-  ];
-  let constellationPreset = 0;
-  document.querySelector("[data-constellation-shuffle]")?.addEventListener("click", () => {
-    constellationPreset = (constellationPreset + 1) % constellationPresets.length;
+  const constellationPresets = {
+    rings: [[50,50],[50,17],[72,30],[78,67],[25,72],[30,30],[50,82],[88,48]],
+    living: [[50,48],[19,25],[75,20],[72,68],[84,78],[45,14],[22,72],[91,43]],
+    orbit: [[48,48],[18,22],[77,20],[22,69],[74,72],[49,14],[11,47],[89,48]],
+    flow: [[10,50],[31,26],[31,72],[72,30],[72,72],[52,27],[52,72],[91,50]],
+    chronicle: [[10,18],[29,36],[40,36],[71,68],[84,68],[48,52],[60,52],[92,84]],
+  };
+  function applyConstellationPreset(name) {
+    const positions = constellationPresets[name];
+    if (!positions) return;
+    const before = constellationNodes.map((node) => node.getBoundingClientRect());
     constellationNodes.forEach((node, index) => {
-      const [left, top] = constellationPresets[constellationPreset][index];
-      if (animeEngine && !isMotionCalm()) animeEngine({targets: node, left: `${left}%`, top: `${top}%`, delay: index * 28, duration: 720, easing: "easeOutElastic(1, .75)", update: drawConstellation, complete: drawConstellation});
-      else { node.style.left = `${left}%`; node.style.top = `${top}%`; }
+      const [left, top] = positions[index];
+      node.style.left = `${left}%`;
+      node.style.top = `${top}%`;
     });
-    drawConstellation();
+    constellationBoard.dataset.preset = name;
+    document.querySelectorAll("[data-constellation-preset]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.constellationPreset === name));
+    });
+    if (!isMotionCalm()) {
+      constellationNodes.forEach((node, index) => {
+        const after = node.getBoundingClientRect();
+        node.animate(
+          [
+            { transform: `translate3d(${before[index].left - after.left}px,${before[index].top - after.top}px,0)` },
+            { transform: "translate3d(0,0,0)" },
+          ],
+          { duration: 680, delay: index * 24, easing: "cubic-bezier(0.16,1,0.3,1)" },
+        );
+      });
+      const started = performance.now();
+      const redraw = (now) => {
+        drawConstellation();
+        if (now - started < 900) requestAnimationFrame(redraw);
+      };
+      requestAnimationFrame(redraw);
+    } else drawConstellation();
+  }
+  document.querySelectorAll("[data-constellation-preset]").forEach((button) => {
+    button.addEventListener("click", () => applyConstellationPreset(button.dataset.constellationPreset));
   });
+  applyConstellationPreset("rings");
   document.querySelector("[data-center-node]")?.addEventListener("click", () => {
     constellationBoard.scrollIntoView({behavior: isMotionCalm() ? "auto" : "smooth", block: "center"});
     if (animeEngine && !isMotionCalm()) animeEngine({targets: selectedNode.querySelector("i"), scale: [1, 1.8, 1.3], duration: 820, easing: "easeOutElastic(1, .5)"});

@@ -28,7 +28,7 @@
       <a href="#connect">Connect AI</a>
       <a href="#privacy">Privacy</a>
     </nav>
-    <a class="bar-action" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0">Get BRACE</a>
+    <a class="bar-action" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0">Get BRACE</a>
   </header>
 
   <main id="guide-main">
@@ -71,13 +71,13 @@
             <span>01</span>
             <div><p>INSTALL</p><h2>Choose the package for your computer.</h2></div>
           </header>
-          <p>Open the <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0">BRACE 0.4.0 GitHub release</a> and download one asset. You do not need the source code unless you want to develop BRACE.</p>
+          <p>Open the <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0">BRACE 0.5.0 GitHub release</a> and download one asset. You do not need the source code unless you want to develop BRACE.</p>
 
           <div class="platform-grid">
             <section>
               <div class="platform-title"><span>WIN</span><h3>Windows 10 or 11</h3></div>
               <ol>
-                <li>Download <code>BRACE-Setup-0.4.0.exe</code>.</li>
+                <li>Download <code>BRACE-Setup-0.5.0.exe</code>.</li>
                 <li>Open the installer and choose an install location.</li>
                 <li>Launch BRACE from the Start menu.</li>
               </ol>
@@ -86,10 +86,10 @@
             <section>
               <div class="platform-title"><span>LNX</span><h3>Linux</h3></div>
               <p>For Debian or Ubuntu, download the <code>amd64.deb</code> package and run:</p>
-              <pre><code>sudo apt install ./brace-brain_0.4.0_amd64.deb</code><button class="copy-code" type="button" aria-label="Copy Debian install command">Copy</button></pre>
+              <pre><code>sudo apt install ./brace-brain_0.5.0_amd64.deb</code><button class="copy-code" type="button" aria-label="Copy Debian install command">Copy</button></pre>
               <p>For other distributions, download the AppImage:</p>
-              <pre><code>chmod +x BRACE-0.4.0.AppImage
-./BRACE-0.4.0.AppImage</code><button class="copy-code" type="button" aria-label="Copy AppImage commands">Copy</button></pre>
+              <pre><code>chmod +x BRACE-0.5.0.AppImage
+./BRACE-0.5.0.AppImage</code><button class="copy-code" type="button" aria-label="Copy AppImage commands">Copy</button></pre>
             </section>
           </div>
 
@@ -135,8 +135,8 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
           </div>
           <p class="guide-note">Indexing is incremental. Use <strong>Reindex</strong> after meaningful file changes. Removed source files are removed from the index; durable memories remain until you forget or supersede them.</p>
           <figure class="guide-shot">
-            <img src="../assets/app-overview.png" width="1440" height="960" alt="BRACE Overview after the synthetic Northstar project is indexed">
-            <figcaption><strong>Overview after import.</strong> Source coverage and durable memory are counted separately.</figcaption>
+            <img src="../assets/app-overview.png" width="1440" height="960" alt="BRACE Command center after the synthetic Northstar project is indexed">
+            <figcaption><strong>Command center after import.</strong> Source coverage and durable memory are counted separately.</figcaption>
           </figure>
         </section>
 
@@ -145,11 +145,11 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <span>04</span>
             <div><p>MEMORY</p><h2>Remember deliberately, then recall with evidence.</h2></div>
           </header>
-          <p>Use <strong>New memory</strong> for context that should survive a project or conversation: decisions, lessons, warnings, preferences, facts, hypotheses, summaries, and procedures. Keep each memory focused on one claim.</p>
+          <p>Use <strong>Quick capture</strong> or <strong>Inbox</strong> for context that should survive a project or conversation: decisions, lessons, warnings, preferences, facts, hypotheses, summaries, and procedures. Keep each memory focused on one claim.</p>
           <div class="shortcut-deck" aria-label="Fast keyboard routes">
             <p><kbd>Ctrl / ⌘ K</kbd><span><strong>Command palette</strong>Jump to any workspace without hunting through navigation.</span></p>
             <p><kbd>Ctrl / ⌘ N</kbd><span><strong>Quick capture</strong>Save a durable memory from whatever view you are using.</span></p>
-            <p><kbd>1 to 9</kbd><span><strong>Direct navigation</strong>Open Overview through Settings in sidebar order.</span></p>
+            <p><kbd>1 to 9</kbd><span><strong>Direct navigation</strong>Open Command center through Skills in sidebar order.</span></p>
             <p><kbd>?</kbd><span><strong>Keyboard map</strong>Open the complete shortcut reference.</span></p>
           </div>
           <ol class="instruction-list">
@@ -158,6 +158,10 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <li><span>3</span><div><strong>Attach provenance when available.</strong><p>A source URI and excerpt let future retrieval show why the memory exists.</p></div></li>
             <li><span>4</span><div><strong>Search in Recall.</strong><p>BRACE reports lexical, semantic, or hybrid mode and keeps memories separate from source evidence.</p></div></li>
           </ol>
+          <figure class="guide-shot">
+            <img src="../assets/app-inbox.png" width="1440" height="960" alt="BRACE Inbox with separate memory and decision capture modes">
+            <figcaption><strong>Capture deliberately.</strong> Inbox stores a useful outcome or explicit decision, never a raw transcript by default.</figcaption>
+          </figure>
           <figure class="guide-shot">
             <img src="../assets/app-recall.png" width="1440" height="960" alt="BRACE Recall results with Durable memory and Source evidence sections">
             <figcaption><strong>Recall is evidence-aware.</strong> Durable context is not disguised as a source excerpt.</figcaption>
@@ -170,11 +174,15 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <span>05</span>
             <div><p>STRUCTURE</p><h2>Follow change, relationships, and safe workflows.</h2></div>
           </header>
-          <p>Recall answers a question. The next four views show how that answer stays precise and fits into the larger history, and each view is built from the same local database.</p>
+          <p>Recall answers a question. These workspace views show how that answer stays precise, reaches an AI, and fits into the larger history. Every view reads the same local database.</p>
           <div class="feature-walkthrough">
             <article>
+              <img src="../assets/app-ai-workspace.png" width="1440" height="960" alt="BRACE AI Workspace with Codex CLI detected and a visible context boundary">
+              <div><strong>AI Workspace</strong><p>Ask through a detected Codex CLI or Claude Code client. BRACE retrieves a bounded context capsule locally, previews the provider boundary, and keeps conversation history separate from durable memory until you choose <b>Retain latest answer</b>.</p></div>
+            </article>
+            <article>
               <img src="../assets/app-memory-review.png" width="1440" height="960" alt="BRACE memory review queue comparing two synthetic checksum procedures">
-              <div><strong>Memory review</strong><p>Open <b>Memories</b>, then <b>Review queue</b>, when BRACE flags likely overlap. Inspect both records, keep either one as canonical, or confirm that both are distinct. BRACE never silently merges them.</p></div>
+              <div><strong>Memory review</strong><p>Open <b>Memory</b>, then <b>Review queue</b>, when BRACE flags likely overlap. Inspect both records, keep either one as canonical, or confirm that both are distinct. BRACE never silently merges them.</p></div>
             </article>
             <article>
               <img src="../assets/app-timeline.png" width="1440" height="960" alt="BRACE Timeline showing synthetic Northstar decisions and indexing events">
@@ -182,7 +190,7 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             </article>
             <article>
               <img src="../assets/app-graph.png" width="1440" height="960" alt="BRACE knowledge graph using synthetic Northstar projects, sources, memories, decisions, and entities">
-              <div><strong>Graph</strong><p>Open <b>Graph</b>, switch between <b>Orbit</b> and <b>Flow</b>, then filter by project, source, memory, decision, or entity. Select a node, or use the arrow keys, to inspect typed relationships and travel back to provenance.</p></div>
+              <div><strong>Knowledge map</strong><p>Open <b>Knowledge map</b> and move the same graph through <b>Rings</b>, <b>Living</b>, <b>Orbit</b>, <b>Flow</b>, or <b>Chronicle</b>. Filter by type, select a node, or use the arrow keys to inspect typed relationships and travel back to provenance.</p></div>
             </article>
             <article>
               <img src="../assets/app-skills.png" width="1440" height="960" alt="BRACE Skills showing synthetic declarative skills and their permissions">
@@ -195,10 +203,19 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
         <section id="connect" class="guide-step">
           <header class="step-header">
             <span>06</span>
-            <div><p>MCP CONNECTION</p><h2>Give an AI read-only recall.</h2></div>
+            <div><p>MCP CONNECTION</p><h2>Connect an AI with explicit memory permission.</h2></div>
           </header>
-          <p>Open <strong>Connections</strong> inside BRACE. It shows the exact platform-specific executable command for your installation. Paste the generated block into an MCP-compatible client's configuration.</p>
-          <p class="guide-note"><strong>Use the generated block.</strong> Linux uses the compact <code>--mcp</code> form shown below. Windows adds a bundled-server path and two Electron Node-mode environment values so redirected MCP stdio works reliably; those values do not enable memory writes.</p>
+          <p>Open <strong>Connections</strong> inside BRACE. The connection studio detects Codex CLI, Claude Code, and Antigravity, shows their installed version, and gives every client the same local BRACE memory.</p>
+          <ol class="instruction-list">
+            <li><span>1</span><div><strong>Choose a permission.</strong><p>Start with <b>Recall only</b>. Choose <b>Recall + remember</b> only when that client should retain explicit durable outcomes.</p></div></li>
+            <li><span>2</span><div><strong>Select a detected client.</strong><p>Choose Codex CLI, Claude Code, or Antigravity and press <b>Connect</b>. BRACE previews the provider boundary and creates a recoverable configuration backup before changing anything.</p></div></li>
+            <li><span>3</span><div><strong>Start with memory.</strong><p>The client can call <code>brace_session_start</code> before work and <code>brace_session_handoff</code> after work when retention is enabled.</p></div></li>
+          </ol>
+          <figure class="guide-shot">
+            <img src="../assets/app-connections.png" width="1440" height="960" alt="BRACE Connection studio detecting Codex CLI and offering read-only or remember access">
+            <figcaption><strong>Guided and recoverable.</strong> Forgetting is never enabled by the connection studio, and BRACE never copies a provider API key.</figcaption>
+          </figure>
+          <p>For another MCP-compatible tool, choose <strong>Any MCP client</strong> and copy the generated JSON. Linux uses the compact <code>--mcp</code> form shown below. Windows uses the bundled server in Electron Node mode so redirected stdio remains reliable.</p>
           <pre><code>{
   "mcpServers": {
     "brace": {
@@ -207,11 +224,11 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
     }
   }
 }</code><button class="copy-code" type="button" aria-label="Copy MCP configuration">Copy</button></pre>
-          <p>Restart the client, then ask it to call <code>brace_status</code> or search with <code>brace_search</code>. The default connection can read recall, projects, timeline, graph, and skill metadata.</p>
+          <p>Restart a manually configured client, then ask it to call <code>brace_status</code> or <code>brace_session_start</code>. The default connection can read recall, projects, timeline, graph, and skill metadata.</p>
           <div class="permission-table" role="table" tabindex="0" aria-label="MCP permission modes. Scroll horizontally on small screens.">
             <div role="row"><span role="columnheader">Mode</span><span role="columnheader">Environment</span><span role="columnheader">What changes</span></div>
             <div role="row"><strong role="cell">Read-only</strong><code role="cell">default</code><span role="cell">Search and inspect local memory.</span></div>
-            <div role="row"><strong role="cell">Write</strong><code role="cell">BRACE_MCP_WRITE=1</code><span role="cell">Remember, record decisions, and run approved skills.</span></div>
+            <div role="row"><strong role="cell">Remember</strong><code role="cell">BRACE_MCP_WRITE=1</code><span role="cell">Remember, record decisions, retain session handoffs, and run approved skills.</span></div>
             <div role="row"><strong role="cell">Destructive</strong><code role="cell">BRACE_MCP_DESTRUCTIVE=1</code><span role="cell">Adds forgetting only when write mode is also enabled.</span></div>
           </div>
           <p class="guide-note"><strong>Start read-only.</strong> Enable writes only for a client you trust. Destructive access is intentionally a second, separate flag.</p>

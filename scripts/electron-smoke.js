@@ -8,7 +8,10 @@ const os = require("node:os");
 const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
-const SMOKE_TIMEOUT_MS = 45_000;
+const requestedTimeout = Number(process.env.BRACE_SMOKE_TIMEOUT_MS || 45_000);
+const SMOKE_TIMEOUT_MS = Number.isFinite(requestedTimeout)
+  ? Math.min(180_000, Math.max(15_000, requestedTimeout))
+  : 45_000;
 const defaultExecutables =
   process.platform === "win32"
     ? [
@@ -32,6 +35,7 @@ const defaultExecutables =
 const executable = path.resolve(
   process.argv[2] || defaultExecutables.find(fs.existsSync) || defaultExecutables[0],
 );
+const launcher = String(process.env.BRACE_SMOKE_LAUNCHER || "").trim() || null;
 const token = `smoke-${Date.now()}-${process.pid}`;
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "brace-package-smoke-"));
 const configRoot = path.join(temporaryRoot, "config");
@@ -57,7 +61,7 @@ const childArguments = [
   ...(process.platform === "linux" ? ["--no-sandbox"] : []),
   `--smoke-token=${token}`,
 ];
-const child = spawn(executable, childArguments, {
+const child = spawn(launcher || executable, launcher ? [executable, ...childArguments] : childArguments, {
   cwd: path.dirname(executable),
   windowsHide: true,
   stdio: ["ignore", "ignore", "pipe"],
@@ -65,6 +69,12 @@ const child = spawn(executable, childArguments, {
     ...process.env,
     BRACE_DATA_DIR: path.join(temporaryRoot, "data"),
     BRACE_SMOKE_RESULT_PATH: smokeResultPath,
+    ...(launcher?.endsWith("wine")
+      ? {
+          WINEPREFIX: path.join(temporaryRoot, "wine-prefix"),
+          WINEDEBUG: "-all",
+        }
+      : {}),
     ...(process.platform === "win32"
       ? {
           APPDATA: configRoot,
@@ -84,7 +94,7 @@ child.stderr.on("data", (chunk) => {
 
 const timeout = setTimeout(() => {
   child.kill();
-  process.stderr.write("Electron smoke test timed out after 45 seconds.\n");
+  process.stderr.write(`Electron smoke test timed out after ${Math.round(SMOKE_TIMEOUT_MS / 1_000)} seconds.\n`);
   process.exitCode = 1;
 }, SMOKE_TIMEOUT_MS);
 

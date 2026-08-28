@@ -33,4 +33,12 @@ contextBridge.exposeInMainWorld("electron", {
   backupBraceData: () => ipcRenderer.invoke("brace:backup"),
   deleteAllBraceData: (confirmation: string) =>
     ipcRenderer.invoke("brace:delete-all", confirmation),
+  listBraceConnectors: () => ipcRenderer.invoke("brace:list-connectors"),
+  installBraceConnector: (id: string, access: string) =>
+    ipcRenderer.invoke("brace:install-connector", id, access),
+  runBraceAssistant: (input: unknown) =>
+    ipcRenderer.invoke("brace:run-assistant", input),
+  clearBraceAssistantHistory: () =>
+    ipcRenderer.invoke("brace:clear-assistant-history"),
+  copyBraceText: (value: string) => ipcRenderer.invoke("brace:copy-text", value),
 });

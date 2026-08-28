@@ -1,4 +1,5 @@
-import { dialog, ipcMain, type BrowserWindow } from "electron";
+import { clipboard, dialog, ipcMain, type BrowserWindow } from "electron";
+import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import memoryModule from "../core/memory-store";
@@ -7,8 +8,13 @@ import embeddingModule from "../core/embedding-adapters";
 import skillModule from "../core/skill-runtime";
 import demoModule from "../core/demo-profile";
 import dataPathModule from "../core/data-paths";
+import {
+  BraceConnectorService,
+  type ConnectorAccess,
+  type ConnectorId,
+} from "./connector-service";
 
-const { MemoryStore } = memoryModule as any;
+const { MemoryStore, redactSecrets } = memoryModule as any;
 const { indexProject } = projectModule as any;
 const { createOllamaEmbeddingAdapter } = embeddingModule as any;
 const { installSkill, runSkillAction } = skillModule as any;
@@ -30,6 +36,7 @@ export class BraceMemoryService {
   readonly demoDirectory: string;
   readonly profileWorkspacePath: string;
   readonly store: any;
+  readonly connectors: BraceConnectorService;
   private readonly appPath: string;
   private readonly getWindow: () => BrowserWindow | null;
   private readonly executablePath: string;
@@ -45,6 +52,12 @@ export class BraceMemoryService {
     this.profileWorkspacePath = path.join(this.dataDirectory, "agent-workspace");
     fs.mkdirSync(this.profileWorkspacePath, { recursive: true });
     this.store = new MemoryStore(this.databasePath);
+    this.connectors = new BraceConnectorService({
+      userDataPath: options.userDataPath,
+      executablePath: this.executablePath,
+      appPath: this.appPath,
+      getWindow: this.getWindow,
+    });
     this.installBundledSkills();
   }
 
@@ -125,8 +138,113 @@ export class BraceMemoryService {
     };
   }
 
+  assistantHistory() {
+    const history = this.store.getSetting("assistant.conversations", []);
+    if (!Array.isArray(history)) return [];
+    return history.slice(-40).map((turn: any) => ({
+      ...turn,
+      prompt: redactSecrets(String(turn?.prompt || "")).value,
+      response: redactSecrets(String(turn?.response || "")).value,
+    }));
+  }
+
+  async runAssistant(input: any) {
+    const client = String(input?.client || "codex");
+    if (client !== "codex" && client !== "claude") {
+      throw new Error("The embedded workspace currently supports detected Codex CLI or Claude Code clients.");
+    }
+    const prompt = String(input?.prompt || "").trim();
+    if (!prompt) throw new Error("Ask BRACE a specific question.");
+    if (prompt.length > 12_000) throw new Error("Keep one AI workspace turn under 12,000 characters.");
+    const context = await this.search({ query: prompt, limit: 6 });
+    const memories = context.memories.slice(0, 6).map((memory: any) => ({
+      title: memory.title,
+      kind: memory.kind,
+      summary: String(memory.summary || memory.content || "").slice(0, 900),
+      sourceUri: memory.sourceUri || null,
+    }));
+    const sources = context.sources.slice(0, 6).map((source: any) => ({
+      title: source.heading || source.title,
+      uri: source.uri,
+      excerpt: String(source.content || "").slice(0, 1_000),
+    }));
+    const window = this.getWindow();
+    if (!window) throw new Error("The BRACE window is unavailable.");
+    const clientLabel = client === "codex" ? "Codex CLI" : "Claude Code";
+    const approval = await dialog.showMessageBox(window, {
+      type: "question",
+      title: `Send this turn to ${clientLabel}?`,
+      message: `BRACE found ${memories.length} memories and ${sources.length} source excerpts for this question.`,
+      detail: [
+        "The prompt and listed context will be sent through the selected client's configured model provider.",
+        "The client runs in BRACE's isolated read-only agent workspace and cannot edit imported projects from this surface.",
+        "The prompt and final answer are saved in local AI Workspace history. They are not automatically promoted to durable memory.",
+      ].join("\n\n"),
+      buttons: ["Cancel", `Send to ${clientLabel}`],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (approval.response !== 1) return { cancelled: true };
+    const agentPrompt = [
+      "You are operating inside the BRACE local-first AI Workspace.",
+      "Answer the user's question using the supplied BRACE context when relevant.",
+      "Keep durable memory and indexed source evidence separate. Cite brace-project URIs exactly when supplied.",
+      "Do not claim to have inspected or changed files outside this supplied context. This turn is read-only.",
+      `\nUSER QUESTION\n${prompt}`,
+      `\nDURABLE MEMORY\n${memories.length ? JSON.stringify(memories, null, 2) : "No matching durable memory."}`,
+      `\nSOURCE EVIDENCE\n${sources.length ? JSON.stringify(sources, null, 2) : "No matching indexed source evidence."}`,
+    ].join("\n");
+    const result = await this.connectors.runAssistant(
+      client,
+      agentPrompt,
+      this.profileWorkspacePath,
+    );
+    const turn = {
+      id: randomUUID(),
+      client,
+      prompt: redactSecrets(prompt).value,
+      response: redactSecrets(result.response).value,
+      createdAt: new Date().toISOString(),
+      context: {
+        mode: context.mode,
+        embeddingModel: context.embeddingModel,
+        memoryCount: memories.length,
+        sourceCount: sources.length,
+      },
+    };
+    const history = [...this.assistantHistory(), turn].slice(-40);
+    this.store.setSetting("assistant.conversations", history);
+    return { cancelled: false, turn };
+  }
+
+  async clearAssistantHistory() {
+    const window = this.getWindow();
+    if (!window) throw new Error("The BRACE window is unavailable.");
+    const approval = await dialog.showMessageBox(window, {
+      type: "warning",
+      title: "Clear local AI Workspace history?",
+      message: "This removes saved prompts and answers from BRACE's local database.",
+      detail: "Durable memories, decisions, indexed projects, and client conversations outside BRACE are not changed.",
+      buttons: ["Cancel", "Clear history"],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (approval.response !== 1) return false;
+    this.store.setSetting("assistant.conversations", []);
+    return true;
+  }
+
+  copyText(value: unknown) {
+    const text = String(value || "");
+    if (!text || text.length > 200_000) {
+      throw new Error("Copy a non-empty BRACE value under 200,000 characters.");
+    }
+    clipboard.writeText(text);
+    return true;
+  }
+
   snapshot() {
-    const windowsMcp = process.platform === "win32";
+    const launch = this.connectors.launchDefinition("read-only");
     return {
       environment: "desktop",
       storage: {
@@ -134,13 +252,9 @@ export class BraceMemoryService {
         database: this.databasePath,
       },
       connections: {
-        command: this.executablePath,
-        args: windowsMcp
-          ? [path.join(this.appPath, "dist", "mcp", "brace-mcp.cjs")]
-          : ["--mcp"],
-        env: windowsMcp
-          ? { ELECTRON_RUN_AS_NODE: "1", BRACE_MCP_DIRECT: "1" }
-          : undefined,
+        ...launch,
+        instruction:
+          "Search BRACE before asking the user to repeat durable project context. Keep memory separate from source evidence, cite brace-project URIs, and retain only explicit credential-free outcomes when write tools are enabled.",
       },
       stats: this.store.stats(),
       projects: this.store.listProjects(),
@@ -169,6 +283,9 @@ export class BraceMemoryService {
           endpoint: "http://127.0.0.1:11434",
           model: "nomic-embed-text",
         }),
+      },
+      assistant: {
+        history: this.assistantHistory(),
       },
     };
   }
@@ -351,4 +468,11 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
   ipcMain.handle("brace:export", () => service.exportData());
   ipcMain.handle("brace:backup", () => service.createBackup());
   ipcMain.handle("brace:delete-all", (_event, confirmation: string) => service.deleteAll(String(confirmation || "")));
+  ipcMain.handle("brace:list-connectors", () => service.connectors.list());
+  ipcMain.handle("brace:install-connector", (_event, id: ConnectorId, access: ConnectorAccess) =>
+    service.connectors.install(id, access),
+  );
+  ipcMain.handle("brace:run-assistant", (_event, input: any) => service.runAssistant(input));
+  ipcMain.handle("brace:clear-assistant-history", () => service.clearAssistantHistory());
+  ipcMain.handle("brace:copy-text", (_event, value: unknown) => service.copyText(value));
 }

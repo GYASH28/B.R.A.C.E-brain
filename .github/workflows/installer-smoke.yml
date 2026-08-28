@@ -6,7 +6,7 @@ on:
       tag:
         description: Release tag whose NSIS installer should be verified
         required: true
-        default: v0.3.0
+        default: v0.5.0
 
 permissions:
   contents: read
@@ -54,7 +54,8 @@ jobs:
           $executable = Join-Path $installDir "BRACE.exe"
           if (-not (Test-Path $executable)) { throw "The installer did not create $executable." }
           $version = (Get-Item $executable).VersionInfo.ProductVersion
-          if ($version -notlike "0.3.0*") { throw "Installed executable reports unexpected version $version." }
+          $expectedVersion = "${{ inputs.tag }}" -replace '^v', ''
+          if ($version -notlike "$expectedVersion*") { throw "Installed executable reports $version; expected $expectedVersion." }
           "directory=$installDir" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "executable=$executable" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 

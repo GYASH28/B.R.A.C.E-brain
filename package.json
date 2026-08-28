@@ -1,6 +1,6 @@
 {
   "name": "brace-brain",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Local-first personal AI memory layer — one memory, every AI",
   "author": {
     "name": "BRACE contributors",
@@ -40,6 +40,7 @@
     "electron:e2e": "npm run electron:compile && node scripts/electron-e2e-runner.js",
     "electron:mcp-smoke": "npm run electron:compile && node scripts/electron-mcp-smoke.js",
     "electron:smoke": "node scripts/electron-smoke.js",
+    "website:screenshots": "node scripts/sync-website-screenshots.js",
     "electron:pack": "npm run build && npm run electron:compile && electron-builder --dir",
     "electron:dist": "npm run build && npm run electron:compile && electron-builder"
   },

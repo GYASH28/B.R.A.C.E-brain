@@ -73,6 +73,62 @@ export function createBraceMcpServer(options = {}) {
     },
   );
 
+  const searchAll = async ({ query, scope, projectId, kinds, limit }) => {
+    let queryVector = null;
+    let warning = null;
+    if (embeddingAdapter) {
+      try {
+        [queryVector] = await embeddingAdapter.embed([query]);
+      } catch (error) {
+        warning = `Semantic retrieval unavailable; lexical search completed: ${error.message}`;
+      }
+    }
+    const vectorOptions = queryVector
+      ? { queryVector, embeddingModel: embeddingAdapter.model }
+      : {};
+    const memories = store.search(query, { scope, kinds, limit, ...vectorOptions });
+    const sources = store.searchSources(query, { projectId, limit, ...vectorOptions });
+    const mode = [memories.mode, sources.mode].includes("hybrid")
+      ? "hybrid"
+      : [memories.mode, sources.mode].includes("semantic")
+        ? "semantic"
+        : "lexical";
+    return {
+      mode,
+      embeddingModel: mode === "lexical" ? null : embeddingAdapter.model,
+      memories: memories.results,
+      sources: sources.results,
+      warning,
+    };
+  };
+
+  server.registerPrompt(
+    "brace_memory_compass",
+    {
+      title: "Start with BRACE memory",
+      description: "Begin a task by recalling durable context and finish with an explicit handoff when retention is enabled.",
+      argsSchema: z.object({
+        topic: z.string().min(1).max(2_000),
+      }),
+    },
+    ({ topic }) => ({
+      messages: [{
+        role: "user",
+        content: {
+          type: "text",
+          text: [
+            `Before working on “${topic}”, call brace_session_start with that topic.`,
+            "Use durable memory and source evidence as separate inputs and cite stable source URIs.",
+            "Do the task normally. Do not invent prior context when BRACE has no result.",
+            writesEnabled
+              ? "At the end, call brace_session_handoff only if the session produced explicit durable decisions, lessons, preferences, open questions, or next actions."
+              : "This connection is read-only, so summarize any proposed durable handoff to the user instead of writing it.",
+          ].join(" "),
+        },
+      }],
+    }),
+  );
+
   server.registerTool(
     "brace_search",
     {
@@ -99,32 +155,44 @@ export function createBraceMcpServer(options = {}) {
         openWorldHint: false,
       },
     },
-    async ({ query, scope, projectId, kinds, limit }) => {
-      let queryVector = null;
-      let warning = null;
-      if (embeddingAdapter) {
-        try {
-          [queryVector] = await embeddingAdapter.embed([query]);
-        } catch (error) {
-          warning = `Semantic retrieval unavailable; lexical search completed: ${error.message}`;
-        }
-      }
-      const vectorOptions = queryVector
-        ? { queryVector, embeddingModel: embeddingAdapter.model }
-        : {};
-      const memories = store.search(query, { scope, kinds, limit, ...vectorOptions });
-      const sources = store.searchSources(query, { projectId, limit, ...vectorOptions });
-      const mode = [memories.mode, sources.mode].includes("hybrid")
-        ? "hybrid"
-        : [memories.mode, sources.mode].includes("semantic")
-          ? "semantic"
-          : "lexical";
+    async (input) => jsonResult(await searchAll(input)),
+  );
+
+  server.registerTool(
+    "brace_session_start",
+    {
+      title: "Start a BRACE-aware session",
+      description: "Recall a bounded context capsule for the task before asking the user to repeat durable context.",
+      inputSchema: z.object({
+        topic: z.string().min(1).max(2_000),
+        scope: z.string().max(200).optional(),
+        projectId: z.string().max(200).optional(),
+        limit: z.number().int().min(1).max(20).default(8),
+      }),
+      outputSchema: z.object({
+        topic: z.string(),
+        mode: z.enum(["lexical", "semantic", "hybrid"]),
+        embeddingModel: z.string().nullable(),
+        memories: z.array(z.record(z.string(), z.unknown())),
+        sources: z.array(z.record(z.string(), z.unknown())),
+        recentEvents: z.array(z.record(z.string(), z.unknown())),
+        warning: z.string().nullable(),
+        retentionAvailable: z.boolean(),
+      }),
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: false,
+      },
+    },
+    async ({ topic, scope, projectId, limit }) => {
+      const context = await searchAll({ query: topic, scope, projectId, limit });
       return jsonResult({
-        mode,
-        embeddingModel: mode === "lexical" ? null : embeddingAdapter.model,
-        memories: memories.results,
-        sources: sources.results,
-        warning,
+        topic,
+        ...context,
+        recentEvents: store.listTimeline({ projectId, limit: Math.min(8, limit) }),
+        retentionAvailable: writesEnabled,
       });
     },
   );
@@ -240,6 +308,50 @@ export function createBraceMcpServer(options = {}) {
   );
 
   if (writesEnabled) {
+    server.registerTool(
+      "brace_session_handoff",
+      {
+        title: "Retain a BRACE session handoff",
+        description: "Store one concise, explicit end-of-session handoff with durable outcomes and next actions. Never store raw transcripts or hidden reasoning.",
+        inputSchema: z.object({
+          topic: z.string().min(1).max(240),
+          scope: z.string().min(1).max(200).default("global"),
+          summary: z.string().min(1).max(4_000),
+          decisions: z.array(z.string().min(1).max(1_000)).max(20).default([]),
+          lessons: z.array(z.string().min(1).max(1_000)).max(20).default([]),
+          openQuestions: z.array(z.string().min(1).max(1_000)).max(20).default([]),
+          nextActions: z.array(z.string().min(1).max(1_000)).max(20).default([]),
+          sourceUri: z.string().max(2_000).optional(),
+        }),
+        outputSchema: z.object({
+          memory: z.record(z.string(), z.unknown()),
+          duplicate: z.boolean(),
+          duplicateCandidate: z.record(z.string(), z.unknown()).nullable(),
+        }),
+        annotations: {
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      async ({ topic, scope, summary, decisions, lessons, openQuestions, nextActions, sourceUri }) => {
+        const section = (label, values) =>
+          values.length ? `\n\n## ${label}\n${values.map((value) => `- ${value}`).join("\n")}` : "";
+        return jsonResult(store.createMemory({
+          kind: "summary",
+          scope,
+          title: `Session handoff: ${topic}`,
+          summary,
+          content: `${summary}${section("Decisions", decisions)}${section("Lessons", lessons)}${section("Open questions", openQuestions)}${section("Next actions", nextActions)}`,
+          tags: ["session-handoff"],
+          sourceUri,
+          confidence: 0.82,
+          importance: 0.72,
+        }));
+      },
+    );
+
     server.registerTool(
       "brace_remember",
       {

@@ -61,9 +61,11 @@ test("official MCP v2 stdio server exposes structured read-only memory tools", a
   const listed = await client.listTools();
   const names = listed.tools.map((tool) => tool.name);
   assert.ok(names.includes("brace_search"));
+  assert.ok(names.includes("brace_session_start"));
   assert.ok(names.includes("brace_get_memory"));
   assert.ok(names.includes("brace_status"));
   assert.ok(!names.includes("brace_remember"));
+  assert.ok(!names.includes("brace_session_handoff"));
   assert.ok(!names.includes("brace_forget_memory"));
 
   const searched = await client.callTool({
@@ -73,6 +75,22 @@ test("official MCP v2 stdio server exposes structured read-only memory tools", a
   assert.equal(searched.structuredContent.mode, "lexical");
   assert.equal(searched.structuredContent.memories[0].id, memory.id);
   assert.match(searched.content[0].text, /Keep indexing offline/);
+
+  const started = await client.callTool({
+    name: "brace_session_start",
+    arguments: { topic: "offline markdown", scope: "project:northstar" },
+  });
+  assert.equal(started.structuredContent.retentionAvailable, false);
+  assert.equal(started.structuredContent.memories[0].id, memory.id);
+
+  const prompts = await client.listPrompts();
+  assert.ok(prompts.prompts.some((prompt) => prompt.name === "brace_memory_compass"));
+  const compass = await client.getPrompt({
+    name: "brace_memory_compass",
+    arguments: { topic: "finish Northstar", retainOutcomes: "true" },
+  });
+  assert.match(compass.messages[0].content.text, /brace_session_start/);
+  assert.match(compass.messages[0].content.text, /read-only/);
 
   const resource = await client.readResource({ uri: "brace://status" });
   assert.match(resource.contents[0].text, /"schemaVersion": 3/);
@@ -89,9 +107,24 @@ test("MCP writes are separately enabled and destructive forgetting remains absen
   const listed = await client.listTools();
   const names = listed.tools.map((tool) => tool.name);
   assert.ok(names.includes("brace_remember"));
+  assert.ok(names.includes("brace_session_handoff"));
   assert.ok(names.includes("brace_record_decision"));
   assert.ok(names.includes("brace_run_skill"));
   assert.ok(!names.includes("brace_forget_memory"));
+
+  const handedOff = await client.callTool({
+    name: "brace_session_handoff",
+    arguments: {
+      topic: "Northstar migration",
+      scope: "project:northstar",
+      summary: "The migration workflow now has an explicit restart verification step.",
+      decisions: ["Keep imported sources canonical."],
+      lessons: ["Verify the database after restart."],
+      nextActions: ["Run the packaged MCP smoke test."],
+    },
+  });
+  assert.equal(handedOff.structuredContent.memory.kind, "summary");
+  assert.match(handedOff.structuredContent.memory.title, /Session handoff/);
 
   const remembered = await client.callTool({
     name: "brace_remember",
@@ -108,7 +141,7 @@ test("MCP writes are separately enabled and destructive forgetting remains absen
 
   await client.close();
   const stored = new MemoryStore(databasePath);
-  assert.equal(stored.stats().memories, 1);
+  assert.equal(stored.stats().memories, 2);
   assert.equal(stored.search("schema migration").results[0].title, "Restart after migrations");
   stored.close();
 });

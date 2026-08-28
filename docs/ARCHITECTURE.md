@@ -80,6 +80,10 @@ It never imports code from the skill directory. There is no shell, `eval`, dynam
 
 `electron/memory-service.ts` performs user-authorized folder selection, backup/export destinations, destructive confirmations, and skill permission dialogs in the trusted process.
 
+`electron/connector-service.ts` is the only client-configuration and AI-process seam. It detects allowlisted clients, builds platform-correct stdio definitions, backs up the exact configuration target, runs client-specific argument arrays without a shell, verifies the resulting BRACE entry, and restores the previous state on failure. The renderer receives connection metadata and named actions; it never receives a general process launcher.
+
+The AI Workspace can invoke detected Codex CLI or Claude Code clients inside an isolated read-only working directory. The trusted service presents the selected context and model-provider boundary before execution. Prompt and response history is secret-redacted and local, and durable retention is a separate explicit operation.
+
 ## MCP boundary
 
 `scripts/mcp-server.mjs` uses the official TypeScript SDK's stdio server. The release build bundles it into `dist/mcp/brace-mcp.cjs`. `electron/launcher.js` chooses between desktop mode and MCP mode before importing Electron application code.
@@ -93,6 +97,8 @@ Authorization has three modes:
 3. Forgetting only when both write and `BRACE_MCP_DESTRUCTIVE=1` are set.
 
 Tool schemas cap query, title, content, list, and array sizes. Project listings omit absolute roots.
+
+Session continuity uses the same permission split. `brace_session_start` is read-only and returns a bounded capsule of memory, source evidence, and recent events. `brace_session_handoff` exists only in write mode and stores one explicit structured outcome rather than a transcript. The `brace_memory_compass` prompt teaches capable clients to use those seams without inventing absent context.
 
 ## Browser preview boundary
 
@@ -113,4 +119,6 @@ See [ADR-001](architecture/adr-001-local-data-boundary.md) and [ADR-002](archite
 - Unsupported or dangerous project selections fail before traversal.
 - Database schemas newer than the running application are rejected.
 - Browser preview mutations fail explicitly.
+- Connector setup fails and restores the exact prior configuration when the expected BRACE entry cannot be verified.
+- An existing configuration entry is reported as configured, not as proof of a live provider connection.
 - Missing packaged static output shows an application build error instead of opening a remote page.

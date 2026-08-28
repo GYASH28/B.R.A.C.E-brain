@@ -14,8 +14,8 @@ The BRACE site is an explorable explanation of a local memory system, not an ani
 | 6 | Recall query lab | Try synthetic questions and see source-backed results | Form submit, prompt chips | Loading delay is removed |
 | 7 | Evidence layers | Isolate source, memory, and receipt in the retrieval result | Click/tap toggles | Immediate visibility change |
 | 8 | Copy recall | Copy the displayed synthetic result with confirmation | Click/tap | Identical |
-| 9 | Memory constellation | Explore typed relations instead of a decorative node cloud | Filters, node selection, arrow keys, center | Static readable graph; reshuffle is immediate |
-| 10 | Constellation reshuffle | Show that relationships remain legible across layouts | Click/tap | Immediate layout change |
+| 9 | Memory constellation | Explore typed relations instead of a decorative node cloud | Filters, node selection, arrow keys, center | Static readable graph; projection changes are immediate |
+| 10 | Five graph projections | Ask spatial, neighborhood, focus, evidence-flow, or time questions over one graph | Rings, Living, Orbit, Flow, Chronicle buttons | Immediate transform-free layout change |
 | 11 | Privacy vault | Inspect source, memory, and network boundaries | Click/tap | Readout changes without animation |
 | 12 | Product proof gallery | Browse and expand real synthetic-workspace screenshots | Previous/next, expand, dialog controls | Scrolling and dialog opening are immediate |
 | 13 | Package advisor | Match guided or portable intent to equal Windows/Linux release choices | Click/tap | Highlight changes immediately |

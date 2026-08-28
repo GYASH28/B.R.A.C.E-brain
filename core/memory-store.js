@@ -1200,7 +1200,7 @@ class MemoryStore {
     `).all(limit);
     const projects = this.listProjects().slice(0, limit);
     const sources = this.db.prepare(`
-      SELECT id, project_id, title, uri, media_type FROM sources
+      SELECT id, project_id, title, uri, media_type, updated_at FROM sources
       ORDER BY updated_at DESC LIMIT ?
     `).all(limit);
     const allowed = {
@@ -1246,11 +1246,11 @@ class MemoryStore {
     }
     return {
       nodes: [
-        ...projects.map((item) => ({ id: item.id, type: "project", label: item.name })),
-        ...sources.map((item) => ({ id: item.id, type: "source", label: item.title, mediaType: item.media_type })),
-        ...memories.map((item) => ({ id: item.id, type: "memory", label: item.title, kind: item.kind })),
-        ...entities.map((item) => ({ id: item.id, type: "entity", label: item.name, entityType: item.entity_type })),
-        ...decisions.map((item) => ({ id: item.id, type: "decision", label: item.title, status: item.status })),
+        ...projects.map((item) => ({ id: item.id, type: "project", label: item.name, timestamp: item.created_at })),
+        ...sources.map((item) => ({ id: item.id, type: "source", label: item.title, mediaType: item.media_type, timestamp: item.updated_at })),
+        ...memories.map((item) => ({ id: item.id, type: "memory", label: item.title, kind: item.kind, timestamp: item.updatedAt })),
+        ...entities.map((item) => ({ id: item.id, type: "entity", label: item.name, entityType: item.entity_type, timestamp: item.created_at })),
+        ...decisions.map((item) => ({ id: item.id, type: "decision", label: item.title, status: item.status, timestamp: item.decided_at })),
       ],
       edges,
     };

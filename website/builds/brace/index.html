@@ -125,7 +125,7 @@
 
     <section id="constellation" class="constellation-act sc-section" data-sc-act="flow">
       <div class="sc-wrap" data-sc-in>
-        <header class="constellation-heading"><div><p class="section-kicker">TOUCH THE RELATIONSHIP</p><h2>Memory is not a list.<br>It is a living map.</h2></div><p>Select a node, filter the evidence types, or reshuffle the local graph. Every connection stays readable and every control works with a keyboard.</p></header>
+        <header class="constellation-heading"><div><p class="section-kicker">TOUCH THE RELATIONSHIP</p><h2>Memory is not a list.<br>It is a living map.</h2></div><p>Select a node, filter its evidence, or change the question with five real projections. Every connection stays readable and every control works with a keyboard.</p></header>
         <div class="constellation-lab motion-card">
           <div class="constellation-toolbar">
             <div role="group" aria-label="Filter constellation nodes">
@@ -134,7 +134,13 @@
               <button type="button" data-node-filter="memory" aria-pressed="false">Memories</button>
               <button type="button" data-node-filter="decision" aria-pressed="false">Decisions</button>
             </div>
-            <button type="button" class="shuffle-constellation" data-constellation-shuffle><span>Reshuffle</span><i aria-hidden="true"></i></button>
+            <div class="constellation-presets" role="group" aria-label="Knowledge map preset">
+              <button type="button" data-constellation-preset="rings" aria-pressed="true">Rings</button>
+              <button type="button" data-constellation-preset="living" aria-pressed="false">Living</button>
+              <button type="button" data-constellation-preset="orbit" aria-pressed="false">Orbit</button>
+              <button type="button" data-constellation-preset="flow" aria-pressed="false">Flow</button>
+              <button type="button" data-constellation-preset="chronicle" aria-pressed="false">Chronicle</button>
+            </div>
           </div>
           <div class="constellation-workspace">
             <div class="constellation-board" data-constellation-board role="group" aria-label="Interactive BRACE memory constellation. Use arrow keys to move between nodes.">
@@ -182,9 +188,9 @@
           </header>
           <figure class="proof-frame" data-proof="overview" data-proof-image="assets/app-overview.png" data-proof-title="Memory signal" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>MEMORY SIGNAL</b><em>LOCAL</em></div><img src="assets/app-overview.png" width="1440" height="960" alt="BRACE overview with synthetic Northstar data"><figcaption><strong>See what BRACE knows</strong><span>Memory health, strongest recall, and source provenance in one working surface.</span></figcaption></figure>
           <figure class="proof-frame" data-proof="recall" data-proof-image="assets/app-recall.png" data-proof-title="Recall with receipts" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>RECALL</b><em>LEXICAL</em></div><img src="assets/app-recall.png" width="1440" height="960" alt="BRACE recall separating memories and source evidence"><figcaption><strong>Recall with receipts</strong><span>Durable memories and raw source evidence remain visibly different.</span></figcaption></figure>
-          <figure class="proof-frame" data-proof="review" data-proof-image="assets/app-memory-review.png" data-proof-title="Memory review" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>MEMORY REVIEW</b><em>YOU DECIDE</em></div><img src="assets/app-memory-review.png" width="1440" height="960" alt="BRACE memory review queue comparing two synthetic memories"><figcaption><strong>Resolve overlap without silent merging</strong><span>Keep either record canonical or confirm both are intentionally distinct.</span></figcaption></figure>
-          <figure class="proof-frame" data-proof="graph" data-proof-image="assets/app-graph.png" data-proof-title="Interactive constellation" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>CONSTELLATION</b><em>INTERACTIVE</em></div><img src="assets/app-graph.png" width="1440" height="960" alt="BRACE interactive memory constellation"><figcaption><strong>Follow the relationship</strong><span>Keyboard-selectable nodes, type filters, zoom, and a readable adjacency inspector.</span></figcaption></figure>
-          <figure class="proof-frame" data-proof="timeline" data-proof-image="assets/app-timeline.png" data-proof-title="Decision timeline" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>TIMELINE</b><em>DURABLE</em></div><img src="assets/app-timeline.png" width="1440" height="960" alt="BRACE decision timeline with synthetic data"><figcaption><strong>Keep the reason, not only the result</strong><span>Decisions and evidence stay attached to the moment they changed.</span></figcaption></figure>
+          <figure class="proof-frame" data-proof="assistant" data-proof-image="assets/app-ai-workspace.png" data-proof-title="AI Workspace" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>AI WORKSPACE</b><em>VISIBLE BOUNDARY</em></div><img src="assets/app-ai-workspace.png" width="1440" height="960" alt="BRACE AI Workspace with a detected Codex CLI and explicit local-memory boundary"><figcaption><strong>Ask with your memory attached</strong><span>Approve the context capsule, use an installed client, then retain only the outcome worth keeping.</span></figcaption></figure>
+          <figure class="proof-frame" data-proof="graph" data-proof-image="assets/app-graph.png" data-proof-title="Five knowledge projections" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>KNOWLEDGE ATLAS</b><em>FIVE PRESETS</em></div><img src="assets/app-graph.png" width="1440" height="960" alt="BRACE knowledge atlas showing Rings, Living, Orbit, Flow, and Chronicle presets"><figcaption><strong>Change the question, not the data</strong><span>Rings, Living, Orbit, Flow, and Chronicle project one provenance-backed graph five useful ways.</span></figcaption></figure>
+          <figure class="proof-frame" data-proof="inbox" data-proof-image="assets/app-inbox.png" data-proof-title="Deliberate Inbox" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>INBOX</b><em>EXPLICIT CAPTURE</em></div><img src="assets/app-inbox.png" width="1440" height="960" alt="BRACE Inbox for explicit memory and decision capture"><figcaption><strong>Keep the useful outcome</strong><span>Capture a durable point or decision without rewriting a source file or saving a raw transcript.</span></figcaption></figure>
           <aside class="proof-outro"><strong>The product is inspectable before you install it.</strong><a href="guide/">Open the beginner guide</a></aside>
         </div>
         <div class="rail-meter" aria-hidden="true"><i></i></div>
@@ -205,7 +211,7 @@
                 <header><span>WIN</span><div><small>WINDOWS 10 / 11</small><h3>BRACE for Windows</h3></div><b data-device-badge>THIS DEVICE</b></header>
                 <p>A familiar installer with Start menu shortcuts and a clean uninstall path.</p>
                 <div class="platform-actions">
-                  <a class="platform-primary" data-magnetic data-download="windows" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.4.0/BRACE-Setup-0.4.0.exe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg><span><strong>Download installer</strong><small>BRACE 0.4.0 · x64 .exe</small></span></a>
+                  <a class="platform-primary" data-magnetic data-download="windows" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.5.0/BRACE-Setup-0.5.0.exe"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg><span><strong>Download installer</strong><small>BRACE 0.5.0 · x64 .exe</small></span></a>
                   <a class="platform-guide" href="guide/#install">Install guide</a>
                 </div>
               </article>
@@ -213,12 +219,12 @@
                 <header><span>LNX</span><div><small>LINUX X86_64</small><h3>BRACE for Linux</h3></div><b data-device-badge>THIS DEVICE</b></header>
                 <p>Choose a portable AppImage or the native Debian / Ubuntu package.</p>
                 <div class="platform-actions platform-actions--linux">
-                  <a class="platform-primary" data-magnetic data-download="linux" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.4.0/BRACE-0.4.0.AppImage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg><span><strong>AppImage</strong><small>Portable · x86_64</small></span></a>
-                  <a class="platform-secondary" data-download="deb" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.4.0/brace-brain_0.4.0_amd64.deb"><strong>.deb</strong><small>Debian / Ubuntu</small></a>
+                  <a class="platform-primary" data-magnetic data-download="linux" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.5.0/BRACE-0.5.0.AppImage"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 21h14"/></svg><span><strong>AppImage</strong><small>Portable · x86_64</small></span></a>
+                  <a class="platform-secondary" data-download="deb" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.5.0/brace-brain_0.5.0_amd64.deb"><strong>.deb</strong><small>Debian / Ubuntu</small></a>
                 </div>
               </article>
             </div>
-            <div class="release-proof"><span><i></i> VERSIONED ASSETS</span><span><i></i> SHA-256 MANIFEST</span><span><i></i> CYCLONEDX SBOM</span><a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0">Release details</a></div>
+            <div class="release-proof"><span><i></i> VERSIONED ASSETS</span><span><i></i> SHA-256 MANIFEST</span><span><i></i> CYCLONEDX SBOM</span><a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0">Release details</a></div>
           </div>
         </div>
         <div class="download-divider" aria-hidden="true"></div>

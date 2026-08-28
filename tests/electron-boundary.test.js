@@ -38,6 +38,11 @@ test("Electron renderer is isolated behind a narrow BRACE bridge", () => {
     "exportBraceData",
     "backupBraceData",
     "deleteAllBraceData",
+    "listBraceConnectors",
+    "installBraceConnector",
+    "runBraceAssistant",
+    "clearBraceAssistantHistory",
+    "copyBraceText",
   ]) {
     assert.match(preload, new RegExp(`${operation}:`));
   }

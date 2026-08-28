@@ -90,6 +90,7 @@ export interface GraphNode {
   label: string;
   kind?: string;
   status?: string;
+  timestamp?: string | null;
 }
 
 export interface GraphEdge {
@@ -142,9 +143,49 @@ export interface BraceSnapshot {
     enabled: boolean;
     config: { enabled: boolean; endpoint: string; model: string };
   };
+  assistant?: {
+    history: AssistantTurn[];
+  };
   storage?: { directory: string; database: string };
-  connections?: { command: string; args: string[]; env?: Record<string, string> };
+  connections?: {
+    command: string;
+    args: string[];
+    env?: Record<string, string>;
+    instruction?: string;
+  };
   environment?: "desktop" | "browser-preview";
+}
+
+export interface AssistantTurn {
+  id: string;
+  client: "codex" | "claude";
+  prompt: string;
+  response: string;
+  createdAt: string;
+  context: {
+    mode: "lexical" | "semantic" | "hybrid";
+    embeddingModel: string | null;
+    memoryCount: number;
+    sourceCount: number;
+  };
+}
+
+export type ConnectorId = "codex" | "claude" | "antigravity" | "generic";
+export type ConnectorAccess = "read-only" | "remember";
+
+export interface BraceConnector {
+  id: ConnectorId;
+  name: string;
+  description: string;
+  detected: boolean;
+  executablePath: string | null;
+  version: string | null;
+  configured: boolean;
+  configPath: string | null;
+  supportsInstall: boolean;
+  instruction: string;
+  readOnlyConfig: Record<string, unknown>;
+  rememberConfig: Record<string, unknown>;
 }
 
 export interface SearchResponse {
@@ -195,6 +236,17 @@ export interface BraceElectronApi {
   exportBraceData: () => Promise<unknown>;
   backupBraceData: () => Promise<unknown>;
   deleteAllBraceData: (confirmation: string) => Promise<boolean>;
+  listBraceConnectors: () => Promise<BraceConnector[]>;
+  installBraceConnector: (
+    id: ConnectorId,
+    access: ConnectorAccess,
+  ) => Promise<{ connected: boolean; cancelled: boolean }>;
+  runBraceAssistant: (input: {
+    client: "codex" | "claude";
+    prompt: string;
+  }) => Promise<{ cancelled: boolean; turn?: AssistantTurn }>;
+  clearBraceAssistantHistory: () => Promise<boolean>;
+  copyBraceText: (value: string) => Promise<boolean>;
 }
 
 declare global {

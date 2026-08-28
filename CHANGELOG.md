@@ -6,8 +6,40 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Planned
 
-- Collect structured feedback from the 0.4.0 preview.
+- Collect structured feedback from the 0.5.0 preview.
 - Add native signing and update-channel work when maintainers have signing infrastructure.
+
+## [0.5.0] - 2026-08-28
+
+### Added
+
+- Restored the strongest original AI Second Brain workflows inside the public local-first BRACE boundary, including dedicated Inbox and AI Workspace surfaces.
+- Added deterministic Rings, Living, Orbit, Flow, and Chronicle projections over one provenance-backed knowledge graph, with persistent choice, accessible controls, and a relationship inspector.
+- Added guided read-only or remember setup for Codex CLI, Claude Code, and Antigravity, alongside platform-correct manual configuration for any stdio MCP client.
+- Added the `brace_memory_compass` MCP prompt plus `brace_session_start` and permission-gated `brace_session_handoff` tools for explicit continuity across compatible AI clients.
+- Added locally stored, secret-redacted AI Workspace history and an explicit **Retain latest answer** action; no response is promoted to durable memory automatically.
+- Added trusted clipboard support through the narrow Electron preload boundary and a website screenshot synchronization gate that accepts only the synthetic Northstar profile.
+
+### Changed
+
+- Rebuilt the desktop navigation and high-signal surfaces around Command center, Knowledge map, Inbox, AI Workspace, Recall, Memory, Timeline, Projects, Skills, Connections, and Settings.
+- Replaced placeholder identity elements with the real BRACE brain mark and refreshed the launch-site product proof with the current application, all five graph projections, Inbox, and AI Workspace.
+- Expanded the integrated beginner guide with guided connections, provider-boundary disclosure, cross-session handoff, AI retention, and five-mode graph guidance.
+- Connection health now says **Configured** when a BRACE config entry exists; only a real AI Workspace turn proves the live client/provider path.
+
+### Fixed
+
+- Guided connector setup now verifies that the expected BRACE entry survived the client command and restores the exact prior configuration when verification fails.
+- Rollback removes a newly created config when no file existed before setup, instead of leaving a partial file behind.
+- Windows connector path discovery no longer accepts empty application-data candidates.
+- Synthetic E2E screenshots and connection output no longer expose the development machine's workspace path.
+
+### Verified
+
+- Native synthetic Electron E2E covers every primary workspace, all five graph views, graph selection/zoom/keyboard travel, retained preferences, review resolution, connections, and zero renderer-console errors.
+- MCP source, packaged Linux, and Windows Node-mode simulations cover status plus memory-compass, session-start, and session-handoff behavior.
+- AppImage and Debian packages pass local runtime and content audits; the Windows NSIS payload is byte-identical at the ASAR boundary and remains subject to native Windows CI before release publication.
+- The launch site passes interaction, responsive-layout, WCAG 2.2 AA, and 111-frame Scrollcraft desktop/mobile/reduced-motion checks with no dead scroll and at least 4.5:1 cue contrast.
 
 ## [0.4.0] - 2026-08-27
 
@@ -83,7 +115,8 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Removed private seed data, machine-specific paths, legacy local servers, arbitrary plugin execution, and broad renderer privileges from the public candidate.
 - Added secret-pattern tests, dependency auditing, strict embedding endpoint validation, sandboxed rendering, CSP, and repository hygiene controls.
 
-[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0
 [0.4.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0
 [0.3.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.3.0
 [0.2.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.2.0

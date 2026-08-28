@@ -2,10 +2,19 @@
 
 import { create } from "zustand";
 import { browserPreviewSnapshot, searchBrowserPreview } from "./browser-preview";
-import type { BraceMemory, BraceSnapshot, SearchResponse } from "./types";
+import type {
+  BraceConnector,
+  BraceMemory,
+  BraceSnapshot,
+  ConnectorAccess,
+  ConnectorId,
+  SearchResponse,
+} from "./types";
 
 export type BraceView =
   | "home"
+  | "inbox"
+  | "assistant"
   | "search"
   | "memories"
   | "review"
@@ -19,6 +28,7 @@ export type BraceView =
 interface BraceState {
   view: BraceView;
   snapshot: BraceSnapshot | null;
+  connectors: BraceConnector[];
   selectedMemory: BraceMemory | null;
   searchQuery: string;
   searchResult: SearchResponse | null;
@@ -32,6 +42,10 @@ interface BraceState {
   clearMessage: () => void;
   bootstrap: () => Promise<void>;
   refresh: () => Promise<void>;
+  refreshConnectors: () => Promise<void>;
+  installConnector: (id: ConnectorId, access: ConnectorAccess) => Promise<void>;
+  runAssistant: (client: "codex" | "claude", prompt: string) => Promise<void>;
+  clearAssistantHistory: () => Promise<void>;
   initializeDemo: () => Promise<void>;
   search: (query?: string) => Promise<void>;
   createMemory: (input: Record<string, unknown>) => Promise<void>;
@@ -74,15 +88,21 @@ export const useBrace = create<BraceState>((set, get) => {
 
   const refresh = async () => {
     const api = desktop();
-    const snapshot = api?.getBraceSnapshot
-      ? await api.getBraceSnapshot()
-      : structuredClone(browserPreviewSnapshot);
-    set({ snapshot, loading: false });
+    const [snapshot, connectors] = await Promise.all([
+      api?.getBraceSnapshot
+        ? api.getBraceSnapshot()
+        : Promise.resolve(structuredClone(browserPreviewSnapshot)),
+      api?.listBraceConnectors
+        ? api.listBraceConnectors()
+        : Promise.resolve([]),
+    ]);
+    set({ snapshot, connectors, loading: false });
   };
 
   return {
     view: "home",
     snapshot: null,
+    connectors: [],
     selectedMemory: null,
     searchQuery: "",
     searchResult: null,
@@ -103,6 +123,49 @@ export const useBrace = create<BraceState>((set, get) => {
       }
     },
     refresh,
+    refreshConnectors: async () => {
+      const api = desktop();
+      const connectors = api?.listBraceConnectors
+        ? await api.listBraceConnectors()
+        : [];
+      set({ connectors });
+    },
+    installConnector: async (id, access) =>
+      perform("Connecting AI client…", async () => {
+        const api = desktop();
+        if (!api?.installBraceConnector) {
+          throw new Error("Guided connector setup is available in the desktop app.");
+        }
+        const result = await api.installBraceConnector(id, access);
+        if (!result.connected) return;
+        const connectors = await api.listBraceConnectors();
+        set({
+          connectors,
+          notice: `${connectors.find((connector) => connector.id === id)?.name || "AI client"} is configured for BRACE. Run a turn to verify the live connection.`,
+        });
+      }),
+    runAssistant: async (client, prompt) =>
+      perform("Recalling context and asking AI…", async () => {
+        const api = desktop();
+        if (!api?.runBraceAssistant) {
+          throw new Error("The embedded AI Workspace is available in the desktop app.");
+        }
+        const result = await api.runBraceAssistant({ client, prompt });
+        if (result.cancelled) return;
+        await refresh();
+        set({ notice: "AI Workspace turn completed. Nothing was promoted to durable memory automatically." });
+      }),
+    clearAssistantHistory: async () =>
+      perform("Clearing AI Workspace history…", async () => {
+        const api = desktop();
+        if (!api?.clearBraceAssistantHistory) {
+          throw new Error("AI Workspace history is available in the desktop app.");
+        }
+        if (await api.clearBraceAssistantHistory()) {
+          await refresh();
+          set({ notice: "Local AI Workspace history cleared." });
+        }
+      }),
     initializeDemo: async () =>
       perform("Preparing synthetic demo…", async () => {
         const api = desktop();

@@ -26,11 +26,13 @@ import {
   GitBranch,
   HardDrive,
   Info,
+  Inbox,
   KeyRound,
   Keyboard,
   LayoutDashboard,
   LoaderCircle,
   Menu,
+  MessageSquareText,
   Maximize2,
   Minus,
   Network,
@@ -53,19 +55,28 @@ import {
 } from "lucide-react";
 import { useBrace, type BraceView } from "@/lib/brace/store";
 import type {
+  BraceConnector,
   BraceMemory,
   BraceProject,
   BraceSkill,
+  GraphEdge,
   GraphNode,
   TimelineEvent,
 } from "@/lib/brace/types";
+import {
+  graphPositions,
+  graphPresetDetails,
+  type GraphPreset,
+} from "@/lib/brace/graph-layouts";
 
 const nav: Array<{ view: BraceView; label: string; icon: LucideIcon }> = [
-  { view: "home", label: "Overview", icon: LayoutDashboard },
+  { view: "home", label: "Command center", icon: LayoutDashboard },
+  { view: "graph", label: "Knowledge map", icon: Network },
+  { view: "inbox", label: "Inbox", icon: Inbox },
+  { view: "assistant", label: "AI Workspace", icon: MessageSquareText },
   { view: "search", label: "Recall", icon: Search },
-  { view: "memories", label: "Memories", icon: Brain },
+  { view: "memories", label: "Memory", icon: Brain },
   { view: "timeline", label: "Timeline", icon: Clock3 },
-  { view: "graph", label: "Graph", icon: Network },
   { view: "projects", label: "Projects", icon: FolderInput },
   { view: "skills", label: "Skills", icon: Zap },
   { view: "connections", label: "Connections", icon: GitBranch },
@@ -273,6 +284,8 @@ export function BraceApp() {
         )}
         <main key={view} className="brace-main min-h-0 flex-1 overflow-y-auto">
           {view === "home" && <Overview />}
+          {view === "inbox" && <InboxView />}
+          {view === "assistant" && <AiWorkspaceView />}
           {view === "search" && <SearchView />}
           {view === "memories" && <MemoriesView />}
           {view === "review" && <MemoryReviewView />}
@@ -302,9 +315,7 @@ export function BraceApp() {
 function BraceMark() {
   return (
     <span className="brace-mark relative flex h-10 w-10 shrink-0 items-center justify-center">
-      <span className="brace-mark-orbit" aria-hidden="true" />
-      <span className="relative text-sm font-black tracking-[-0.08em] text-[#04111f]">B</span>
-      <span className="absolute right-[8px] top-[7px] h-1 w-1 rounded-full bg-white" />
+      <img src="/logo.svg" alt="" width="40" height="40" draggable={false} />
     </span>
   );
 }
@@ -673,6 +684,142 @@ function TimelineMini({ event, last }: { event: TimelineEvent; last: boolean }) 
   );
 }
 
+function InboxView() {
+  const { snapshot, createMemory, createDecision, setView } = useBrace();
+  const [mode, setMode] = useState<"capture" | "decision">("capture");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [scope, setScope] = useState("global");
+  const [rationale, setRationale] = useState("");
+  if (!snapshot) return null;
+  const recentCaptures = snapshot.memories
+    .filter((memory) => memory.tags.includes("inbox"))
+    .slice(0, 8);
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (mode === "capture") {
+      await createMemory({
+        title,
+        content,
+        summary: content.slice(0, 400),
+        kind: "summary",
+        scope,
+        tags: ["inbox"],
+        confidence: 0.64,
+        importance: 0.55,
+      });
+    } else {
+      await createDecision({
+        title,
+        context: content,
+        decision: content,
+        rationale,
+        projectId: scope.startsWith("project:") ? scope.slice(8) : undefined,
+        status: "accepted",
+      });
+    }
+    if (!useBrace.getState().error) {
+      setTitle("");
+      setContent("");
+      setRationale("");
+    }
+  };
+  return (
+    <Page eyebrow="Safe local capture" title="Inbox" description="Catch a thought, name a decision, or clear a memory review without rewriting an imported source file.">
+      <div className="grid gap-5 xl:grid-cols-[1.08fr_.92fr]">
+        <section className="inbox-composer">
+          <div className="inbox-mode" role="group" aria-label="Inbox capture type">
+            <button type="button" className={mode === "capture" ? "is-active" : ""} aria-pressed={mode === "capture"} onClick={() => setMode("capture")}><Inbox className="h-4 w-4" />Capture</button>
+            <button type="button" className={mode === "decision" ? "is-active" : ""} aria-pressed={mode === "decision"} onClick={() => setMode("decision")}><GitBranch className="h-4 w-4" />Decision</button>
+          </div>
+          <form onSubmit={submit}>
+            <label htmlFor="inbox-title">{mode === "capture" ? "What should future-you recognize?" : "Name the decision"}</label>
+            <input id="inbox-title" required value={title} onChange={(event) => setTitle(event.target.value)} placeholder={mode === "capture" ? "A concise, recognisable title" : "The choice we made"} />
+            <label htmlFor="inbox-content">{mode === "capture" ? "Capture" : "Decision and context"}</label>
+            <textarea id="inbox-content" required value={content} onChange={(event) => setContent(event.target.value)} placeholder={mode === "capture" ? "Keep the useful outcome—not a raw transcript or credential." : "What was chosen, under which constraints, and what changed?"} />
+            {mode === "decision" && <><label htmlFor="inbox-rationale">Rationale</label><textarea id="inbox-rationale" value={rationale} onChange={(event) => setRationale(event.target.value)} placeholder="Why this option won" className="is-compact" /></>}
+            <div className="inbox-composer-foot">
+              <label>Scope<select value={scope} onChange={(event) => setScope(event.target.value)}><option value="global">Global</option>{snapshot.projects.map((project) => <option key={project.id} value={`project:${project.id}`}>{project.name}</option>)}</select></label>
+              <button type="submit" className="brace-primary h-10 px-4">{mode === "capture" ? "Send to inbox" : "Record decision"}<CornerDownLeft className="h-3.5 w-3.5" /></button>
+            </div>
+          </form>
+        </section>
+        <div className="space-y-5">
+          <section className="brace-card overflow-hidden">
+            <SectionHeading title="Review queue" action="Open review" onAction={() => setView("review")} />
+            <div className="review-pulse"><span>{snapshot.memoryQuality.pendingReview}</span><div><strong>overlap {snapshot.memoryQuality.pendingReview === 1 ? "pair" : "pairs"}</strong><small>BRACE never auto-merges a near duplicate.</small></div><ArrowRight className="ml-auto h-4 w-4" /></div>
+          </section>
+          <section className="brace-card overflow-hidden">
+            <SectionHeading title="Recent inbox captures" action="All memory" onAction={() => setView("memories")} />
+            {recentCaptures.map((memory) => <MemoryRow key={memory.id} memory={memory} onClick={() => useBrace.getState().setSelectedMemory(memory)} />)}
+            {!recentCaptures.length && <EmptyRows text="Your local inbox is clear." />}
+          </section>
+        </div>
+      </div>
+    </Page>
+  );
+}
+
+function AiWorkspaceView() {
+  const { snapshot, connectors, runAssistant, clearAssistantHistory, createMemory, setView } = useBrace();
+  const available = connectors.filter((connector) => (connector.id === "codex" || connector.id === "claude") && connector.detected);
+  const [client, setClient] = useState<"codex" | "claude">("codex");
+  const [prompt, setPrompt] = useState("");
+  const history = snapshot?.assistant?.history || [];
+  const latest = history[history.length - 1];
+  useEffect(() => {
+    if (!available.some((connector) => connector.id === client) && available[0]) {
+      setClient(available[0].id as "codex" | "claude");
+    }
+  }, [available, client]);
+  if (!snapshot) return null;
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    await runAssistant(client, prompt);
+    if (!useBrace.getState().error) setPrompt("");
+  };
+  const retain = async () => {
+    if (!latest) return;
+    await createMemory({
+      kind: "summary",
+      scope: "global",
+      title: `AI handoff: ${latest.prompt.slice(0, 120)}`,
+      summary: latest.response.slice(0, 500),
+      content: latest.response.slice(0, 100_000),
+      tags: ["ai-handoff", latest.client],
+      confidence: 0.68,
+      importance: 0.6,
+    });
+  };
+  return (
+    <div className="ai-workspace">
+      <header className="ai-workspace-head">
+        <div><div className="brace-eyebrow"><span />Original workspace, safer core</div><h1>AI Workspace</h1><p>BRACE recalls local context first, then sends only the approved capsule through your installed AI client.</p></div>
+        <div className="ai-runtime-state"><span className={available.length ? "is-online" : ""} /><div><strong>{available.length ? `${available.length} local client${available.length === 1 ? "" : "s"} ready` : "No runnable client detected"}</strong><small>Read-only agent workspace · persistent local history</small></div></div>
+      </header>
+      <div className="ai-boundary"><ShieldCheck className="h-4 w-4" /><span><strong>Every turn has a visible boundary.</strong> BRACE previews how many memory and source records will be sent. Retrieved context may be sent to the selected provider. Imported projects cannot be edited from this surface.</span></div>
+      <div className="ai-workspace-grid">
+        <section className="ai-thread" aria-live="polite">
+          <div className="ai-thread-toolbar"><span>LOCAL CONVERSATION HISTORY</span>{history.length > 0 && <button type="button" onClick={() => void clearAssistantHistory()}><Trash2 className="h-3.5 w-3.5" />Clear</button>}</div>
+          <div className="ai-thread-scroll">
+            {history.map((turn) => <article key={turn.id} className="ai-turn"><div className="ai-turn-user"><span>YOU</span><p>{turn.prompt}</p></div><div className="ai-turn-assistant"><span><Sparkles className="h-3.5 w-3.5" />{turn.client} · {turn.context.mode} · {turn.context.memoryCount} memories · {turn.context.sourceCount} sources</span><p>{turn.response}</p></div></article>)}
+            {!history.length && <div className="ai-empty"><div className="ai-empty-orb"><i /><i /><Sparkles className="h-5 w-5" /></div><h2>Ask with your memory attached.</h2><p>Try “What decisions already constrain this project?” or “Summarize the lessons that matter before I continue.”</p></div>}
+          </div>
+          <form onSubmit={submit} className="ai-composer">
+            <textarea required value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Ask BRACE with your durable context…" disabled={!available.length} />
+            <div><label><span className="sr-only">AI client</span><select value={client} onChange={(event) => setClient(event.target.value as "codex" | "claude")} disabled={!available.length}>{available.map((connector) => <option key={connector.id} value={connector.id}>{connector.name}</option>)}</select></label><span>Context is selected locally before the provider boundary.</span><button type="submit" disabled={!available.length || !prompt.trim()} className="brace-primary">Send<CornerDownLeft className="h-3.5 w-3.5" /></button></div>
+          </form>
+        </section>
+        <aside className="ai-context-rail">
+          <section><span>LAST CONTEXT CAPSULE</span>{latest ? <><strong>{latest.context.memoryCount + latest.context.sourceCount}</strong><p>{latest.context.memoryCount} durable memories<br />{latest.context.sourceCount} source excerpts<br />{latest.context.embeddingModel || "Lexical retrieval"}</p></> : <p>No turn prepared yet.</p>}</section>
+          <section><span>DURABLE RETENTION</span><h2>History is not memory.</h2><p>BRACE keeps this chat local. No answer becomes durable memory automatically; you explicitly choose the useful outcome.</p><button type="button" onClick={() => void retain()} disabled={!latest}><Brain className="h-4 w-4" />Retain latest answer</button></section>
+          <section><span>CLIENT CONNECTIONS</span>{connectors.filter((connector) => connector.id !== "generic").map((connector) => <div key={connector.id}><i className={connector.configured ? "is-online" : connector.detected ? "is-detected" : ""} /><strong>{connector.name}</strong><small>{connector.configured ? "Configured" : connector.detected ? "Detected" : "Not installed"}</small></div>)}<button type="button" onClick={() => setView("connections")}><GitBranch className="h-4 w-4" />Open connection studio</button></section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
 function SearchView() {
   const { searchQuery, setSearchQuery, search, searchResult, setSelectedMemory, snapshot } = useBrace();
   const submit = (event: FormEvent) => { event.preventDefault(); void search(); };
@@ -903,17 +1050,29 @@ function GraphView() {
   const [type, setType] = useState("all");
   const [query, setQuery] = useState("");
   const [zoom, setZoom] = useState(1);
-  const [layout, setLayout] = useState<"constellation" | "layers">("constellation");
+  const [layout, setLayout] = useState<GraphPreset>("rings");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  useEffect(() => {
+    const saved = localStorage.getItem("brace.graph-preset") as GraphPreset | null;
+    if (saved && graphPresetDetails.some((preset) => preset.id === saved)) {
+      setLayout(saved);
+    }
+  }, []);
+  const selectLayout = (preset: GraphPreset) => {
+    setLayout(preset);
+    localStorage.setItem("brace.graph-preset", preset);
+  };
   if (!snapshot) return null;
   const selected = snapshot.graph.nodes.find((node) => node.id === selectedId) || snapshot.graph.nodes.find((node) => node.type === "project") || snapshot.graph.nodes[0];
   const connectedEdges = selected ? snapshot.graph.edges.filter((edge) => edge.from === selected.id || edge.to === selected.id) : [];
   const connectedNodes = connectedEdges.map((edge) => snapshot.graph.nodes.find((node) => node.id === (edge.from === selected?.id ? edge.to : edge.from))).filter(Boolean) as GraphNode[];
   return (
-    <Page eyebrow="Living relationships" title="Memory constellation" description="Trace the path from a project to its sources, decisions, durable memories, and named ideas.">
+    <Page eyebrow="Living relationships" title="Knowledge atlas" description="Travel one memory graph through the two original maps, the two public maps, and a new time-based Chronicle.">
       <div className="graph-toolbar">
         <label className="graph-search"><Search className="h-4 w-4" /><span className="sr-only">Find a node</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a memory, source, or entity…" /></label>
-        <div className="graph-layout" aria-label="Graph layout"><button type="button" className={layout === "constellation" ? "is-active" : ""} aria-pressed={layout === "constellation"} onClick={() => setLayout("constellation")}>Orbit</button><button type="button" className={layout === "layers" ? "is-active" : ""} aria-pressed={layout === "layers"} onClick={() => setLayout("layers")}>Flow</button></div>
+        <div className="graph-layout graph-layout--five" aria-label="Graph preset">
+          {graphPresetDetails.map((preset) => <button key={preset.id} type="button" className={layout === preset.id ? "is-active" : ""} aria-pressed={layout === preset.id} onClick={() => selectLayout(preset.id)} title={`${preset.lineage}: ${preset.description}`}>{preset.label}</button>)}
+        </div>
         <div className="graph-filters" aria-label="Filter graph nodes">{["all", "project", "source", "memory", "decision", "entity"].map((item) => <button key={item} type="button" onClick={() => setType(item)} className={type === item ? "is-active" : ""} aria-pressed={type === item}>{item}</button>)}</div>
         <div className="graph-zoom" aria-label="Graph zoom controls"><button type="button" onClick={() => setZoom((value) => Math.max(.72, value - .12))} aria-label="Zoom out"><Minus className="h-4 w-4" /></button><span>{Math.round(zoom * 100)}%</span><button type="button" onClick={() => setZoom((value) => Math.min(1.45, value + .12))} aria-label="Zoom in"><Plus className="h-4 w-4" /></button><button type="button" onClick={() => setZoom(1)} aria-label="Reset zoom"><Maximize2 className="h-4 w-4" /></button></div>
       </div>
@@ -921,7 +1080,7 @@ function GraphView() {
         <div className="graph-canvas-wrap">
           <GraphCanvas nodes={snapshot.graph.nodes} edges={snapshot.graph.edges} activeType={type} query={query} zoom={zoom} layout={layout} selectedId={selected?.id || null} onSelect={setSelectedId} />
           <div className="graph-legend">{[["project", "Project"], ["source", "Source"], ["decision", "Decision"], ["memory", "Memory"], ["entity", "Entity"]].map(([nodeType, label]) => <span key={label}><i data-type={nodeType} />{label}</span>)}</div>
-          <div className="graph-hint"><CircleDot className="h-3.5 w-3.5" /> Select a node · use arrow keys to travel</div>
+          <div className="graph-hint"><CircleDot className="h-3.5 w-3.5" /> {graphPresetDetails.find((preset) => preset.id === layout)?.description} · use arrow keys to travel</div>
         </div>
         <aside className="graph-inspector" aria-live="polite">
           {selected ? <>
@@ -941,67 +1100,22 @@ function GraphView() {
   );
 }
 
-function GraphCanvas({ nodes, edges, activeType, query, zoom, layout, selectedId, onSelect }: { nodes: GraphNode[]; edges: Array<{ id: string; from: string; to: string; relation: string }>; activeType: string; query: string; zoom: number; layout: "constellation" | "layers"; selectedId: string | null; onSelect: (id: string) => void }) {
-  const positions = useMemo(() => {
-    const width = 1000;
-    const height = 620;
-    const anchors: Record<string, { x: number; y: number }> = layout === "layers"
-      ? { project: { x: 170, y: 310 }, source: { x: 330, y: 310 }, decision: { x: 500, y: 310 }, memory: { x: 670, y: 310 }, entity: { x: 830, y: 310 } }
-      : { project: { x: 500, y: 310 }, source: { x: 230, y: 310 }, decision: { x: 500, y: 105 }, memory: { x: 770, y: 310 }, entity: { x: 500, y: 525 } };
-    const map = new Map<string, { x: number; y: number }>();
-    const hash = (value: string) => [...value].reduce((total, character) => ((total << 5) - total + character.charCodeAt(0)) | 0, 0);
-    nodes.forEach((node, index) => {
-      const anchor = anchors[node.type];
-      const seed = Math.abs(hash(node.id));
-      const angle = ((seed % 360) * Math.PI) / 180;
-      const radius = layout === "layers" ? 48 + ((seed + index * 17) % 175) : 42 + ((seed + index * 17) % 105);
-      map.set(node.id, { x: anchor.x + Math.cos(angle) * radius, y: anchor.y + Math.sin(angle) * radius });
-    });
-    if (layout === "layers") {
-      (["project", "source", "decision", "memory", "entity"] as const).forEach((nodeType) => {
-        const group = nodes.filter((node) => node.type === nodeType);
-        group.forEach((node, index) => {
-          const y = group.length === 1 ? height / 2 : 92 + index * (436 / Math.max(1, group.length - 1));
-          map.set(node.id, { x: anchors[nodeType].x, y });
-        });
-      });
-      return map;
-    }
-    for (let iteration = 0; iteration < 150; iteration += 1) {
-      const movement = new Map(nodes.map((node) => [node.id, { x: 0, y: 0 }]));
-      for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
-        const left = map.get(nodes[leftIndex].id)!; const right = map.get(nodes[rightIndex].id)!;
-        const dx = left.x - right.x || .1; const dy = left.y - right.y || .1; const distanceSquared = Math.max(900, dx * dx + dy * dy); const force = 1500 / distanceSquared;
-        const leftMove = movement.get(nodes[leftIndex].id)!; const rightMove = movement.get(nodes[rightIndex].id)!;
-        leftMove.x += dx * force; leftMove.y += dy * force; rightMove.x -= dx * force; rightMove.y -= dy * force;
-      }
-      edges.forEach((edge) => {
-        const from = map.get(edge.from); const to = map.get(edge.to); if (!from || !to) return;
-        const dx = to.x - from.x; const dy = to.y - from.y; const distance = Math.max(1, Math.hypot(dx, dy)); const force = (distance - 150) * .006;
-        movement.get(edge.from)!.x += (dx / distance) * force; movement.get(edge.from)!.y += (dy / distance) * force;
-        movement.get(edge.to)!.x -= (dx / distance) * force; movement.get(edge.to)!.y -= (dy / distance) * force;
-      });
-      nodes.forEach((node) => {
-        const point = map.get(node.id)!; const move = movement.get(node.id)!; const anchor = anchors[node.type];
-        const anchorStrength = node.type === "project" ? .07 : .018;
-        point.x = Math.max(85, Math.min(width - 85, point.x + move.x + (anchor.x - point.x) * anchorStrength));
-        point.y = Math.max(70, Math.min(height - 70, point.y + move.y + (anchor.y - point.y) * anchorStrength));
-      });
-    }
-    return map;
-  }, [nodes, edges, layout]);
+function GraphCanvas({ nodes, edges, activeType, query, zoom, layout, selectedId, onSelect }: { nodes: GraphNode[]; edges: GraphEdge[]; activeType: string; query: string; zoom: number; layout: GraphPreset; selectedId: string | null; onSelect: (id: string) => void }) {
+  const positions = useMemo(() => graphPositions(layout, nodes, edges, selectedId), [layout, nodes, edges, selectedId]);
   const color = (nodeType: string) => ({ project: "#7dd3fc", source: "#60a5fa", decision: "#c4b5fd", memory: "#6ee7b7", entity: "#cbd5e1" }[nodeType] || "#fff");
   const filteredEdges = edges.filter((edge) => positions.has(edge.from) && positions.has(edge.to));
   const normalizedQuery = query.trim().toLowerCase();
   const isVisible = (node: GraphNode) => (activeType === "all" || node.type === activeType) && (!normalizedQuery || node.label.toLowerCase().includes(normalizedQuery));
   const selectedNeighborIds = new Set(filteredEdges.filter((edge) => edge.from === selectedId || edge.to === selectedId).flatMap((edge) => [edge.from, edge.to]));
   return (
-    <svg viewBox="0 0 1000 620" className="graph-svg" role="img" aria-label={`${nodes.length} knowledge nodes and ${filteredEdges.length} relationships`}>
+    <svg viewBox="0 0 1000 620" className="graph-svg" data-preset={layout} role="img" aria-label={`${nodes.length} knowledge nodes and ${filteredEdges.length} relationships in ${layout} layout`}>
       <defs><filter id="node-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7" result="blur" /><feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge></filter><radialGradient id="graph-vignette"><stop offset="0" stopColor="#17212a" stopOpacity=".7" /><stop offset="1" stopColor="#070a0d" stopOpacity="0" /></radialGradient><pattern id="graph-grid" width="36" height="36" patternUnits="userSpaceOnUse"><path d="M 36 0 L 0 0 0 36" fill="none" stroke="rgba(255,255,255,.035)" strokeWidth="1" /></pattern></defs>
       <rect width="1000" height="620" fill="url(#graph-vignette)" /><rect width="1000" height="620" fill="url(#graph-grid)" />
+      {layout === "rings" && <g className="graph-rings" aria-hidden="true"><circle cx="500" cy="310" r="102" /><circle cx="500" cy="310" r="178" /><circle cx="500" cy="310" r="244" /><circle cx="500" cy="310" r="286" /></g>}
+      {layout === "chronicle" && <g className="graph-chronicle-lanes" aria-hidden="true">{[[90,"PROJECT"],[205,"SOURCE"],[315,"DECISION"],[425,"MEMORY"],[535,"ENTITY"]].map(([y,label]) => <g key={label}><line x1="76" x2="936" y1={y} y2={y} /><text x="82" y={Number(y) - 10}>{label}</text></g>)}</g>}
       <g transform={`translate(${500 - 500 * zoom} ${310 - 310 * zoom}) scale(${zoom})`} className="graph-world">
-        {filteredEdges.map((edge, index) => { const from = positions.get(edge.from)!; const to = positions.get(edge.to)!; const active = edge.from === selectedId || edge.to === selectedId; const curve = layout === "layers" ? 0 : (index % 2 ? 1 : -1) * Math.min(38, Math.hypot(to.x - from.x, to.y - from.y) * .08); const midX = (from.x + to.x) / 2; const midY = (from.y + to.y) / 2; const dx = to.x - from.x; const dy = to.y - from.y; const length = Math.max(1, Math.hypot(dx, dy)); const controlX = midX - (dy / length) * curve; const controlY = midY + (dx / length) * curve; return <g key={edge.id} className={active ? "graph-edge is-active" : "graph-edge"}><path d={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /><circle r="2.4" fill={active ? "#9bdcff" : "rgba(255,255,255,.28)"}><animateMotion dur={`${5 + index % 4}s`} repeatCount="indefinite" path={`M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`} /></circle>{active && <text x={controlX} y={controlY - 8} textAnchor="middle">{edge.relation.replaceAll("_", " ")}</text>}</g>; })}
-        {nodes.map((node, index) => { const position = positions.get(node.id)!; const radius = node.type === "project" ? 22 : node.type === "memory" || node.type === "decision" ? 16 : 13; const selected = node.id === selectedId; const visible = isVisible(node); const related = selectedNeighborIds.has(node.id); const core = node.type === "project" ? <rect className="graph-node-core" x={-radius} y={-radius} width={radius * 2} height={radius * 2} rx="7" /> : node.type === "decision" ? <path className="graph-node-core" d={`M 0 ${-radius} L ${radius} 0 L 0 ${radius} L ${-radius} 0 Z`} /> : node.type === "memory" ? <path className="graph-node-core" d={`M ${-radius * .86} ${-radius * .5} L 0 ${-radius} L ${radius * .86} ${-radius * .5} L ${radius * .86} ${radius * .5} L 0 ${radius} L ${-radius * .86} ${radius * .5} Z`} /> : <circle className={`graph-node-core ${node.type === "entity" ? "is-entity" : ""}`} r={radius} />; return <g key={node.id} data-node-index={index} transform={`translate(${position.x} ${position.y})`} className={`graph-node ${selected ? "is-selected" : ""} ${visible ? "is-visible" : "is-dimmed"} ${related ? "is-related" : ""}`} role="button" tabIndex={selected ? 0 : -1} aria-label={`${node.type}: ${node.label}`} onClick={() => onSelect(node.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(node.id); } if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(event.key)) { event.preventDefault(); const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1; const next = (index + direction + nodes.length) % nodes.length; onSelect(nodes[next].id); requestAnimationFrame(() => document.querySelector<SVGGElement>(`[data-node-index="${next}"]`)?.focus()); } }} style={{ "--node-color": color(node.type), "--node-delay": `${index * 42}ms` } as React.CSSProperties}><circle className="graph-node-wave" r={radius + 18} /><circle className="graph-node-halo" r={radius + 10} />{core}<circle className="graph-node-dot" r={node.type === "project" ? 5 : 3.5} /><text className="graph-node-label" y={radius + 26} textAnchor="middle">{node.label.length > 28 ? `${node.label.slice(0, 27)}…` : node.label}</text><text className="graph-node-type" y={radius + 39} textAnchor="middle">{node.type}</text></g>; })}
+        {filteredEdges.map((edge, index) => { const from = positions.get(edge.from)!; const to = positions.get(edge.to)!; const active = edge.from === selectedId || edge.to === selectedId; const straight = layout === "flow" || layout === "chronicle"; const curve = straight ? 0 : (index % 2 ? 1 : -1) * Math.min(38, Math.hypot(to.x - from.x, to.y - from.y) * .08); const midX = (from.x + to.x) / 2; const midY = (from.y + to.y) / 2; const dx = to.x - from.x; const dy = to.y - from.y; const length = Math.max(1, Math.hypot(dx, dy)); const controlX = midX - (dy / length) * curve; const controlY = midY + (dx / length) * curve; const path = `M ${from.x} ${from.y} Q ${controlX} ${controlY} ${to.x} ${to.y}`; return <g key={edge.id} className={active ? "graph-edge is-active" : "graph-edge"}><path d={path} /><circle r="2.4" fill={active ? "#9bdcff" : "rgba(255,255,255,.28)"}><animateMotion dur={`${5 + index % 4}s`} repeatCount="indefinite" path={path} /></circle>{active && <text x={controlX} y={controlY - 8} textAnchor="middle">{edge.relation.replaceAll("_", " ")}</text>}</g>; })}
+        {nodes.map((node, index) => { const position = positions.get(node.id); if (!position) return null; const radius = node.type === "project" ? 22 : node.type === "memory" || node.type === "decision" ? 16 : 13; const selected = node.id === selectedId; const visible = isVisible(node); const related = selectedNeighborIds.has(node.id); const core = node.type === "project" ? <rect className="graph-node-core" x={-radius} y={-radius} width={radius * 2} height={radius * 2} rx="7" /> : node.type === "decision" ? <path className="graph-node-core" d={`M 0 ${-radius} L ${radius} 0 L 0 ${radius} L ${-radius} 0 Z`} /> : node.type === "memory" ? <path className="graph-node-core" d={`M ${-radius * .86} ${-radius * .5} L 0 ${-radius} L ${radius * .86} ${-radius * .5} L ${radius * .86} ${radius * .5} L 0 ${radius} L ${-radius * .86} ${radius * .5} Z`} /> : <circle className={`graph-node-core ${node.type === "entity" ? "is-entity" : ""}`} r={radius} />; return <g key={node.id} data-node-index={index} transform={`translate(${position.x} ${position.y})`} className={`graph-node ${layout === "living" ? "is-living" : ""} ${selected ? "is-selected" : ""} ${visible ? "is-visible" : "is-dimmed"} ${related ? "is-related" : ""}`} role="button" tabIndex={selected ? 0 : -1} aria-label={`${node.type}: ${node.label}`} onClick={() => onSelect(node.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelect(node.id); } if (["ArrowRight", "ArrowDown", "ArrowLeft", "ArrowUp"].includes(event.key)) { event.preventDefault(); const direction = event.key === "ArrowRight" || event.key === "ArrowDown" ? 1 : -1; const next = (index + direction + nodes.length) % nodes.length; onSelect(nodes[next].id); requestAnimationFrame(() => document.querySelector<SVGGElement>(`[data-node-index="${next}"]`)?.focus()); } }} style={{ "--node-color": color(node.type), "--node-delay": `${index * 42}ms`, "--living-delay": `${-(index % 7) * .72}s` } as React.CSSProperties}><circle className="graph-node-wave" r={radius + 18} /><circle className="graph-node-halo" r={radius + 10} />{core}<circle className="graph-node-dot" r={node.type === "project" ? 5 : 3.5} /><text className="graph-node-label" y={radius + 26} textAnchor="middle">{node.label.length > 28 ? `${node.label.slice(0, 27)}…` : node.label}</text><text className="graph-node-type" y={radius + 39} textAnchor="middle">{node.type}</text></g>; })}
       </g>
     </svg>
   );
@@ -1051,29 +1165,94 @@ function SafetyFact({ icon: Icon, title, text }: { icon: LucideIcon; title: stri
 }
 
 function ConnectionsView() {
-  const { snapshot } = useBrace();
-  const config = JSON.stringify({
+  const { snapshot, connectors, installConnector, refreshConnectors } = useBrace();
+  const [access, setAccess] = useState<"read-only" | "remember">("read-only");
+  const [selectedId, setSelectedId] = useState("generic");
+  const [copied, setCopied] = useState(false);
+  const selected = connectors.find((connector) => connector.id === selectedId);
+  const fallbackConfig = {
     mcpServers: {
       brace: {
         command: snapshot?.connections?.command || "<path-to-BRACE-executable>",
         args: snapshot?.connections?.args || ["--mcp"],
         ...(snapshot?.connections?.env ? { env: snapshot.connections.env } : {}),
+        ...(access === "remember" ? { env: { ...(snapshot?.connections?.env || {}), BRACE_MCP_WRITE: "1" } } : {}),
       },
     },
-  }, null, 2);
+  };
+  const config = JSON.stringify(
+    selected
+      ? access === "remember"
+        ? selected.rememberConfig
+        : selected.readOnlyConfig
+      : fallbackConfig,
+    null,
+    2,
+  );
+  const copy = async (value: string) => {
+    if (window.electron?.copyBraceText) {
+      await window.electron.copyBraceText(value);
+    } else {
+      await navigator.clipboard.writeText(value);
+    }
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1_800);
+  };
   return (
-    <Page eyebrow="One memory. Every AI." title="Connections" description="Expose the same local, provenance-backed memory to MCP-compatible clients. Read access is the default; writes require an explicit environment flag.">
-      <div className="grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
-        <section className="brace-card overflow-hidden"><SectionHeading title="MCP stdio configuration" /><div className="p-5"><div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-300/10 bg-emerald-300/[0.04] p-4"><CircleDot className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /><div><h2 className="text-xs font-semibold text-emerald-100/85">Read-only by default</h2><p className="mt-1 text-[11px] leading-5 text-white/36">Search, inspect memories, browse projects, timeline, graph, and skill metadata. Set <code className="brace-code">BRACE_MCP_WRITE=1</code> only for clients you trust.</p></div></div><pre className="overflow-x-auto rounded-xl border border-white/[0.07] bg-black/30 p-4 font-mono text-[10px] leading-5 text-white/55"><code>{config}</code></pre></div></section>
-        <section className="space-y-3"><ConnectionCard icon={Code2} name="Codex & IDE clients" status="MCP v2" text="Connect over local stdio using the configuration shown." /><ConnectionCard icon={Sparkles} name="Other AI tools" status="Provider-independent" text="Any compatible MCP client can use the same read tools and provenance." /><ConnectionCard icon={HardDrive} name="Local Ollama" status={snapshot?.semantic.enabled ? "Enabled" : "Optional"} text="Adds semantic ranking without sending project text off-device." /></section>
+    <Page eyebrow="One memory. Every AI." title="Connection studio" description="Detect an AI client, choose its memory permission, and connect it to the same local BRACE brain with a guided, recoverable setup." actions={<button type="button" onClick={() => void refreshConnectors()} className="brace-secondary h-10 px-4"><RefreshCw className="h-4 w-4" />Detect again</button>}>
+      <section className="connector-access mb-5" aria-label="Connector memory permission">
+        <div><ShieldCheck className="h-4 w-4" /><span><strong>Memory permission</strong><small>Forgetting is never enabled by guided setup.</small></span></div>
+        <div role="group" aria-label="Choose memory access">
+          <button type="button" className={access === "read-only" ? "is-active" : ""} aria-pressed={access === "read-only"} onClick={() => setAccess("read-only")}>Recall only</button>
+          <button type="button" className={access === "remember" ? "is-active" : ""} aria-pressed={access === "remember"} onClick={() => setAccess("remember")}>Recall + remember</button>
+        </div>
+      </section>
+
+      <div className="grid gap-5 xl:grid-cols-[.92fr_1.08fr]">
+        <section className="space-y-3" aria-label="AI clients">
+          {connectors.map((connector) => <ConnectorClientCard key={connector.id} connector={connector} selected={selectedId === connector.id} access={access} onSelect={() => setSelectedId(connector.id)} onInstall={() => void installConnector(connector.id, access)} />)}
+          {!connectors.length && <div className="brace-card p-6 text-sm text-white/40"><LoaderCircle className="mb-3 h-5 w-5 animate-spin text-sky-200" />Detecting installed AI clients…</div>}
+        </section>
+
+        <div className="space-y-5">
+          <section className="brace-card overflow-hidden">
+            <SectionHeading title="Portable MCP configuration" action={copied ? "Copied" : "Copy JSON"} onAction={() => void copy(config)} />
+            <div className="p-5">
+              <div className="mb-4 flex items-start gap-3 rounded-xl border border-emerald-300/10 bg-emerald-300/[0.04] p-4"><CircleDot className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" /><div><h2 className="text-xs font-semibold text-emerald-100/85">{access === "remember" ? "Explicit retention enabled" : "Read-only by default"}</h2><p className="mt-1 text-[11px] leading-5 text-white/36">{access === "remember" ? "This client may save concise memories and decisions, but cannot forget or delete memory." : "This client may search memory, inspect provenance, and read the graph without changing it."}</p></div></div>
+              <pre className="max-h-[330px] overflow-auto rounded-xl border border-white/[0.07] bg-black/30 p-4 font-mono text-[10px] leading-5 text-white/55"><code>{config}</code></pre>
+            </div>
+          </section>
+          <section className="brace-card overflow-hidden">
+            <SectionHeading title="Shared-memory habit" action="Copy instruction" onAction={() => void copy(selected?.instruction || snapshot?.connections?.instruction || "Search BRACE before asking me to repeat durable context.")} />
+            <div className="p-5"><p className="text-xs leading-6 text-white/46">{selected?.instruction || snapshot?.connections?.instruction || "Search BRACE before asking me to repeat durable context. Keep source evidence separate from memory."}</p><div className="mt-4 grid gap-2 sm:grid-cols-3"><ConnectorStep number="01" title="Recall" text="The client searches BRACE when prior context matters." /><ConnectorStep number="02" title="Work" text="The model uses cited memory and source evidence." /><ConnectorStep number="03" title="Handoff" text="Only explicit durable outcomes are retained." /></div></div>
+          </section>
+        </div>
       </div>
-      <div className="mt-5 rounded-xl border border-amber-300/10 bg-amber-300/[0.035] p-4 text-xs leading-5 text-amber-100/55"><KeyRound className="mr-2 inline h-4 w-4" />Destructive MCP tools remain unavailable unless both write and destructive flags are explicitly enabled for that process.</div>
+      <div className="mt-5 rounded-xl border border-rose-300/10 bg-rose-300/[0.03] p-4 text-xs leading-5 text-rose-100/55"><KeyRound className="mr-2 inline h-4 w-4" />A connected client can send retrieved context to its own model provider. BRACE shows this boundary before setup, creates a configuration backup, and never copies API keys.</div>
     </Page>
   );
 }
 
-function ConnectionCard({ icon: Icon, name, status, text }: { icon: LucideIcon; name: string; status: string; text: string }) {
-  return <div className="brace-card flex gap-4 p-5"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.045] text-white/55"><Icon className="h-[18px] w-[18px]" /></span><div><div className="flex flex-wrap items-center gap-2"><h2 className="text-sm font-semibold">{name}</h2><span className="rounded-full border border-white/[0.07] px-2 py-0.5 text-[9px] text-white/28">{status}</span></div><p className="mt-1.5 text-xs leading-5 text-white/35">{text}</p></div></div>;
+function ConnectorClientCard({ connector, selected, access, onSelect, onInstall }: { connector: BraceConnector; selected: boolean; access: "read-only" | "remember"; onSelect: () => void; onInstall: () => void }) {
+  const Icon = connector.id === "codex" ? Code2 : connector.id === "claude" ? Sparkles : connector.id === "antigravity" ? Network : GitBranch;
+  return (
+    <article className={`connector-client ${selected ? "is-selected" : ""}`}>
+      <button type="button" className="connector-client-main" onClick={onSelect} aria-pressed={selected}>
+        <span><Icon className="h-5 w-5" /></span>
+        <span><strong>{connector.name}</strong><small>{connector.version || connector.description}</small></span>
+        <i className={connector.configured ? "is-online" : connector.detected ? "is-detected" : ""} />
+      </button>
+      <div className="connector-client-foot">
+        <span>{connector.configured ? "Configured" : connector.detected ? "Detected" : connector.id === "generic" ? "Manual config" : "Not installed"}</span>
+        {connector.supportsInstall && <button type="button" disabled={!connector.detected} onClick={onInstall}>{connector.configured ? `Reconnect ${access === "remember" ? "with retention" : "read-only"}` : "Connect"}<ArrowRight className="h-3.5 w-3.5" /></button>}
+        {!connector.supportsInstall && <button type="button" onClick={onSelect}>Show JSON<ArrowRight className="h-3.5 w-3.5" /></button>}
+      </div>
+    </article>
+  );
+}
+
+function ConnectorStep({ number, title, text }: { number: string; title: string; text: string }) {
+  return <div className="connector-step"><span>{number}</span><strong>{title}</strong><small>{text}</small></div>;
 }
 
 function SettingsView() {

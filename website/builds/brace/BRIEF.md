@@ -1,4 +1,4 @@
-# BRACE 0.3 liquid-memory launch brief
+# BRACE 0.5 liquid-memory launch brief
 
 > Self-authored from the user's stated direction during an autonomous goal continuation. The quoted phrases below preserve the user's words; inferred production decisions are labelled separately.
 
@@ -47,7 +47,7 @@ No external font, generated imagery, tracking script, or remote dependency is re
 | Product proof | The interface is real and inspectable | Awe → control | Full-scale packaged screenshots travel laterally and remain operable by controls | `pan` + pointer tilt |
 | Download resolve | The remembered side wins and becomes something installable | Resolve | The divider collapses; the detected native package enters an inset glass dock | `pin` + collapse |
 
-Final experiential length: 13.8 desktop viewport-heights and 14.1 mobile viewport-heights. The opening split is the longest act; the boundary before the proof is deliberately quieter.
+Final experiential length after the 0.5 product-evidence refresh: 15.9 desktop viewport-heights and 16.4 mobile viewport-heights. The opening split is the longest act; the boundary before the proof is deliberately quieter.
 
 ## Peak
 
@@ -82,11 +82,11 @@ The first third of the boundary act intentionally removes most particles and poi
 - Scroll contact sheets at desktop, mobile, and reduced motion; inspect every sampled state.
 - Axe WCAG 2.2 AA, focus order, visible focus, label coverage, console errors, failed requests, overflow, and contrast.
 - Exact downloaded AppImage and native Windows build tested with isolated application-data directories.
-- Product E2E covers onboarding, quick capture persistence, recall, timeline, graph keyboard selection, graph zoom, both graph layouts, Skills, interface preferences, and MCP connection information. Core storage tests cover consistent backup and portable export independently.
+- Product E2E covers onboarding, quick capture persistence, Inbox, AI Workspace, recall, timeline, graph keyboard selection, graph zoom, all five graph projections, Skills, interface preferences, and MCP connection information. Core storage tests cover consistent backup and portable export independently.
 - Privacy, secret, home-path, dependency, license, package-content, and release-asset checks run before publication.
 
 ## Final cold read
 
 One word per act, read before reopening this brief: **unease → proof → custody → command → resolve**.
 
-The intended curve survived implementation. The opening owns the largest transformation, the recall receipt is the clearest informational peak, the local-boundary act creates deliberate quiet without becoming blank, and the product panorama restores density before the download close. The desktop, 390×844 mobile, and reduced-motion contact sheets all advance without dead scroll; every measured cue clears 4.5:1 contrast at its worst composited frame. The ending holds a complete package choice and installation guidance instead of dissolving into atmosphere.
+The intended curve survived implementation. The opening owns the largest transformation, the recall receipt is the clearest informational peak, the local-boundary act creates deliberate quiet without becoming blank, and the product panorama restores density before the download close. The 2026-08-28 desktop, 390×844 mobile, and reduced-motion contact sheets sampled 111 settled frames without dead scroll; every measured cue clears 4.5:1 contrast at its worst composited frame. The refreshed product rail proves AI Workspace, Inbox, and all five Knowledge Atlas projections before the ending holds equal Windows and Linux package choices with installation guidance instead of dissolving into atmosphere.

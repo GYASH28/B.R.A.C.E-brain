@@ -1,0 +1,42 @@
+# The Vercel project root is website/builds/brace, but CLI deployments begin at
+# the repository root so that dashboard setting can resolve. Exclude every
+# application/build area and every non-production website area explicitly.
+/.git/
+/.github/
+/.next/
+/node_modules/
+/dist/
+/out/
+/artifacts/
+/assets/
+/core/
+/design-system/
+/docs/
+/electron/
+/examples/
+/mini-services/
+/prisma/
+/public/
+/scripts/
+/src/
+/tests/
+/*.md
+/*.json
+/*.ts
+/*.mjs
+/*.tsbuildinfo
+/LICENSE
+/.scrollcraft.json
+/website/FINGERPRINTS.md
+/website/INTERACTION_CONTRACT.md
+/website/README.md
+/website/lab/
+/website/remotion-opening/
+website/builds/brace/.env*
+website/builds/brace/.vercel/
+website/builds/brace/lab/
+website/builds/brace/node_modules/
+website/builds/brace/scripts/
+website/builds/brace/BRIEF.md
+website/builds/brace/package.json
+website/builds/brace/package-lock.json

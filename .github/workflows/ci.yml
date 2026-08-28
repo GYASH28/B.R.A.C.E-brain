@@ -64,4 +64,5 @@ jobs:
           curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
           npm run audit:a11y --prefix website/builds/brace
           npm run audit:layout --prefix website/builds/brace
+          npm run audit:focus --prefix website/builds/brace
           npm run audit:interactions --prefix website/builds/brace

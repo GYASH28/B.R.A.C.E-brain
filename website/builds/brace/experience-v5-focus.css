@@ -1,0 +1,359 @@
+/* BRACE V5 focus pass: first hero + final download conversion surface.
+   This layer only resolves geometry/UX inherited from the semantic base.
+   GitHub Pages concatenates it into the single production stylesheet. */
+
+/* -------------------------------------------------------------------------
+   HERO — keep the two-sided story, but give every object a predictable lane.
+   ------------------------------------------------------------------------- */
+.split-stage {
+  --hero-safe-top: clamp(110px, 13.5vh, 146px);
+  --hero-safe-bottom: clamp(30px, 5.2vh, 56px);
+}
+
+.split-copy {
+  top: var(--hero-safe-top);
+  left: clamp(24px, 5.2cqw, 64px) !important;
+  right: clamp(18px, 4.2cqw, 52px);
+  width: auto !important;
+  max-width: min(500px, calc(100% - 42px));
+  transform: none !important;
+}
+
+.split-copy--forget,
+.split-copy--remember {
+  left: clamp(24px, 5.2cqw, 64px) !important;
+}
+
+.split-copy p { margin-bottom: 14px; }
+
+.split-copy h1,
+.split-copy h2 {
+  max-width: 7.35ch;
+  margin-bottom: 18px;
+  font-size: clamp(2.7rem, 12cqw, 6.9rem);
+  line-height: .86;
+  letter-spacing: -.072em;
+}
+
+.split-copy > span {
+  max-width: 30ch;
+  font-size: clamp(12px, 2.05cqw, 16px);
+  line-height: 1.58;
+}
+
+.split-side--remember .split-copy { max-width: min(470px, 69cqw); }
+
+.hero-product-cue {
+  top: auto;
+  right: clamp(20px, 4.4cqw, 58px);
+  bottom: var(--hero-safe-bottom);
+  width: min(620px, 78cqw);
+  max-width: calc(100% - 40px);
+}
+
+.hero-product {
+  margin: 0;
+  transform: perspective(1400px) rotateY(-4.5deg) rotateX(1.8deg);
+}
+
+.hero-product .window-bar { height: 38px; }
+.receipt-source { top: 17%; right: clamp(18px, 4cqw, 54px); }
+.receipt-memory { left: clamp(18px, 4.8cqw, 58px); bottom: clamp(18px, 4vh, 42px); }
+.recovery-console { left: clamp(18px, 2vw, 30px); bottom: clamp(18px, 3vh, 30px); }
+
+@container (max-width: 560px) {
+  .split-copy {
+    top: clamp(100px, 12.5vh, 126px);
+    left: clamp(18px, 5cqw, 28px) !important;
+    right: 16px;
+  }
+  .split-copy h1,
+  .split-copy h2 { font-size: clamp(2.4rem, 13.4cqw, 4.55rem); }
+  .split-copy > span { max-width: 25ch; font-size: 11.5px; }
+  .hero-product-cue { right: 16px; width: min(86cqw, 420px); }
+  .source-receipt { display: none; }
+}
+
+@container (max-width: 380px) {
+  .split-copy h1,
+  .split-copy h2 { font-size: clamp(2rem, 14cqw, 3.15rem); }
+  .split-copy > span { display: none; }
+  .hero-product-cue { width: min(82cqw, 300px); opacity: .58; }
+}
+
+@container (max-width: 285px) {
+  .split-copy p { display: none; }
+  .split-copy h1,
+  .split-copy h2 { font-size: clamp(1.65rem, 16cqw, 2.45rem); }
+  .hero-product-cue { display: none; }
+}
+
+/* -------------------------------------------------------------------------
+   DOWNLOAD — remove the inherited 52/48 split. The previous V5 copy was
+   centered inside only the right half, which could pass overflow checks while
+   still looking visibly misaligned. The final action is now one composition.
+   ------------------------------------------------------------------------- */
+.download-stage {
+  --download-content-max: 1240px;
+  display: grid;
+  place-items: center;
+  padding: clamp(92px, 11vh, 118px) var(--v5-gutter) clamp(28px, 4.5vh, 48px);
+  overflow: hidden;
+}
+
+.download-forget,
+.download-divider { display: none !important; }
+
+.download-memory {
+  position: absolute;
+  inset: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 74% 22%, rgba(94,181,255,.13), transparent 28rem),
+    radial-gradient(circle at 18% 78%, rgba(185,166,255,.07), transparent 32rem),
+    linear-gradient(150deg, #061222 0%, #030912 54%, #02050b 100%);
+}
+
+.download-memory::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(199,229,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(199,229,255,.018) 1px, transparent 1px);
+  background-size: 62px 62px;
+  mask-image: radial-gradient(circle at 50% 45%, #000 8%, rgba(0,0,0,.72) 46%, transparent 86%);
+}
+
+#download-field { opacity: .42; }
+
+.download-copy {
+  position: relative;
+  z-index: 5;
+  width: min(var(--download-content-max), calc(100vw - (var(--v5-gutter) * 2)));
+  max-width: none;
+  margin: 0 auto;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(300px, .78fr) minmax(520px, 1.22fr);
+  grid-template-rows: auto auto auto auto auto 1fr auto;
+  column-gap: clamp(32px, 4.6vw, 70px);
+  align-items: start;
+  text-align: left;
+}
+
+.download-copy > img,
+.download-copy > .section-kicker,
+.download-copy > h2,
+.download-copy > p:not(.section-kicker),
+.download-copy > .package-advisor { grid-column: 1; }
+
+.download-copy > img {
+  grid-row: 1;
+  justify-self: start;
+  width: 68px;
+  height: 68px;
+  margin: 0 0 18px;
+}
+
+.download-copy > .section-kicker { grid-row: 2; justify-self: start; }
+
+.download-copy h2 {
+  grid-row: 3;
+  max-width: 7.4ch;
+  margin: 15px 0 20px;
+  font-size: clamp(4.15rem, 6.5vw, 7.25rem);
+  line-height: .82;
+  letter-spacing: -.078em;
+}
+
+.download-copy > p:not(.section-kicker) {
+  grid-row: 4;
+  max-width: 43ch;
+  margin: 0 0 24px;
+  color: rgba(204,223,241,.66);
+  font-size: 14px;
+  line-height: 1.68;
+}
+
+.package-advisor {
+  grid-row: 5;
+  width: 100%;
+  max-width: 470px;
+  margin: 0;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: auto minmax(0,1fr);
+  gap: 10px 12px;
+  align-items: center;
+  justify-content: stretch;
+  border-radius: 17px;
+  text-align: left;
+}
+
+.package-advisor > span { grid-column: 1 / -1; }
+.package-advisor > div { justify-self: start; }
+.package-advisor > p {
+  min-width: 0;
+  max-width: 30ch !important;
+  margin: 0 !important;
+  font-size: 8.5px !important;
+  line-height: 1.5 !important;
+}
+
+.platform-downloads {
+  grid-column: 2;
+  grid-row: 1 / 7;
+  align-self: center;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  text-align: left;
+}
+
+.platform-download {
+  min-height: 208px;
+  padding: 21px 22px;
+  border-radius: 21px;
+}
+
+.platform-download > p { margin: 14px 0 16px; font-size: 10.5px; line-height: 1.55; }
+.platform-actions,
+.platform-actions--linux { grid-template-columns: minmax(0,1fr) 132px; gap: 9px; }
+.platform-primary,
+.platform-secondary,
+.platform-guide { min-height: 58px; }
+.platform-guide,
+.platform-secondary { min-width: 0; }
+
+.release-proof {
+  grid-column: 1 / -1;
+  grid-row: 7;
+  justify-content: flex-start;
+  width: 100%;
+  margin: clamp(20px, 3vh, 30px) 0 0;
+  padding-top: 16px;
+  border-top: 1px solid rgba(211,239,255,.075);
+}
+
+.platform-downloads > .platform-download { height: 100%; }
+
+@media (max-width: 1120px) and (min-width: 901px) {
+  .download-stage { padding-inline: 28px; }
+  .download-copy {
+    width: min(100%, 1060px);
+    grid-template-columns: minmax(270px, .72fr) minmax(500px, 1.28fr);
+    column-gap: 30px;
+  }
+  .download-copy h2 { font-size: clamp(3.7rem, 6.3vw, 5.25rem); }
+  .download-copy > img { width: 58px; height: 58px; margin-bottom: 13px; }
+  .download-copy > p:not(.section-kicker) { margin-bottom: 17px; font-size: 12.5px; }
+  .package-advisor { padding: 10px; }
+  .platform-download { min-height: 196px; padding: 18px; }
+  .platform-download > p { margin-block: 11px 13px; }
+}
+
+@media (max-height: 780px) and (min-width: 901px) {
+  .download-stage { padding-top: 84px; padding-bottom: 14px; }
+  .download-copy > img { width: 44px; height: 44px; margin-bottom: 7px; }
+  .download-copy .section-kicker { font-size: 8px; }
+  .download-copy h2 { margin: 8px 0 10px; font-size: clamp(3.1rem, 5.1vw, 4.65rem); }
+  .download-copy > p:not(.section-kicker) { margin-bottom: 10px; font-size: 11.5px; line-height: 1.48; }
+  .package-advisor { padding: 8px 9px; gap: 7px 9px; }
+  .package-advisor button { min-height: 32px; }
+  .platform-download { min-height: 166px; padding: 14px 16px; }
+  .platform-download header > span { width: 36px; height: 36px; }
+  .platform-download header h3 { margin-top: 3px; font-size: 14px; }
+  .platform-download > p { margin: 7px 0 9px; line-height: 1.42; }
+  .platform-primary,
+  .platform-secondary,
+  .platform-guide { min-height: 48px; }
+  .release-proof { margin-top: 10px; padding-top: 9px; }
+}
+
+/* -------------------------------------------------------------------------
+   COMPACT / PHONE — the fixed bottom rail is part of the layout budget.
+   ------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .download-stage { display: block; padding: 104px var(--v5-gutter) 122px; }
+  .download-memory {
+    position: relative;
+    inset: auto !important;
+    display: block;
+    overflow: visible;
+    background:
+      radial-gradient(circle at 78% 12%, rgba(94,181,255,.11), transparent 24rem),
+      linear-gradient(180deg, #06111f, #02050b);
+  }
+  .download-copy { width: 100%; display: block; text-align: left; }
+  .download-copy > img { width: 62px; height: 62px; margin: 0 0 17px; }
+  .download-copy > .section-kicker { justify-self: auto; }
+  .download-copy h2 { max-width: 7.4ch; margin: 15px 0 18px; font-size: clamp(4rem, 11vw, 6.4rem); }
+  .download-copy > p:not(.section-kicker) { max-width: 50ch; margin: 0 0 24px; }
+  .package-advisor { max-width: 620px; margin: 0 0 24px; }
+  .platform-downloads { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px; }
+  .platform-download { min-height: 250px; height: auto !important; }
+  .release-proof { justify-content: flex-start; margin-top: 22px; }
+}
+
+@media (max-width: 760px) {
+  :root { --mobile-rail-clearance: calc(88px + env(safe-area-inset-bottom)); }
+  .split-stage { grid-template-rows: 39% 61%; }
+  .memory-divider { top: 39%; }
+  .split-copy { top: 18px; left: 18px !important; right: 16px; max-width: 330px; }
+  .split-copy h1,
+  .split-copy h2 { margin-bottom: 9px; font-size: clamp(2.25rem, 11.4vw, 3.65rem); }
+  .hero-product-cue { right: 14px; bottom: var(--mobile-rail-clearance); width: min(66%, 300px); }
+  .recovery-console { left: 14px; top: calc(39% - 40px); bottom: auto; }
+
+  .download-stage { padding: 92px 16px calc(112px + env(safe-area-inset-bottom)); }
+  .download-copy > img { width: 54px; height: 54px; }
+  .download-copy h2 { font-size: clamp(3.55rem, 15.5vw, 5.6rem); }
+  .download-copy > p:not(.section-kicker) { font-size: 13px; }
+  .package-advisor { display: grid; grid-template-columns: 1fr; gap: 9px; }
+  .package-advisor > span,
+  .package-advisor > div,
+  .package-advisor > p { grid-column: 1; }
+  .package-advisor > div { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .package-advisor button { min-height: 42px; }
+  .package-advisor > p { max-width: none !important; }
+  .platform-downloads { grid-template-columns: 1fr; }
+  .platform-download { min-height: 0; padding: 19px; }
+  .platform-actions,
+  .platform-actions--linux { grid-template-columns: minmax(0,1fr) 116px; }
+  .platform-primary,
+  .platform-secondary,
+  .platform-guide { min-height: 56px; }
+  .release-proof { gap: 9px 13px; padding-top: 14px; }
+}
+
+@media (max-width: 430px) {
+  .split-copy h1,
+  .split-copy h2 { font-size: clamp(2.05rem, 11vw, 3rem); }
+  .split-copy > span { font-size: 9.5px; }
+  .hero-product-cue { width: min(58%, 232px); bottom: calc(90px + env(safe-area-inset-bottom)); }
+  .recovery-console { top: calc(39% - 38px); padding: 7px 9px; }
+  .download-copy h2 { font-size: clamp(3.2rem, 15vw, 4.9rem); }
+  .platform-download header { grid-template-columns: 42px minmax(0,1fr) auto; gap: 10px; }
+  .platform-actions,
+  .platform-actions--linux { grid-template-columns: 1fr; }
+  .platform-guide,
+  .platform-secondary { min-height: 48px; }
+  .release-proof { font-size: 7px; }
+}
+
+@media (max-width: 760px) and (max-height: 740px) {
+  .split-copy > span { display: none; }
+  .hero-product-cue { width: min(54%, 210px); bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .recovery-console > span { display: none; }
+}

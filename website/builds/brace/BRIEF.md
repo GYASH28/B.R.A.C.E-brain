@@ -47,7 +47,7 @@ No external font, generated imagery, tracking script, or remote dependency is re
 | Product proof | The interface is real and inspectable | Awe → control | Full-scale packaged screenshots travel laterally and remain operable by controls | `pan` + pointer tilt |
 | Download resolve | The remembered side wins and becomes something installable | Resolve | The divider collapses; the detected native package enters an inset glass dock | `pin` + collapse |
 
-Final experiential length after the 0.5 product-evidence refresh: 15.9 desktop viewport-heights and 16.4 mobile viewport-heights. The opening split is the longest act; the boundary before the proof is deliberately quieter.
+Final experiential length after the 0.5 V5 product-evidence refresh: 15.6 desktop viewport-heights and 12.1 mobile viewport-heights. The opening split is the longest act; the boundary before the proof is deliberately quieter. On compact screens, the boundary, product proof, and download devices convert to normal flow instead of imitating desktop pinning or horizontal pan.
 
 ## Peak
 
@@ -89,4 +89,4 @@ The first third of the boundary act intentionally removes most particles and poi
 
 One word per act, read before reopening this brief: **unease → proof → custody → command → resolve**.
 
-The intended curve survived implementation. The opening owns the largest transformation, the recall receipt is the clearest informational peak, the local-boundary act creates deliberate quiet without becoming blank, and the product panorama restores density before the download close. The 2026-08-28 desktop, 390×844 mobile, and reduced-motion contact sheets sampled 111 settled frames without dead scroll; every measured cue clears 4.5:1 contrast at its worst composited frame. The refreshed product rail proves AI Workspace, Inbox, and all five Knowledge Atlas projections before the ending holds equal Windows and Linux package choices with installation guidance instead of dissolving into atmosphere.
+The intended curve survived implementation. The opening owns the largest transformation, the recall receipt is the clearest informational peak, the local-boundary act creates deliberate quiet without becoming blank, and the product panorama restores density before the download close. After integrating the V5 responsive runtime on 2026-08-28, fresh desktop, 390×844 mobile, and reduced-motion contact sheets sampled 74 settled frames without dead scroll; every measured cue clears 4.5:1 contrast at its worst composited frame. The mobile opening cue was deliberately extended after the first compact capture found that “Context disappears” never peaked; the recapture cleared the warning. The refreshed product rail proves AI Workspace, Inbox, and all five Knowledge Atlas projections before the ending holds equal Windows and Linux package choices with installation guidance instead of dissolving into atmosphere.

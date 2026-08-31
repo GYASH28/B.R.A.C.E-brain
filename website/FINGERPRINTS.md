@@ -14,6 +14,7 @@ on at least four axes before it is accepted.
 | BRACE 0.3.0 | Split stage | Vertical glass rail with compact mobile dock | Live forget/remember divide with a provenance lens | `pin > flow+in > pin+reveal > pan > pin-collapse`, 5 acts, 13.8vh | Cinematic collapse into a detected native-package dock | Memory lens reveals source fragments and biases the divide toward durable context | Arctic Glass memory film | 4517 |
 | BRACE 0.7.0 | Liquid lens chamber | Floating refractive rail plus cumulative droplet ledger | Live forget/remember rain divide with real packaged proof | `pin > flow > flow > pin > pan > pin`, 6 sensory chapters, 15.7vh | Equal-platform cinematic installation chamber | Pointer-reflective rain joins chapter stamps and device-local recall pins | Pearl-and-stone Liquid Glass | 4517 |
 | BRACE 0.8.0 | Frosted product reel | Single floating white-glass bar | Scroll-scrubbed Remotion memory film | `scrub > flow > pan > flow`, 4 beats, about 10.5vh | Quiet equal-platform installation plate | Scroll and pointer clear a reversible lens through the hero frost | High-key cobalt rain glass | 4517 |
+| BRACE 0.9.0 | Frosted context relay | Single floating white-glass bar | Scroll-scrubbed Remotion memory film | `scrub > flow+relay > pan > flow`, 4 acts with 5 narrative beats | Quiet equal-platform installation plate | A tactile custody relay moves context from source to local memory to explicit AI handoff | High-key pearl-and-cobalt rain glass | 4517 |
 
 ## Reserved choices
 
@@ -40,3 +41,8 @@ but changes the other five structural dimensions: reel grammar, one-bar
 navigation, scrub-film hero, four-beat sequence, flat installation close, and
 the reversible frost-clear interaction. It differs from every earlier row on
 at least four of six dimensions.
+
+BRACE 0.9.0 intentionally retains the 0.8 film, navigation, panorama, and close,
+but changes the central interaction and proof rhythm: visitors now manipulate the
+custody boundary itself before seeing the real product. It is an iterative product
+enhancement, not a claim of a wholly unrelated launch-site skeleton.

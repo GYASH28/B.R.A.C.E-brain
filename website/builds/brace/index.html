@@ -66,6 +66,32 @@
         <p>BRACE indexes selected sources in place, stores runtime state in your application-data directory, and keeps network access explicit.</p>
         <a href="guide/#privacy">Read the privacy model</a>
       </div>
+      <section class="memory-relay sc-wrap" data-memory-relay data-sc-in aria-labelledby="relay-title" style="--relay-progress: 0">
+        <header class="relay-copy">
+          <div>
+            <p class="overline">TOUCH THE CONTEXT RELAY</p>
+            <h3 id="relay-title">Move the memory.<br>Keep the evidence.</h3>
+          </div>
+          <output data-relay-output aria-live="polite">Your source remains the canonical record.</output>
+        </header>
+        <div class="relay-stage" aria-label="Context relay stages">
+          <div class="relay-thread"><i></i><b></b></div>
+          <button type="button" class="relay-node is-active" data-relay-step="0" aria-pressed="true">
+            <span class="relay-glyph relay-glyph--file">01</span><strong>Source</strong><small>proposal.md</small>
+          </button>
+          <button type="button" class="relay-node" data-relay-step="1" aria-pressed="false">
+            <span class="relay-glyph relay-glyph--memory"><img src="assets/brace-logo.svg" width="30" height="30" alt=""></span><strong>BRACE</strong><small>Local memory</small>
+          </button>
+          <button type="button" class="relay-node" data-relay-step="2" aria-pressed="false">
+            <span class="relay-glyph relay-glyph--ai">›_</span><strong>AI tool</strong><small>Context attached</small>
+          </button>
+        </div>
+        <label class="relay-control">
+          <span>Move context</span>
+          <input type="range" min="0" max="2" step="1" value="0" data-relay-input aria-describedby="relay-title">
+          <span data-relay-position>Source</span>
+        </label>
+      </section>
       <div class="custody-strip sc-wrap" data-sc-in aria-label="BRACE privacy boundaries">
         <span><i></i><strong>Sources</strong><small>Read in place</small></span>
         <span><i></i><strong>Memory</strong><small>Local SQLite</small></span>

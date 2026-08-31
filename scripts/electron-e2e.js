@@ -162,7 +162,7 @@ async function run() {
     height: 960,
     useContentSize: true,
     show: false,
-    backgroundColor: "#080a0d",
+    backgroundColor: "#cfe4ff",
     webPreferences: {
       preload: path.join(root, "dist", "electron", "preload.js"),
       contextIsolation: true,
@@ -223,7 +223,7 @@ async function run() {
   });
   await window.reload();
   await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
-  await clickText(window, "Memory");
+  await clickText(window, "Memory library");
   await window.webContents.executeJavaScript(
     "document.querySelector('button[aria-label=\"Open memory review queue\"]')?.click()",
   );
@@ -235,7 +235,7 @@ async function run() {
   const reviewResolved = service.snapshot().memoryQuality.pendingReview === 0 &&
     service.store.listTimeline().some((event) => event.eventType === "memory.reviewed");
 
-  await clickText(window, "Memory");
+  await clickText(window, "Memory library");
   await waitFor(window, "document.querySelector('.memory-toolbelt')");
   await setInput(window, ".memory-toolbelt input", "checksum");
   await waitFor(window, "document.querySelector('.memory-result-line')?.textContent?.includes('3 of')");
@@ -248,6 +248,14 @@ async function run() {
   const pinningReady = service.snapshot().stats.pinnedMemories === 1;
   await clickText(window, "Copy memory");
   await waitFor(window, "document.body.innerText.includes('Copied')");
+  await clickText(window, "Continue with AI");
+  await waitFor(window, "document.body.innerText.includes('Every turn has a visible boundary') && document.querySelector('.ai-composer textarea')?.value.includes('Verify')");
+  const memoryHandoffReady = await window.webContents.executeJavaScript("document.querySelector('.ai-composer textarea')?.value.includes('Use this durable BRACE memory as the starting context') && document.body.innerText.includes('Draft stays on this device until you send it.')");
+  await clickText(window, "Memory library");
+  await waitFor(window, "document.querySelector('.memory-toolbelt')");
+  await setInput(window, ".memory-toolbelt input", "checksum");
+  await window.webContents.executeJavaScript("document.querySelector('.brace-memory-card')?.click()");
+  await waitFor(window, "document.body.innerText.includes('Find related context')");
   await clickText(window, "Find related context");
   await waitFor(window, "document.body.innerText.includes('Source evidence')");
 
@@ -306,11 +314,11 @@ async function run() {
   `);
   const graph = await screenshot(window, "app-graph");
 
-  await clickText(window, "Inbox");
+  await clickText(window, "Capture");
   await waitFor(window, "document.body.innerText.includes('Catch a thought') && document.body.innerText.includes('Review queue')");
   const inbox = await screenshot(window, "app-inbox");
 
-  await clickText(window, "AI Workspace");
+  await clickText(window, "Ask AI");
   await waitFor(window, "document.body.innerText.includes('Every turn has a visible boundary') && document.body.innerText.includes('History is not memory')");
   const aiWorkspace = await screenshot(window, "app-ai-workspace");
 
@@ -336,7 +344,7 @@ async function run() {
   await waitFor(window, "document.querySelector('.automation-run.is-expanded') && document.body.innerText.includes('RECIPE SNAPSHOT')");
   const automations = await screenshot(window, "app-automations");
 
-  await clickText(window, "Connections");
+  await clickText(window, "AI connections");
   await waitFor(window, "document.body.innerText.includes('Portable MCP configuration') && document.body.innerText.includes('Read-only by default') && document.body.innerText.includes('Codex CLI')");
   const connectionMarker = process.platform === "win32" ? "BRACE_MCP_DIRECT" : "--mcp";
   const connectionReady = await window.webContents.executeJavaScript(
@@ -357,7 +365,7 @@ async function run() {
   pressKey(window, "Right", ["alt"]);
   await waitFor(window, "document.body.innerText.includes('Make the workspace fit you')");
   const navigationReady = await window.webContents.executeJavaScript("document.querySelector('button[aria-label=\"Go to previous workspace\"]:not(:disabled)') !== null && localStorage.getItem('brace.last-view') === 'settings'");
-  await clickText(window, "Memory");
+  await clickText(window, "Memory library");
   window.setContentSize(760, 900);
   await waitFor(window, "document.querySelector('.memory-toolbelt') && window.innerWidth === 760 && Math.abs(parseFloat(getComputedStyle(document.querySelector('.brace-sidebar')).width) - 76) < 1");
   const responsiveMetrics = await window.webContents.executeJavaScript("({ viewport: window.innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth, sidebarWidth: parseFloat(getComputedStyle(document.querySelector('.brace-sidebar')).width) })");
@@ -382,6 +390,7 @@ async function run() {
     memoryFilteringReady,
     timelineFilteringReady,
     pinningReady,
+    memoryHandoffReady,
     navigationReady,
     responsiveMetrics,
     responsiveReady,
@@ -413,6 +422,7 @@ async function run() {
     !memoryFilteringReady ||
     !timelineFilteringReady ||
     !pinningReady ||
+    !memoryHandoffReady ||
     !navigationReady ||
     !responsiveReady ||
     reviewBefore !== 1 ||

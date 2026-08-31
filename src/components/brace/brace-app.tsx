@@ -87,19 +87,21 @@ import {
   type GraphPreset,
 } from "@/lib/brace/graph-layouts";
 
-const nav: Array<{ view: BraceView; label: string; icon: LucideIcon }> = [
-  { view: "home", label: "Command center", icon: LayoutDashboard },
-  { view: "graph", label: "Knowledge map", icon: Network },
-  { view: "inbox", label: "Inbox", icon: Inbox },
-  { view: "assistant", label: "AI Workspace", icon: MessageSquareText },
-  { view: "search", label: "Recall", icon: Search },
-  { view: "memories", label: "Memory", icon: Brain },
-  { view: "timeline", label: "Timeline", icon: Clock3 },
-  { view: "projects", label: "Projects", icon: FolderInput },
-  { view: "skills", label: "Skills", icon: Zap },
-  { view: "automations", label: "Automations", icon: Workflow },
-  { view: "connections", label: "Connections", icon: GitBranch },
-  { view: "settings", label: "Settings", icon: Settings },
+type NavSection = "Work" | "Library" | "System";
+
+const nav: Array<{ view: BraceView; label: string; icon: LucideIcon; section: NavSection }> = [
+  { view: "home", label: "Home", icon: LayoutDashboard, section: "Work" },
+  { view: "search", label: "Recall", icon: Search, section: "Work" },
+  { view: "inbox", label: "Capture", icon: Inbox, section: "Work" },
+  { view: "assistant", label: "Ask AI", icon: MessageSquareText, section: "Work" },
+  { view: "memories", label: "Memory library", icon: Brain, section: "Library" },
+  { view: "timeline", label: "Timeline", icon: Clock3, section: "Library" },
+  { view: "graph", label: "Knowledge map", icon: Network, section: "Library" },
+  { view: "projects", label: "Projects", icon: FolderInput, section: "System" },
+  { view: "automations", label: "Automations", icon: Workflow, section: "System" },
+  { view: "connections", label: "AI connections", icon: GitBranch, section: "System" },
+  { view: "skills", label: "Skills", icon: Zap, section: "System" },
+  { view: "settings", label: "Settings", icon: Settings, section: "System" },
 ];
 
 const kindTone: Record<string, string> = {
@@ -136,8 +138,20 @@ function shortUri(value: string | null) {
   }
 }
 
-function applyUiPreference(key: "density" | "motion" | "contrast", value: string) {
-  document.documentElement.dataset[key] = value;
+type UiPreference = "theme" | "density" | "motion" | "contrast";
+
+function applyUiPreference(key: UiPreference, value: string) {
+  if (key !== "theme") {
+    document.documentElement.dataset[key] = value;
+    return;
+  }
+  const resolved = value === "system"
+    ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    : value;
+  document.documentElement.dataset.themePreference = value;
+  document.documentElement.dataset.theme = resolved;
+  document.documentElement.className = resolved;
+  document.documentElement.style.colorScheme = resolved;
 }
 
 export function BraceApp() {
@@ -166,12 +180,19 @@ export function BraceApp() {
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem("brace.ui") || "{}");
-      if (saved.density) document.documentElement.dataset.density = saved.density;
-      if (saved.motion) document.documentElement.dataset.motion = saved.motion;
-      if (saved.contrast) document.documentElement.dataset.contrast = saved.contrast;
+      applyUiPreference("theme", saved.theme || "light");
+      if (saved.density) applyUiPreference("density", saved.density);
+      if (saved.motion) applyUiPreference("motion", saved.motion);
+      if (saved.contrast) applyUiPreference("contrast", saved.contrast);
     } catch {
       localStorage.removeItem("brace.ui");
     }
+    const system = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncSystemTheme = () => {
+      if (document.documentElement.dataset.themePreference === "system") applyUiPreference("theme", "system");
+    };
+    system.addEventListener("change", syncSystemTheme);
+    return () => system.removeEventListener("change", syncSystemTheme);
   }, []);
 
   useEffect(() => {
@@ -263,33 +284,38 @@ export function BraceApp() {
           </button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="BRACE navigation">
-          {nav.map((item) => {
-            const active = view === item.view || (item.view === "memories" && view === "review");
-            const Icon = item.icon;
-            const badge = item.view === "memories"
-              ? snapshot.memoryQuality.pendingReview
-              : item.view === "automations"
-                ? snapshot.automations?.runs.filter((run) => run.status === "failed").length || 0
-                : 0;
-            return (
-              <button
-                key={item.view}
-                type="button"
-                onClick={() => setView(item.view)}
-                className={`brace-nav-item group relative flex h-11 w-full items-center rounded-xl text-[13px] font-medium ${
-                  collapsed ? "justify-center" : "gap-3 px-3"
-                } ${active ? "is-active text-white" : "text-white/45 hover:text-white/80"}`}
-                aria-current={active ? "page" : undefined}
-                title={collapsed ? item.label : undefined}
-              >
-                {active && <span className="brace-nav-signal" />}
-                <Icon className={`h-[17px] w-[17px] shrink-0 ${active ? "text-[#9bdcff]" : "text-white/34 group-hover:text-white/65"}`} strokeWidth={1.8} />
-                {!collapsed && <span>{item.label}</span>}
-                {badge > 0 && <span className="brace-nav-badge" aria-label={`${badge} items need attention`}>{badge > 99 ? "99+" : badge}</span>}
-              </button>
-            );
-          })}
+        <nav className="brace-nav flex-1 overflow-y-auto px-3 py-3" aria-label="BRACE navigation">
+          {(["Work", "Library", "System"] as NavSection[]).map((section) => (
+            <div className="brace-nav-section" data-section={section.toLowerCase()} key={section}>
+              {!collapsed && <span className="brace-nav-section-label">{section}</span>}
+              {nav.filter((item) => item.section === section).map((item) => {
+                const active = view === item.view || (item.view === "memories" && view === "review");
+                const Icon = item.icon;
+                const badge = item.view === "memories"
+                  ? snapshot.memoryQuality.pendingReview
+                  : item.view === "automations"
+                    ? snapshot.automations?.runs.filter((run) => run.status === "failed").length || 0
+                    : 0;
+                return (
+                  <button
+                    key={item.view}
+                    type="button"
+                    onClick={() => setView(item.view)}
+                    className={`brace-nav-item group relative flex h-10 w-full items-center rounded-xl text-[12px] font-medium ${
+                      collapsed ? "justify-center" : "gap-3 px-3"
+                    } ${active ? "is-active text-white" : "text-white/45 hover:text-white/80"}`}
+                    aria-current={active ? "page" : undefined}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    {active && <span className="brace-nav-signal" />}
+                    <Icon className={`h-[16px] w-[16px] shrink-0 ${active ? "text-[#9bdcff]" : "text-white/34 group-hover:text-white/65"}`} strokeWidth={1.8} />
+                    {!collapsed && <span>{item.label}</span>}
+                    {badge > 0 && <span className="brace-nav-badge" aria-label={`${badge} items need attention`}>{badge > 99 ? "99+" : badge}</span>}
+                  </button>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         <div className="p-3">
@@ -771,7 +797,7 @@ function Page({ eyebrow, title, description, actions, children }: { eyebrow?: st
 }
 
 function Overview() {
-  const { snapshot, setView, setSelectedMemory } = useBrace();
+  const { snapshot, connectors, setView, setSelectedMemory } = useBrace();
   if (!snapshot) return null;
   const stats = [
     ["memories", snapshot.stats.memories, Brain],
@@ -780,6 +806,14 @@ function Overview() {
     ["relations", snapshot.stats.relations, Network],
   ] as const;
   const featured = snapshot.memories.find((memory) => memory.pinned) || snapshot.memories[0];
+  const failedRuns = snapshot.automations?.runs.filter((run) => run.status === "failed").length || 0;
+  const staleProject = snapshot.projects.find((project) => !project.last_indexed_at || Date.now() - new Date(project.last_indexed_at).getTime() > 7 * 24 * 60 * 60 * 1_000);
+  const focusItems: Array<{ title: string; detail: string; view: BraceView; icon: LucideIcon; tone: string }> = [];
+  if (snapshot.memoryQuality.pendingReview) focusItems.push({ title: "Resolve memory overlap", detail: `${snapshot.memoryQuality.pendingReview} pair${snapshot.memoryQuality.pendingReview === 1 ? "" : "s"} need a human decision`, view: "review", icon: Archive, tone: "review" });
+  if (failedRuns) focusItems.push({ title: "Inspect a failed automation", detail: `${failedRuns} run${failedRuns === 1 ? "" : "s"} stopped safely`, view: "automations", icon: Workflow, tone: "warning" });
+  if (staleProject) focusItems.push({ title: `Refresh ${staleProject.name}`, detail: staleProject.last_indexed_at ? `Last indexed ${formatDate(staleProject.last_indexed_at)}` : "This project has not been indexed yet", view: "projects", icon: FolderSync, tone: "source" });
+  if (!connectors.some((connector) => connector.configured)) focusItems.push({ title: "Connect an AI client", detail: "Start read-only and keep the memory boundary visible", view: "connections", icon: GitBranch, tone: "connection" });
+  focusItems.push({ title: "Ask a recurring question", detail: "Recall decisions and evidence before starting new work", view: "search", icon: Search, tone: "recall" });
   return (
     <Page eyebrow="Local working set" title="Continue from what mattered." description="A compact field record of decisions, evidence, and unfinished context—kept on this machine and ready for the next tool.">
       <section className="brace-hero-grid">
@@ -794,21 +828,23 @@ function Overview() {
           {featured && <span className="signal-open">Inspect memory <ArrowRight className="h-4 w-4" /></span>}
         </button>
 
-        <div className="brace-vitals" aria-label="Memory health">
-          <div className="vitals-heading"><span>LOCAL INDEX</span><strong>{snapshot.memoryQuality.pendingReview ? "Review ready" : "Healthy"} <i /></strong></div>
-          {stats.map(([label, value, Icon], index) => (
-            <button key={label} type="button" onClick={() => setView(index === 0 ? "memories" : index === 2 ? "timeline" : index === 3 ? "graph" : "projects")} className="vital-row">
-              <span><Icon className="h-4 w-4" />{label}</span><strong>{value.toLocaleString()}</strong><i style={{ "--vital": `${Math.min(100, 28 + value * 12)}%` } as React.CSSProperties} />
-            </button>
-          ))}
-          <button type="button" onClick={() => setView("review")} className="vital-row">
-            <span><Archive className="h-4 w-4" />review queue</span>
-            <strong>{snapshot.memoryQuality.pendingReview.toLocaleString()}</strong>
-            <i style={{ "--vital": `${snapshot.memoryQuality.pendingReview ? 72 : 100}%` } as React.CSSProperties} />
-          </button>
-          <button type="button" onClick={() => setView("search")} className="vitals-recall"><Search className="h-4 w-4" /> Ask your memory <ArrowRight className="ml-auto h-4 w-4" /></button>
+        <div className="brace-vitals brace-focus-stack" aria-label="Next useful moves">
+          <div className="vitals-heading"><span>NEXT USEFUL MOVE</span><strong>Local signals <i /></strong></div>
+          <div className="focus-stack-list">
+            {focusItems.slice(0, 3).map((item, index) => {
+              const Icon = item.icon;
+              return <button key={`${item.view}-${item.title}`} type="button" onClick={() => setView(item.view)} className="focus-stack-item" data-tone={item.tone}><span>{String(index + 1).padStart(2, "0")}</span><i><Icon className="h-4 w-4" /></i><div><strong>{item.title}</strong><small>{item.detail}</small></div><ArrowRight className="ml-auto h-4 w-4" /></button>;
+            })}
+          </div>
+          <button type="button" onClick={() => setView("search")} className="vitals-recall"><Search className="h-4 w-4" /> Recall before you continue <ArrowRight className="ml-auto h-4 w-4" /></button>
         </div>
       </section>
+
+      <div className="brace-context-index" aria-label="Local memory index">
+        <span>LOCAL INDEX</span>
+        {stats.map(([label, value, Icon], index) => <button key={label} type="button" onClick={() => setView(index === 0 ? "memories" : index === 2 ? "timeline" : index === 3 ? "graph" : "projects")}><Icon className="h-3.5 w-3.5" /><strong>{value.toLocaleString()}</strong><small>{label}</small></button>)}
+        <b><i />{snapshot.memoryQuality.pendingReview ? "Human review ready" : "Index healthy"}</b>
+      </div>
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[1.22fr_.78fr]">
         <section className="brace-card brace-card--lift overflow-hidden">
@@ -952,10 +988,9 @@ function InboxView() {
 }
 
 function AiWorkspaceView() {
-  const { snapshot, connectors, runAssistant, clearAssistantHistory, createMemory, setView } = useBrace();
+  const { snapshot, connectors, assistantDraft, setAssistantDraft, runAssistant, clearAssistantHistory, createMemory, setView } = useBrace();
   const available = connectors.filter((connector) => (connector.id === "codex" || connector.id === "claude") && connector.detected);
   const [client, setClient] = useState<"codex" | "claude">("codex");
-  const [prompt, setPrompt] = useState("");
   const history = snapshot?.assistant?.history || [];
   const latest = history[history.length - 1];
   useEffect(() => {
@@ -966,8 +1001,8 @@ function AiWorkspaceView() {
   if (!snapshot) return null;
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    await runAssistant(client, prompt);
-    if (!useBrace.getState().error) setPrompt("");
+    await runAssistant(client, assistantDraft);
+    if (!useBrace.getState().error) setAssistantDraft("");
   };
   const retain = async () => {
     if (!latest) return;
@@ -997,8 +1032,8 @@ function AiWorkspaceView() {
             {!history.length && <div className="ai-empty"><div className="ai-empty-orb"><i /><i /><Sparkles className="h-5 w-5" /></div><h2>Ask with your memory attached.</h2><p>Try “What decisions already constrain this project?” or “Summarize the lessons that matter before I continue.”</p></div>}
           </div>
           <form onSubmit={submit} className="ai-composer">
-            <textarea required value={prompt} onChange={(event) => setPrompt(event.target.value)} placeholder="Ask BRACE with your durable context…" disabled={!available.length} />
-            <div><label><span className="sr-only">AI client</span><select value={client} onChange={(event) => setClient(event.target.value as "codex" | "claude")} disabled={!available.length}>{available.map((connector) => <option key={connector.id} value={connector.id}>{connector.name}</option>)}</select></label><span>Context is selected locally before the provider boundary.</span><button type="submit" disabled={!available.length || !prompt.trim()} className="brace-primary">Send<CornerDownLeft className="h-3.5 w-3.5" /></button></div>
+            <textarea required value={assistantDraft} onChange={(event) => setAssistantDraft(event.target.value)} placeholder="Ask BRACE with your durable context…" disabled={!available.length} />
+            <div><label><span className="sr-only">AI client</span><select value={client} onChange={(event) => setClient(event.target.value as "codex" | "claude")} disabled={!available.length}>{available.map((connector) => <option key={connector.id} value={connector.id}>{connector.name}</option>)}</select></label><span>{assistantDraft ? "Draft stays on this device until you send it." : "Context is selected locally before the provider boundary."}</span><button type="submit" disabled={!available.length || !assistantDraft.trim()} className="brace-primary">Send<CornerDownLeft className="h-3.5 w-3.5" /></button></div>
           </form>
         </section>
         <aside className="ai-context-rail">
@@ -1826,25 +1861,32 @@ function SettingsView() {
 }
 
 function AppearanceControls() {
-  const read = (key: "density" | "motion" | "contrast", fallback: string) => typeof document === "undefined" ? fallback : document.documentElement.dataset[key] || fallback;
+  const read = (key: UiPreference, fallback: string) => {
+    if (typeof document === "undefined") return fallback;
+    if (key === "theme") return document.documentElement.dataset.themePreference || fallback;
+    return document.documentElement.dataset[key] || fallback;
+  };
+  const [theme, setTheme] = useState(() => read("theme", "light"));
   const [density, setDensity] = useState(() => read("density", "comfortable"));
   const [motion, setMotion] = useState(() => read("motion", "expressive"));
   const [contrast, setContrast] = useState(() => read("contrast", "standard"));
-  const update = (key: "density" | "motion" | "contrast", value: string) => {
+  const update = (key: UiPreference, value: string) => {
     applyUiPreference(key, value);
-    const next = { density: read("density", "comfortable"), motion: read("motion", "expressive"), contrast: read("contrast", "standard"), [key]: value };
+    const next = { theme: read("theme", "light"), density: read("density", "comfortable"), motion: read("motion", "expressive"), contrast: read("contrast", "standard"), [key]: value };
     localStorage.setItem("brace.ui", JSON.stringify(next));
+    if (key === "theme") setTheme(value);
     if (key === "density") setDensity(value);
     if (key === "motion") setMotion(value);
     if (key === "contrast") setContrast(value);
   };
   const controls = [
+    { key: "theme" as const, label: "Theme", value: theme, options: [["light", "Light"], ["dark", "Dim"], ["system", "System"]] },
     { key: "density" as const, label: "Density", value: density, options: [["comfortable", "Comfortable"], ["compact", "Compact"]] },
     { key: "motion" as const, label: "Motion", value: motion, options: [["expressive", "Expressive"], ["calm", "Calm"]] },
     { key: "contrast" as const, label: "Contrast", value: contrast, options: [["standard", "Standard"], ["high", "High"]] },
   ];
   return (
-    <section className="brace-card overflow-hidden"><SectionHeading title="Interface" /><div className="appearance-controls p-5"><div className="appearance-intro"><span><SlidersHorizontal className="h-4 w-4" /></span><div><h3>Make the workspace fit you</h3><p>These display preferences stay on this device and never enter memory.</p></div></div>{controls.map((control) => <fieldset key={control.key}><legend>{control.label}</legend><div>{control.options.map(([value, label]) => <button key={value} type="button" className={control.value === value ? "is-active" : ""} aria-pressed={control.value === value} onClick={() => update(control.key, value)}>{label}</button>)}</div></fieldset>)}</div></section>
+    <section className="brace-card overflow-hidden"><SectionHeading title="Interface" /><div className="appearance-controls p-5"><div className="appearance-intro"><span><SlidersHorizontal className="h-4 w-4" /></span><div><h3>Make the workspace fit you</h3><p>These display preferences stay on this device and never enter memory.</p></div></div>{controls.map((control) => <fieldset key={control.key}><legend>{control.label}</legend><div style={{ gridTemplateColumns: `repeat(${control.options.length}, minmax(0, 1fr))` }}>{control.options.map(([value, label]) => <button key={value} type="button" className={control.value === value ? "is-active" : ""} aria-pressed={control.value === value} onClick={() => update(control.key, value)}>{label}</button>)}</div></fieldset>)}</div></section>
   );
 }
 
@@ -1853,7 +1895,7 @@ function SettingRow({ icon: Icon, title, text }: { icon: LucideIcon; title: stri
 }
 
 function MemoryDetail({ memory, onClose }: { memory: BraceMemory; onClose: () => void }) {
-  const { forgetMemory, setSearchQuery, search, toggleMemoryPin } = useBrace();
+  const { forgetMemory, setSearchQuery, search, toggleMemoryPin, setAssistantDraft, setView } = useBrace();
   const [full, setFull] = useState<BraceMemory>(memory);
   const [copied, setCopied] = useState(false);
   useEffect(() => {
@@ -1876,11 +1918,16 @@ function MemoryDetail({ memory, onClose }: { memory: BraceMemory; onClose: () =>
     const updated = await toggleMemoryPin(full.id, !full.pinned);
     if (updated) setFull(updated);
   };
+  const handOffToAi = () => {
+    setAssistantDraft(`Use this durable BRACE memory as the starting context. Verify claims against attached evidence where available.\n\nMemory: ${full.title}\n${full.content}\n${full.sourceUri ? `\nSource: ${shortUri(full.sourceUri)}` : ""}\n\nHelp me continue from here:`);
+    onClose();
+    setView("assistant");
+  };
   return (
     <div className="fixed inset-0 z-[70] flex justify-end bg-black/45 backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-labelledby="memory-detail-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <aside className="brace-detail-panel flex h-full w-full max-w-[520px] flex-col border-l border-white/[0.08] bg-[#101318] shadow-2xl">
         <div className="flex h-[72px] items-center justify-between border-b border-white/[0.07] px-5"><span className={`rounded-md border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider ${kindTone[full.kind]}`}>{full.kind}</span><button type="button" onClick={onClose} className="rounded-lg p-2 text-white/35 hover:bg-white/5 hover:text-white" aria-label="Close memory"><X className="h-4 w-4" /></button></div>
-        <div className="flex-1 overflow-y-auto p-6"><h1 id="memory-detail-title" className="text-2xl font-medium leading-tight tracking-[-0.03em]">{full.title}</h1><p className="mt-3 text-sm leading-6 text-white/48">{full.summary}</p><div className="memory-detail-actions"><button type="button" onClick={() => void togglePin()}>{full.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}{full.pinned ? "Unpin memory" : "Pin for daily use"}</button><button type="button" onClick={() => void copyMemory()}>{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied ? "Copied" : "Copy memory"}</button><button type="button" onClick={findRelated}><Search className="h-3.5 w-3.5" />Find related context</button></div><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Durable content</h2><p className="mt-3 whitespace-pre-wrap text-[13px] leading-6 text-white/66">{full.content}</p></div><dl className="mt-7 grid grid-cols-2 gap-4 border-t border-white/[0.06] pt-6 text-[10px]"><div><dt className="text-white/25">Scope</dt><dd className="mt-1 truncate text-white/52">{full.scope}</dd></div><div><dt className="text-white/25">Confidence</dt><dd className="mt-1 text-white/52">{Math.round(full.confidence * 100)}%</dd></div><div><dt className="text-white/25">Updated</dt><dd className="mt-1 text-white/52">{formatDate(full.updatedAt)}</dd></div><div><dt className="text-white/25">Embedding</dt><dd className="mt-1 text-white/52">{full.embeddingModel || "Lexical only"}</dd></div></dl><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Provenance</h2><div className="mt-3 rounded-xl border border-sky-300/10 bg-sky-300/[0.035] p-4"><div className="flex items-center gap-2 text-xs text-sky-100/70"><FileText className="h-4 w-4" />{shortUri(full.sourceUri)}</div>{full.sourceExcerpt && <p className="mt-2 text-[11px] leading-5 text-white/36">{full.sourceExcerpt}</p>}</div></div>{full.evidence && full.evidence.length > 0 && <div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Evidence</h2>{full.evidence.map((evidence) => <div key={evidence.id} className="mt-3 rounded-xl border border-white/[0.06] p-4"><div className="text-[10px] uppercase text-white/25">{evidence.outcome}</div><p className="mt-1 text-xs text-white/55">{evidence.summary}</p><p className="mt-2 font-mono text-[9px] text-white/25">{evidence.reference}</p></div>)}</div>}</div>
+        <div className="flex-1 overflow-y-auto p-6"><h1 id="memory-detail-title" className="text-2xl font-medium leading-tight tracking-[-0.03em]">{full.title}</h1><p className="mt-3 text-sm leading-6 text-white/48">{full.summary}</p><div className="memory-detail-actions"><button type="button" onClick={() => void togglePin()}>{full.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}{full.pinned ? "Unpin memory" : "Pin for daily use"}</button><button type="button" onClick={() => void copyMemory()}>{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied ? "Copied" : "Copy memory"}</button><button type="button" onClick={findRelated}><Search className="h-3.5 w-3.5" />Find related context</button><button type="button" onClick={handOffToAi} className="is-handoff"><MessageSquareText className="h-3.5 w-3.5" />Continue with AI</button></div><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Durable content</h2><p className="mt-3 whitespace-pre-wrap text-[13px] leading-6 text-white/66">{full.content}</p></div><dl className="mt-7 grid grid-cols-2 gap-4 border-t border-white/[0.06] pt-6 text-[10px]"><div><dt className="text-white/25">Scope</dt><dd className="mt-1 truncate text-white/52">{full.scope}</dd></div><div><dt className="text-white/25">Confidence</dt><dd className="mt-1 text-white/52">{Math.round(full.confidence * 100)}%</dd></div><div><dt className="text-white/25">Updated</dt><dd className="mt-1 text-white/52">{formatDate(full.updatedAt)}</dd></div><div><dt className="text-white/25">Embedding</dt><dd className="mt-1 text-white/52">{full.embeddingModel || "Lexical only"}</dd></div></dl><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Provenance</h2><div className="mt-3 rounded-xl border border-sky-300/10 bg-sky-300/[0.035] p-4"><div className="flex items-center gap-2 text-xs text-sky-100/70"><FileText className="h-4 w-4" />{shortUri(full.sourceUri)}</div>{full.sourceExcerpt && <p className="mt-2 text-[11px] leading-5 text-white/36">{full.sourceExcerpt}</p>}</div></div>{full.evidence && full.evidence.length > 0 && <div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Evidence</h2>{full.evidence.map((evidence) => <div key={evidence.id} className="mt-3 rounded-xl border border-white/[0.06] p-4"><div className="text-[10px] uppercase text-white/25">{evidence.outcome}</div><p className="mt-1 text-xs text-white/55">{evidence.summary}</p><p className="mt-2 font-mono text-[9px] text-white/25">{evidence.reference}</p></div>)}</div>}</div>
         <div className="flex items-center justify-between border-t border-white/[0.07] p-5"><span className="text-[10px] text-white/25">Forgetting keeps only a non-sensitive audit tombstone.</span><button type="button" onClick={() => void forgetMemory(full.id)} className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs text-rose-200/60 hover:bg-rose-400/[0.07] hover:text-rose-100"><Trash2 className="h-3.5 w-3.5" />Forget</button></div>
       </aside>
     </div>

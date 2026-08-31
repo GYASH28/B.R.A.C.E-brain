@@ -1,14 +1,25 @@
-# BRACE Arctic Glass design system
+# BRACE Frosted Workspace design system
 
 ## Product contract
 
-BRACE is a private desktop memory instrument, not a generic analytics dashboard. Its hierarchy begins with recall and evidence, then navigation, then system health. Every visible metric must come from the local snapshot. Every action must produce a real state or explain why it is unavailable.
+BRACE is a private desktop memory instrument, not a generic analytics dashboard. Its core loop is **recall → inspect evidence → retain or capture → continue work**. The default interface is a luminous workspace because local context should feel readable and owned, not hidden inside a dark control room. Every visible metric must come from the local snapshot. Every action must produce a real state or explain why it is unavailable.
+
+## Screen contract
+
+- **Home** answers “what is worth continuing?” with one featured memory and a maximum of three next useful moves derived from real review, project, automation, and connection state.
+- **Recall** is the primary retrieval surface. Durable memory and source evidence remain visually separate at every size.
+- **Capture** has two explicit outcomes: a durable memory or a decision with rationale. It never stores a raw AI transcript by default.
+- **Ask AI** prepares a visible local context capsule before crossing a provider boundary. A memory can seed an editable handoff draft; nothing is sent until the user presses Send.
+- **Library** views organize memory, chronology, and relationships. They do not repeat generic dashboard metrics.
+- **System** views expose projects, automations, connections, skills, and settings with permissions and failure states beside the relevant action.
+
+Navigation is grouped as Work, Library, and System. Recall, Capture, and Ask AI must remain reachable from the first group and from the command palette. No more than one primary action dominates a page.
 
 ## Colour roles
 
 | Role | Dark | Light | Purpose |
 | --- | --- | --- | --- |
-| Canvas | `#05080f` | `#eef3f8` | Deep spatial field or cool paper |
+| Canvas | `#071a34` | `#cfe4ff` | Dim navy field or luminous blue atmosphere |
 | Surface | `rgba(15, 24, 39, .68)` | `rgba(255, 255, 255, .64)` | Optical glass with contextual blur |
 | Raised | `#111a29` | `#f8fbff` | Neomorphic controls and selected objects |
 | Ink | `#f5f8ff` | `#101724` | Primary readable text |
@@ -22,7 +33,7 @@ Orange is not a brand colour. Amber may not be used as decoration or selection. 
 
 ## Material rules
 
-- Glass represents a boundary, receipt, floating control, or selected object. It is not a blanket card style.
+- Glass represents navigation, a provider boundary, a receipt, a floating control, or selected context. Indexed content uses quieter paper surfaces instead of turning every object into glass.
 - Each glass surface combines a translucent fill, 1px optical edge, backdrop blur, and one offset canvas-tinted shadow.
 - Neomorphism is limited to pressable controls and inset wells. Raised and inset states must remain obvious at 200% zoom and in forced colours.
 - Maximum three elevation levels. Nothing receives a zero-offset coloured halo.
@@ -54,7 +65,7 @@ Orange is not a brand colour. Amber may not be used as decoration or selection. 
 
 ## Reject
 
-- Generic dashboard card grids, fake telemetry, decorative bento layouts, and equal feature tiles.
+- Generic dashboard card grids, fake telemetry, decorative bento layouts, equal feature tiles, and twelve destinations presented at equal hierarchy.
 - Orange/ember branding, violet-to-blue AI gradients, neon buttons, excessive glow, and black-on-black surfaces.
 - Controls with no outcome, invisible hover-only meaning, squeezed desktop mobile layouts, and endless opening screens.
 - Emoji used as interface icons, `transition: all`, and custom cursor behavior on touch or reduced motion.

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import "./workspace.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,8 +39,8 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#020617",
-  colorScheme: "dark",
+  themeColor: "#dcecff",
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
 };
@@ -50,19 +51,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className="dark">
+    <html lang="en" suppressHydrationWarning className="light" data-theme="light" data-theme-preference="light">
       <head>
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
                 try {
-                  var t = localStorage.getItem('second-brain-theme') || 'dark';
+                  var ui = JSON.parse(localStorage.getItem('brace.ui') || '{}');
+                  var t = ui.theme || localStorage.getItem('second-brain-theme') || 'light';
+                  var resolved = t === 'system' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : t;
                   var html = document.documentElement;
-                  html.className = t;
-                  html.style.colorScheme = (t === 'light') ? 'light' : 'dark';
+                  html.className = resolved;
+                  html.dataset.theme = resolved;
+                  html.dataset.themePreference = t;
+                  html.style.colorScheme = resolved;
                 } catch (e) {
-                  document.documentElement.className = 'dark';
+                  document.documentElement.className = 'light';
+                  document.documentElement.dataset.theme = 'light';
+                  document.documentElement.dataset.themePreference = 'light';
                 }
               })();
             `,

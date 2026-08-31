@@ -11,10 +11,13 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Added Today, 7 days, 30 days, and All time recall scopes across durable memory and indexed source chunks, including MCP timestamp boundaries.
 - Added workspace back/forward history, attention badges, recent command ranking, global recall focus, recoverable session capture drafts, type-and-tag capture controls, memory and timeline filters, and copy/related-context actions.
 - Added device-local saved recall questions, explicit pin/unpin actions, pinned-memory ordering and filtering, and a 5,000-record long-running profile stress gate covering latency, churn, WAL concurrency, backup recovery, restart persistence, malformed input, redaction, and SQLite integrity.
+- Added a memory-to-AI continuation workflow that prepares an editable, device-local handoff draft with the durable memory and its source reference; nothing crosses a provider boundary until the user sends it.
+- Added a tactile context relay to the launch site that explains source custody, local memory, and explicit AI handoff through keyboard-operable stage controls and a range input.
 
 ### Changed
 
-- Refined the desktop information hierarchy, keyboard flow, focus treatment, responsive navigation, compact-window header, filter toolbelts, transient success feedback, and reset/empty states around real local actions.
+- Rebuilt the desktop as a light-first Frosted Workspace with grouped Work, Library, and System navigation; a real next-useful-move home surface; clearer evidence paper; higher-contrast graph, automation, connection, capture, and AI states; and optional dim/system themes.
+- Refined the keyboard flow, focus treatment, responsive navigation, compact-window header, filter toolbelts, transient success feedback, and reset/empty states around real local actions.
 - Re-authored the public website as a quieter high-key cobalt and white Liquid Glass product reel, replacing the six competing interactive chapters with one scroll-scrubbed Remotion memory film, one local-custody passage, the retained sideways real-product gallery, and a calm equal-platform installation plate.
 - Re-skinned the integrated beginner guide with the same white frosted-glass and blue atmospheric system while preserving every installation, memory, automation, connection, privacy, and troubleshooting workflow.
 
@@ -24,7 +27,7 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Verified
 
-- Synthetic Electron journeys now prove capture-draft recovery and clearing, multi-view history, memory and timeline filtering, responsive collapse without horizontal overflow, automation execution, graph interaction, privacy-safe connections, and zero renderer-console errors.
+- Synthetic Electron journeys now prove capture-draft recovery and clearing, multi-view history, memory and timeline filtering, memory-to-AI draft handoff, responsive collapse without horizontal overflow, automation execution, graph interaction, privacy-safe connections, and zero renderer-console errors.
 - The release stress gate proves 5,000-memory operation with explicit p95/p99 recall, bounded graph/list payloads, export, restart, memory-growth, backup parity, concurrent-connection, and database-integrity ceilings.
 - The new website film is rendered separately for desktop and portrait, encoded with dense scrub keyframes, and checked for continuous playhead movement, reduced-motion poster behavior, healthy lateral-gallery overflow, keyboard focus, responsive layout, and WCAG 2.2 AA contrast.
 

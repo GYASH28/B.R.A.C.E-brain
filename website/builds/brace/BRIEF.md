@@ -1,4 +1,4 @@
-# BRACE 0.8 frosted memory film brief
+# BRACE 0.9 frosted context relay brief
 
 > This revision follows the user's explicit direction: “white glass with blue background tint,” “frosty rainlike liquid glass,” less content competing on screen, “a video which appears as I scroll,” and the existing sideways image carousel kept in a new style.
 
@@ -10,7 +10,7 @@ The previous six-chapter liquid-lens chamber was visually rich but too busy. Its
 - **World:** High-key cobalt atmosphere, white optical glass, cool silver rain, ink-blue typography, real BRACE screenshots, and the real BRACE mark. No black canvas and no violet-to-blue AI glow.
 - **Navigation:** A single floating white-glass bar with four destinations. No ledger, command palette, or secondary dock.
 - **Hero:** A newly rendered Remotion film whose playhead is controlled by scroll. The film de-fogs from the BRACE mark into the packaged app and then connects files, memory, and compatible AI.
-- **Signature interaction:** A clear lens follows a fine pointer across the hero's frost layer while scroll progressively removes the remaining fog. Reversing scroll restores it. Reduced motion holds a legible poster without fetching the film.
+- **Signature interactions:** A clear lens follows a fine pointer across the hero's frost layer while scroll progressively removes the remaining fog. The custody passage then provides a keyboard-operable context relay from canonical source to local memory to explicit AI handoff. Reduced motion holds a legible poster without fetching the film and makes relay state changes immediate.
 - **Close:** One white-glass installation plate gives Windows and Linux equal visual weight and direct versioned downloads.
 
 ## Product statement
@@ -27,10 +27,11 @@ BRACE is a local-first memory layer for people who use several AI clients and wa
 | --- | --- | --- | --- |
 | Frosted memory film | Curiosity → recognition | A rain-softened field clears to the real BRACE mark and packaged product | `scrub` + clear lens |
 | Local proof | Relief | One restrained sentence resolves files, memory, and network authority | `flow` + `in` |
+| Context relay | Understanding → agency | The visitor moves one context packet through source, BRACE, and AI boundaries | buttons + range |
 | Product reel | Confidence → control | Real synthetic-profile screenshots move sideways as one continuous gallery | `pan` |
 | Installation | Resolve | Equal Windows and Linux choices settle in one quiet glass plate | `flow` + `in` |
 
-The target length is roughly 10.5 viewport-heights: 3.2 for the film, 1.2 for the proof handoff, 4.8 for the gallery, and 1.3 for installation. The film owns the peak and the most scroll room per visual idea.
+The film still owns the peak and the most scroll room per visual idea. The context relay lives inside the existing proof passage rather than adding another pinned spectacle.
 
 ## Peak
 
@@ -67,4 +68,4 @@ Against BRACE 0.1, 0.3, and 0.7 this build changes at least four of six dimensio
 
 ## Cold-read target
 
-**curiosity → relief → confidence → resolve**. If the gallery competes with the opening or the download plate becomes a second spectacle, simplify it further.
+**curiosity → relief → agency → confidence → resolve**. If the relay, gallery, or download plate competes with the opening, simplify it further.

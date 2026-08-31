@@ -34,6 +34,7 @@ interface BraceState {
   snapshot: BraceSnapshot | null;
   connectors: BraceConnector[];
   selectedMemory: BraceMemory | null;
+  assistantDraft: string;
   searchQuery: string;
   searchResult: SearchResponse | null;
   loading: boolean;
@@ -44,6 +45,7 @@ interface BraceState {
   navigateHistory: (direction: -1 | 1) => void;
   setSearchQuery: (query: string) => void;
   setSelectedMemory: (memory: BraceMemory | null) => void;
+  setAssistantDraft: (draft: string) => void;
   clearMessage: () => void;
   bootstrap: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -118,6 +120,7 @@ export const useBrace = create<BraceState>((set, get) => {
     snapshot: null,
     connectors: [],
     selectedMemory: null,
+    assistantDraft: "",
     searchQuery: "",
     searchResult: null,
     loading: true,
@@ -139,6 +142,7 @@ export const useBrace = create<BraceState>((set, get) => {
     }),
     setSearchQuery: (searchQuery) => set({ searchQuery }),
     setSelectedMemory: (selectedMemory) => set({ selectedMemory }),
+    setAssistantDraft: (assistantDraft) => set({ assistantDraft }),
     clearMessage: () => set({ error: null, notice: null }),
     bootstrap: async () => {
       set({ loading: true, error: null });

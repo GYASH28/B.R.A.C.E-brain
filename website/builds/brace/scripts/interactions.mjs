@@ -14,7 +14,7 @@ async function check(name, run) {
 }
 try {
   await page.goto(`${base}/`, {waitUntil: "networkidle"});
-  await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v8");
+  await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v9");
   await check("scroll film mounts with poster fallback", async () => {
     if (await page.locator("[data-sc-scrub]").count() !== 1) throw new Error("Expected one scroll film");
     if (!await page.locator(".film-poster").isVisible()) throw new Error("Film poster is not visible");
@@ -27,6 +27,17 @@ try {
     await page.waitForTimeout(120);
     const after = await page.locator(".film-stage").getAttribute("data-sc-verify-state");
     if (!before || !after || before === after) throw new Error(`Frost state did not change: ${before} -> ${after}`);
+  });
+  await check("context relay explains every custody boundary", async () => {
+    const relay = page.locator("[data-memory-relay]");
+    await relay.scrollIntoViewIfNeeded();
+    const input = relay.locator("[data-relay-input]");
+    await input.fill("2");
+    await input.dispatchEvent("input");
+    if (await relay.getAttribute("data-sc-verify-state") !== "relay:2") throw new Error("Relay did not reach the AI handoff");
+    if (!String(await relay.locator("[data-relay-output]").textContent()).includes("Only the context you choose")) throw new Error("Relay did not explain the handoff boundary");
+    await relay.locator('[data-relay-step="1"]').click();
+    if (await relay.getAttribute("data-sc-verify-state") !== "relay:1") throw new Error("Relay node controls are not interactive");
   });
   await check("sideways gallery has real overflow", async () => {
     const overflow = await page.locator(".product-rail").evaluate((rail) => rail.scrollWidth - window.innerWidth);

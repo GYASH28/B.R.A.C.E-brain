@@ -10,17 +10,17 @@ test("product navigation maps to implemented memory workflows", () => {
   const app = read("src/components/brace/brace-app.tsx");
   const store = read("src/lib/brace/store.ts");
   for (const label of [
-    "Command center",
-    "Knowledge map",
-    "Inbox",
-    "AI Workspace",
+    "Home",
     "Recall",
-    "Memory",
+    "Capture",
+    "Ask AI",
+    "Memory library",
     "Timeline",
+    "Knowledge map",
     "Projects",
-    "Skills",
     "Automations",
-    "Connections",
+    "AI connections",
+    "Skills",
     "Settings",
   ]) {
     assert.match(app, new RegExp(`label: "${label}"`));
@@ -45,6 +45,10 @@ test("product navigation maps to implemented memory workflows", () => {
   assert.match(app, /Execution traces/);
   assert.match(store, /Preview completed without changing memory/);
   assert.match(app, /Retain latest answer/);
+  assert.match(app, /Continue with AI/);
+  assert.match(app, /NEXT USEFUL MOVE/);
+  assert.match(app, /type NavSection = "Work" \| "Library" \| "System"/);
+  assert.match(store, /assistantDraft/);
   assert.match(app, /Saved recalls/);
   assert.match(app, /Pin for daily use/);
   assert.match(app, /No answer becomes durable memory automatically/);

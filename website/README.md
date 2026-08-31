@@ -42,4 +42,6 @@ poster and do not download either film.
 
 The site is static by design. Keep asset paths relative, keep download URLs pinned to a real release, and do not introduce a runtime network dependency for the core experience. The synthetic Northstar workspace is the only approved source for product examples and screenshots. The sideways product reel is intentional product evidence and must remain reachable with native horizontal scrolling under reduced motion.
 
+The context relay in the custody passage is the second signature interaction. Its three stages must remain truthful: the source is canonical, BRACE holds a local durable memory with evidence, and only user-selected context reaches a compatible AI client. Keep both the stage buttons and the range control keyboard-operable.
+
 Before changing motion or interaction behavior, read [the interaction contract](INTERACTION_CONTRACT.md). The deployment workflow in `.github/workflows/pages.yml` runs both browser audits before publishing.

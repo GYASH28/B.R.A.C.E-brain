@@ -3,7 +3,7 @@
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const fine = matchMedia("(hover: hover) and (pointer: fine)").matches;
   const root = document.documentElement;
-  root.dataset.braceRuntime = "v8";
+  root.dataset.braceRuntime = "v9";
   const filmAct = document.querySelector(".film-act");
   const filmStage = document.querySelector(".film-stage");
   const filmFrost = document.querySelector("[data-film-frost]");
@@ -51,6 +51,32 @@
       root.style.setProperty("--lens-y", "45%");
     });
   }
+  const relay = document.querySelector("[data-memory-relay]");
+  const relayInput = relay?.querySelector("[data-relay-input]");
+  const relayOutput = relay?.querySelector("[data-relay-output]");
+  const relayPosition = relay?.querySelector("[data-relay-position]");
+  const relaySteps = Array.from(relay?.querySelectorAll("[data-relay-step]") || []);
+  const relayStates = [
+    {label: "Source", message: "Your source remains the canonical record."},
+    {label: "Local memory", message: "BRACE keeps the useful decision beside a link to its evidence."},
+    {label: "AI handoff", message: "Only the context you choose is handed to the compatible AI tool."},
+  ];
+  const setRelay = (nextStep) => {
+    if (!relay || !relayInput || !relayStates.length) return;
+    const step = clamp(Math.round(Number(nextStep) || 0), 0, relayStates.length - 1);
+    relay.style.setProperty("--relay-progress", String(step / (relayStates.length - 1)));
+    relay.dataset.scVerifyState = `relay:${step}`;
+    relayInput.value = String(step);
+    if (relayOutput) relayOutput.textContent = relayStates[step].message;
+    if (relayPosition) relayPosition.textContent = relayStates[step].label;
+    relaySteps.forEach((node, index) => {
+      node.classList.toggle("is-active", index === step);
+      node.setAttribute("aria-pressed", String(index === step));
+    });
+  };
+  relayInput?.addEventListener("input", (event) => setRelay(event.currentTarget.value));
+  relaySteps.forEach((node) => node.addEventListener("click", () => setRelay(node.dataset.relayStep)));
+  setRelay(0);
   const canvas = document.querySelector("[data-rain-field]");
   const context = canvas?.getContext("2d");
   const drops = Array.from({length: innerWidth < 700 ? 18 : 30}, (_, index) => ({

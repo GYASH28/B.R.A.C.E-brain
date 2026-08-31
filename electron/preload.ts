@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("brace:create-memory", input),
   updateBraceMemory: (id: string, changes: unknown) =>
     ipcRenderer.invoke("brace:update-memory", id, changes),
+  setBraceMemoryPinned: (id: string, pinned: boolean) =>
+    ipcRenderer.invoke("brace:set-memory-pinned", id, pinned),
   resolveBraceMemoryReview: (input: unknown) =>
     ipcRenderer.invoke("brace:resolve-memory-review", input),
   forgetBraceMemory: (id: string) =>
@@ -41,4 +43,19 @@ contextBridge.exposeInMainWorld("electron", {
   clearBraceAssistantHistory: () =>
     ipcRenderer.invoke("brace:clear-assistant-history"),
   copyBraceText: (value: string) => ipcRenderer.invoke("brace:copy-text", value),
+  getBraceAutomations: () => ipcRenderer.invoke("brace:get-automations"),
+  createBraceAutomation: (input: unknown) =>
+    ipcRenderer.invoke("brace:create-automation", input),
+  updateBraceAutomation: (id: string, input: unknown) =>
+    ipcRenderer.invoke("brace:update-automation", id, input),
+  setBraceAutomationEnabled: (id: string, enabled: boolean) =>
+    ipcRenderer.invoke("brace:set-automation-enabled", id, enabled),
+  runBraceAutomation: (id: string, input: unknown) =>
+    ipcRenderer.invoke("brace:run-automation", id, input),
+  retryBraceAutomationRun: (runId: string, dryRun: boolean) =>
+    ipcRenderer.invoke("brace:retry-automation-run", runId, dryRun),
+  deleteBraceAutomation: (id: string) =>
+    ipcRenderer.invoke("brace:delete-automation", id),
+  setBraceAutomationsPaused: (paused: boolean) =>
+    ipcRenderer.invoke("brace:set-automations-paused", paused),
 });

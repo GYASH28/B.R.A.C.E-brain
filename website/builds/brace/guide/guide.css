@@ -1,3 +1,30 @@
 @import url("./guide-base.css");
 @import url("./guide-v5.css");
 @import url("./guide-v5-guards.css");
+
+.guide-footer { background:#05080f;color:#e2ebe3; }
+.guide-footer>p,.guide-footer>nav a { color:#b7c1b8!important; }
+
+/* Clear liquid-glass guide: the long-form content stays neutral while the
+   navigation and actionable surfaces carry the translucent material. */
+.guide-body{background:radial-gradient(circle at 84% 7%,rgba(255,255,255,.085),transparent 29rem),radial-gradient(circle at 8% 44%,rgba(255,255,255,.035),transparent 38rem),linear-gradient(180deg,#060606,#121214 38%,#070707 100%)}
+.guide-bar{border-color:rgba(255,255,255,.15);background:rgba(17,17,19,.72);box-shadow:inset 0 1px rgba(255,255,255,.12),0 20px 64px rgba(0,0,0,.38)}.guide-bar::after{background:linear-gradient(112deg,rgba(255,255,255,.075),transparent 24%,transparent 76%,rgba(255,255,255,.04))}
+.product-mark{border-color:rgba(255,255,255,.08)}.product-mark span small,.guide-bar>nav a{color:rgba(255,255,255,.52)}.guide-bar>nav a:hover{color:#fff;background:rgba(255,255,255,.04)}
+.guide-bar .bar-action{border-color:rgba(255,255,255,.7);background:linear-gradient(145deg,#fff,#d7d7da 58%,#f5f5f7);color:#111113;box-shadow:inset 0 1px #fff,inset 0 -3px 7px rgba(0,0,0,.15),0 12px 30px rgba(0,0,0,.32)}
+.guide-hero{border-color:rgba(255,255,255,.07)}.guide-hero::before{color:rgba(255,255,255,.02)}.guide-hero::after{border-color:rgba(255,255,255,.06);box-shadow:0 0 0 86px rgba(255,255,255,.011),0 0 0 170px rgba(255,255,255,.007)}
+.surface-kicker,.guide-route a span,.guide-toc>strong,.step-header p{color:#dedee2}.surface-kicker::before{background:linear-gradient(90deg,#fff,transparent)}.guide-hero h1,.step-header h2{color:#f5f5f7}.guide-lede,.guide-step>p,.details-body p,.platform-grid p{color:rgba(235,235,238,.66)}
+.guide-route,.guide-toc{border-color:rgba(255,255,255,.11);background:rgba(20,20,22,.48);box-shadow:inset 0 1px rgba(255,255,255,.06),0 24px 64px rgba(0,0,0,.24)}.guide-route a,.guide-toc nav a{color:rgba(235,235,238,.54)}.guide-route a:hover,.guide-toc nav a:hover,.guide-toc nav a[aria-current="true"]{color:#fff;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.025))}
+.guide-step{border-color:rgba(255,255,255,.075)}.guide-step::before{color:rgba(255,255,255,.019)}.step-header>span{border-color:rgba(255,255,255,.14);background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.03));color:#f5f5f7}
+.platform-grid>section,.choice-list>li,.do-dont>div,.shortcut-deck>p,.permission-table,.guide-step details,.feature-walkthrough>article{border-color:rgba(255,255,255,.105);background:linear-gradient(155deg,rgba(34,34,37,.58),rgba(15,15,17,.52));box-shadow:inset 0 1px rgba(255,255,255,.055),0 18px 48px rgba(0,0,0,.18)}
+.platform-grid>section:hover,.choice-list>li:hover,.do-dont>div:hover,.shortcut-deck>p:hover{border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.25)}
+.guide-note{border-color:rgba(255,255,255,.12)!important;border-left-color:rgba(255,255,255,.46)!important;background:rgba(25,25,27,.42)!important}.guide-shot{border-color:rgba(255,255,255,.12);background:#101012;box-shadow:0 32px 86px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.06)}.guide-shot figcaption{background:rgba(14,14,16,.84);border-color:rgba(255,255,255,.075)}.guide-step pre{border-color:rgba(255,255,255,.11)!important;background:rgba(3,3,4,.84)!important}
+.guide-footer{background:#060606;color:#f1f1f3}.guide-footer>p,.guide-footer>nav a{color:#aaaab0!important}
+@media(max-width:860px){.guide-toc{background:rgba(17,17,19,.9)}}
+
+/* Pearl content layer under the clear guide controls. */
+.guide-body{background:radial-gradient(circle at 84% 7%,rgba(255,255,255,.28),transparent 29rem),radial-gradient(circle at 8% 44%,rgba(216,190,204,.17),transparent 38rem),radial-gradient(circle at 82% 76%,rgba(235,226,217,.1),transparent 32rem),linear-gradient(180deg,#6c666a,#4b464a 38%,#5d575b 100%)}
+.guide-bar{background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.025)),rgba(39,36,40,.58);box-shadow:inset 0 1px rgba(255,255,255,.18),0 20px 64px rgba(42,33,39,.3)}
+.guide-route,.guide-toc{background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.02)),rgba(40,37,41,.5);box-shadow:inset 0 1px rgba(255,255,255,.11),0 24px 64px rgba(42,33,39,.23)}
+.platform-grid>section,.choice-list>li,.do-dont>div,.shortcut-deck>p,.permission-table,.guide-step details,.feature-walkthrough>article{background:linear-gradient(155deg,rgba(255,255,255,.11),rgba(255,255,255,.02)),rgba(41,38,42,.5);box-shadow:inset 0 1px rgba(255,255,255,.1),0 18px 48px rgba(42,33,39,.2)}
+.guide-note{background:rgba(46,42,46,.44)!important}.guide-footer{background:#474245}.guide-footer>p,.guide-footer>nav a{color:#c8c3c7!important}.guide-shot figcaption{background:rgba(43,39,43,.74)}
+@media(max-width:860px){.guide-toc{background:rgba(43,39,43,.82)}}

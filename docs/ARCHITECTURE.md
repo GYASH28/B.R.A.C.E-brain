@@ -11,7 +11,7 @@ BRACE separates private data, trusted local services, and untrusted presentation
                         │ guarded, incremental read
                         ▼
 ┌──────────────── core modules ─────────────────────────────┐
-│ project indexer  memory store  embeddings  skill runtime │
+│ indexer  memory store  embeddings  skills  automations   │
 └───────────────────────┬───────────────────────────────────┘
                         │ parameterized SQLite operations
                         ▼
@@ -36,10 +36,11 @@ The CommonJS modules under `core/` are environment-independent and directly test
 Responsibilities include:
 
 - projects, sources, source chunks, and chunk embeddings;
-- memories, memory embeddings, evidence, and tombstones;
+- memories, pinned working context, memory embeddings, evidence, and tombstones;
 - explicit decisions and append-only timeline events;
 - entities and typed relationships;
 - installed skill metadata and settings;
+- automation definitions and immutable execution history;
 - lexical, semantic, and hybrid retrieval;
 - backup, portable export, delete-all, and statistics.
 
@@ -63,6 +64,12 @@ Adapters return provider vectors and a model identifier. Search uses vector rank
 `core/skill-runtime.js` parses a versioned JSON manifest, verifies declared permissions, copies only the normalized manifest into external data, stores a checksum, and dispatches a small allowlist of built-in operations.
 
 It never imports code from the skill directory. There is no shell, `eval`, dynamic module, or arbitrary HTTP operation.
+
+### Automation runtime
+
+`core/automation-engine.js` validates and executes typed trigger-condition-action recipes. It derives a visible permission envelope from actions, renders only property placeholders, redacts durable trace data, bounds recipe size and schedule frequency, and supports mutation-free previews plus snapshot-based retries.
+
+The Electron main process owns the 30-second scheduler. Schedules use local time and run only while the desktop is open. Event dispatch occurs after explicit memory, decision, project-index, and handoff operations. Automation actions do not recursively dispatch new automation triggers.
 
 ## Desktop boundary
 
@@ -110,7 +117,7 @@ The preview is not a storage implementation and is not used by the packaged desk
 
 BRACE owns its external SQLite database and installed manifest copies. It does not own imported project originals. The distinction is visible in the UI, export format, provenance URIs, and deletion behavior.
 
-See [ADR-001](architecture/adr-001-local-data-boundary.md) and [ADR-002](architecture/adr-002-memory-lifecycle.md).
+See [ADR-001](architecture/adr-001-local-data-boundary.md), [ADR-002](architecture/adr-002-memory-lifecycle.md), [ADR-003](architecture/adr-003-unified-workspace-and-connectors.md), and [ADR-004](architecture/adr-004-local-automation-runtime.md).
 
 ## Failure behavior
 
@@ -121,4 +128,5 @@ See [ADR-001](architecture/adr-001-local-data-boundary.md) and [ADR-002](archite
 - Browser preview mutations fail explicitly.
 - Connector setup fails and restores the exact prior configuration when the expected BRACE entry cannot be verified.
 - An existing configuration entry is reported as configured, not as proof of a live provider connection.
+- Failed automation attempts preserve their redacted trace and original recipe snapshot for inspection or retry.
 - Missing packaged static output shows an application build error instead of opening a remote page.

@@ -359,7 +359,9 @@
     if (event.key === "Home") manualSplit = 11;
     else if (event.key === "End") manualSplit = 78;
     else manualSplit = clamp(current + (event.key === "ArrowRight" ? 3 : -3), 11, 78);
-    scheduleSpatialState();
+    // Keyboard control is a direct manipulation: paint synchronously so the
+    // accessible value and the visible divider can never drift by one frame.
+    paintSpatialState();
   });
 
   /* Recoverable fragments ---------------------------------------------- */

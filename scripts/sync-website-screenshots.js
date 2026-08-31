@@ -18,6 +18,7 @@ const approved = [
   "app-inbox.png",
   "app-ai-workspace.png",
   "app-skills.png",
+  "app-automations.png",
   "app-connections.png",
   "app-settings.png",
 ];

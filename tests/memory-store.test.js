@@ -56,7 +56,38 @@ test("structured memories survive restart with provenance and evidence", (contex
   assert.equal(memory.sourceId, source.id);
   assert.equal(memory.evidence.length, 1);
   assert.equal(memory.evidence[0].outcome, "promoted");
-  assert.equal(reopened.stats().schemaVersion, 3);
+  assert.equal(reopened.stats().schemaVersion, 5);
+  reopened.close();
+});
+
+test("pinned working context is durable, filterable, and ordered first", (context) => {
+  const { databasePath, store } = fixture(context);
+  const routine = store.createMemory({
+    kind: "procedure",
+    scope: "project:daily",
+    title: "Daily release review",
+    content: "Review the release evidence before starting a new build.",
+    importance: 0.2,
+  }).memory;
+  store.createMemory({
+    kind: "decision",
+    scope: "project:daily",
+    title: "Use local evidence",
+    content: "Keep the evidence ledger inside the selected local workspace.",
+    importance: 0.95,
+  });
+
+  const pinned = store.setMemoryPinned(routine.id, true);
+  assert.equal(pinned.pinned, true);
+  assert.equal(store.listMemories({ scope: "project:daily" })[0].id, routine.id);
+  assert.deepEqual(store.listMemories({ scope: "project:daily", pinned: true }).map((memory) => memory.id), [routine.id]);
+  assert.equal(store.stats().pinnedMemories, 1);
+
+  store.close();
+  const reopened = new MemoryStore(databasePath);
+  assert.equal(reopened.getMemory(routine.id).pinned, true);
+  assert.equal(reopened.setMemoryPinned(routine.id, false).pinned, false);
+  assert.equal(reopened.stats().pinnedMemories, 0);
   reopened.close();
 });
 
@@ -174,6 +205,43 @@ test("search reports lexical mode unless real model vectors are supplied", (cont
   assert.ok(hybrid.results.find((result) => result.id === beta.id).retrieval.semanticSimilarity > 0.99);
 });
 
+test("search time scopes filter memory and source evidence by their own update time", (context) => {
+  const { databasePath, store } = fixture(context);
+  const project = store.upsertProject({
+    name: "Time scope fixture",
+    rootPath: path.join(path.dirname(databasePath), "time-scope"),
+  });
+  const source = store.upsertSource({
+    projectId: project.id,
+    uri: "project://time-scope/notes.md",
+    title: "Indexed notes",
+  });
+  const [oldChunk, freshChunk] = store.replaceSourceChunks(source.id, [
+    { heading: "Old context", content: "Orbit release context from an earlier cycle." },
+    { heading: "Fresh context", content: "Orbit release context captured today." },
+  ]);
+  const oldMemory = store.createMemory({
+    kind: "fact",
+    title: "Old orbit note",
+    content: "Orbit release context from an earlier cycle.",
+  }).memory;
+  const freshMemory = store.createMemory({
+    kind: "fact",
+    title: "Fresh orbit note",
+    content: "Orbit release context captured today.",
+  }).memory;
+  const oldTimestamp = "2024-01-01T00:00:00.000Z";
+  store.db.prepare("UPDATE memories SET updated_at = ? WHERE id = ?").run(oldTimestamp, oldMemory.id);
+  store.db.prepare("UPDATE source_chunks SET updated_at = ? WHERE id = ?").run(oldTimestamp, oldChunk.id);
+
+  const since = new Date(Date.now() - (24 * 60 * 60 * 1_000)).toISOString();
+  const memories = store.search("orbit release context", { since });
+  const sources = store.searchSources("orbit release context", { since });
+  assert.deepEqual(memories.results.map((memory) => memory.id), [freshMemory.id]);
+  assert.deepEqual(sources.results.map((chunk) => chunk.id), [freshChunk.id]);
+  assert.throws(() => store.search("orbit", { since: "not-a-date" }), /valid ISO dates/);
+});
+
 test("decisions create real timeline entries and graph relations", (context) => {
   const { databasePath, store } = fixture(context);
   const project = store.upsertProject({
@@ -267,17 +335,21 @@ test("deleteAll removes user content without invalidating the schema", (context)
   store.createMemory({ kind: "fact", title: "Delete me", content: "Synthetic data", projectId: project.id });
   store.deleteAll();
   assert.deepEqual(store.stats(), {
-    schemaVersion: 3,
+    schemaVersion: 5,
     projects: 0,
     sources: 0,
     sourceChunks: 0,
     memories: 0,
+    pinnedMemories: 0,
     forgotten: 0,
     decisions: 0,
     events: 0,
     entities: 0,
     relations: 0,
     skills: 0,
+    automations: 0,
+    enabledAutomations: 0,
+    automationRuns: 0,
   });
 });
 
@@ -298,9 +370,30 @@ test("version-one databases migrate source chunks without losing memories", (con
   `);
   store.close();
   const migrated = new MemoryStore(databasePath);
-  assert.equal(migrated.stats().schemaVersion, 3);
+  assert.equal(migrated.stats().schemaVersion, 5);
   assert.deepEqual(migrated.listMemoryReviewCandidates(), []);
   assert.equal(migrated.getMemory(memory.id).title, "Migration fixture");
   assert.deepEqual(migrated.searchSources("anything").results, []);
+  migrated.close();
+});
+
+test("version-three desktop profiles migrate to automation storage without losing memory", (context) => {
+  const { databasePath, store } = fixture(context);
+  const memory = store.createMemory({
+    kind: "decision",
+    title: "Existing 0.5 profile memory",
+    content: "This synthetic record represents a schema-three desktop profile.",
+  }).memory;
+  store.db.exec(`
+    DROP TABLE automation_runs;
+    DROP TABLE automations;
+    PRAGMA user_version = 3;
+  `);
+  store.close();
+  const migrated = new MemoryStore(databasePath);
+  assert.equal(migrated.stats().schemaVersion, 5);
+  assert.equal(migrated.getMemory(memory.id).title, "Existing 0.5 profile memory");
+  assert.deepEqual(migrated.listAutomations(), []);
+  assert.deepEqual(migrated.listAutomationRuns(), []);
   migrated.close();
 });

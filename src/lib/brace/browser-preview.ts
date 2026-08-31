@@ -10,17 +10,21 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     database: "brace.sqlite3",
   },
   stats: {
-    schemaVersion: 3,
+    schemaVersion: 5,
     projects: 1,
     sources: 3,
     sourceChunks: 11,
     memories: 3,
+    pinnedMemories: 1,
     forgotten: 0,
     decisions: 1,
     events: 5,
     entities: 6,
     relations: 8,
     skills: 2,
+    automations: 1,
+    enabledAutomations: 1,
+    automationRuns: 1,
   },
   projects: [
     {
@@ -43,6 +47,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
       status: "active",
       confidence: 0.9,
       importance: 0.85,
+      pinned: true,
       tags: ["northstar", "product"],
       sourceId: "source-architecture",
       sourceUri: "brace-project://demo-northstar/Architecture%20Decisions.md",
@@ -64,6 +69,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
       status: "active",
       confidence: 0.82,
       importance: 0.72,
+      pinned: false,
       tags: ["research", "provenance"],
       sourceId: null,
       sourceUri: "brace-project://demo-northstar/Research%20Notes.md",
@@ -85,6 +91,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
       status: "active",
       confidence: 0.88,
       importance: 0.78,
+      pinned: false,
       tags: ["consolidation", "safety"],
       sourceId: null,
       sourceUri: null,
@@ -175,20 +182,75 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     enabled: false,
     config: { enabled: false, endpoint: "http://127.0.0.1:11434", model: "nomic-embed-text" },
   },
+  automations: {
+    paused: false,
+    schedulerError: null,
+    definitions: [
+      {
+        id: "automation-daily-brief",
+        name: "Daily memory brief",
+        description: "Turns the last 24 hours of synthetic activity into a local summary.",
+        enabled: true,
+        trigger: { type: "schedule.daily", config: { time: "09:00", daysOfWeek: [0, 1, 2, 3, 4, 5, 6] } },
+        conditionLogic: "and",
+        conditions: [],
+        actions: [{ type: "timeline.digest", config: { title: "Daily BRACE brief", scope: "global", windowHours: 24 } }],
+        permissions: ["memory:write", "timeline:read"],
+        version: 1,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        lastRunAt: timestamp,
+        nextRunAt: "2026-04-19T09:00:00.000Z",
+      },
+    ],
+    runs: [
+      {
+        id: "run-daily-brief",
+        automationId: "automation-daily-brief",
+        automationName: "Daily memory brief",
+        status: "success",
+        triggerType: "schedule.daily",
+        triggerPayload: { scheduledAt: timestamp },
+        automationSnapshot: { name: "Daily memory brief", version: 1 },
+        steps: [
+          { type: "conditions", status: "success", detail: "No conditions configured." },
+          { type: "timeline.digest", status: "success", output: { eventCount: 5 } },
+        ],
+        error: null,
+        startedAt: timestamp,
+        finishedAt: timestamp,
+        durationMs: 18,
+        retryOf: null,
+        dryRun: false,
+      },
+    ],
+    templates: [
+      {
+        id: "daily-memory-brief",
+        name: "Daily memory brief",
+        description: "Turn recent activity into a concise local summary.",
+        trigger: { type: "schedule.daily", config: { time: "09:00", daysOfWeek: [0, 1, 2, 3, 4, 5, 6] } },
+        conditionLogic: "and",
+        conditions: [],
+        actions: [{ type: "timeline.digest", config: { title: "Daily BRACE brief", scope: "global", windowHours: 24 } }],
+      },
+    ],
+  },
 };
 
-export function searchBrowserPreview(query: string): SearchResponse {
+export function searchBrowserPreview(query: string, options: { since?: string | null } = {}): SearchResponse {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   const memories = browserPreviewSnapshot.memories.filter((memory) => {
     const haystack = `${memory.title} ${memory.summary} ${memory.content} ${memory.tags.join(" ")}`.toLowerCase();
-    return words.some((word) => haystack.includes(word));
+    const withinRange = !options.since || new Date(memory.updatedAt).getTime() >= new Date(options.since).getTime();
+    return withinRange && words.some((word) => haystack.includes(word));
   });
   return {
     mode: "lexical",
     embeddingModel: null,
     warning: "Browser preview uses the bundled synthetic profile. Desktop search runs against local SQLite.",
     memories,
-    sources: query.trim()
+    sources: query.trim() && !options.since
       ? [
           {
             id: "chunk-architecture",

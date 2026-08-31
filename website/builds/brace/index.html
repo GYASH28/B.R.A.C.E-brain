@@ -27,6 +27,7 @@
     </div>
   </div>
   <div class="atmosphere" aria-hidden="true"><i></i><i></i><i></i></div>
+  <canvas class="rain-glass" data-rain-glass aria-hidden="true"></canvas>
   <div class="sc-grain" aria-hidden="true"></div>
   <div data-sc-progress aria-hidden="true"></div>
   <div class="memory-cursor" aria-hidden="true"><span></span><i></i></div>
@@ -50,9 +51,23 @@
     </a>
   </header>
 
+  <aside class="field-ledger" aria-label="BRACE field ledger">
+    <header><span>BRACE / FIELD RECORD</span><b>LOCAL</b></header>
+    <nav aria-label="Story chapters">
+      <a href="#opening-act" data-ledger-chapter="01"><i></i><span><small>01</small>Memory</span><b>OPEN</b></a>
+      <a href="#recall" data-ledger-chapter="02"><i></i><span><small>02</small>Receipt</span><b>UNREAD</b></a>
+      <a href="#constellation" data-ledger-chapter="03"><i></i><span><small>03</small>Map</span><b>UNREAD</b></a>
+      <a href="#boundary" data-ledger-chapter="04"><i></i><span><small>04</small>Custody</span><b>UNREAD</b></a>
+      <a href="#product" data-ledger-chapter="05"><i></i><span><small>05</small>Proof</span><b>UNREAD</b></a>
+      <a href="#download" data-ledger-chapter="06"><i></i><span><small>06</small>Install</span><b>UNREAD</b></a>
+    </nav>
+    <footer><span data-ledger-readout>CHAPTER 01 / MEMORY</span><i><b data-ledger-progress></b></i><small>Nothing leaves this page.</small></footer>
+  </aside>
+
   <main id="main">
     <section id="opening-act" class="split-act" data-sc-act="pin" data-sc-span="3.25">
       <div class="split-stage" data-sc-stage data-memory-lens data-sc-spotlight data-sc-verify-state="split:50:idle">
+        <div class="folio-meta" aria-hidden="true"><span>FIELD NOTE 001</span><b>LOCAL MEMORY<br>FOR MACHINE INTELLIGENCE</b><small>GY / BRACE<br>2026.08</small></div>
         <div class="split-side split-side--forget">
           <div class="forget-noise" aria-hidden="true"></div>
           <div class="split-copy split-copy--forget" data-sc-cue="0 0.84 0 0.12">
@@ -79,7 +94,6 @@
           </button>
           <div class="hero-product-cue" data-sc-cue="0.52 1 0.16 0" data-sc-rise="0">
             <figure class="hero-product">
-              <div class="window-bar"><span><i></i><i></i><i></i></span><b>BRACE · SYNTHETIC NORTHSTAR</b><em>LOCAL</em></div>
               <img src="assets/app-overview.png" width="1440" height="960" alt="Real BRACE packaged application overview using synthetic Northstar data">
             </figure>
           </div>
@@ -113,6 +127,7 @@
             <button type="button" data-evidence-layer="memory" aria-pressed="true">Memory</button>
             <button type="button" data-evidence-layer="receipt" aria-pressed="true">Receipt</button>
           </div>
+          <div class="saved-question-row"><button type="button" data-save-query>Pin this question</button><div data-saved-queries aria-live="polite"><small>No pinned questions on this device.</small></div></div>
         </form>
         <div class="recall-pipeline" id="recall-result" aria-live="polite">
           <article class="pipeline-source"><span>SOURCE EVIDENCE</span><strong id="recall-source">Architecture Decisions.md</strong><small id="recall-uri">examples/demo-workspace/Architecture Decisions.md</small></article>
@@ -189,6 +204,7 @@
           <figure class="proof-frame" data-proof="overview" data-proof-image="assets/app-overview.png" data-proof-title="Memory signal" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>MEMORY SIGNAL</b><em>LOCAL</em></div><img src="assets/app-overview.png" width="1440" height="960" alt="BRACE overview with synthetic Northstar data"><figcaption><strong>See what BRACE knows</strong><span>Memory health, strongest recall, and source provenance in one working surface.</span></figcaption></figure>
           <figure class="proof-frame" data-proof="recall" data-proof-image="assets/app-recall.png" data-proof-title="Recall with receipts" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>RECALL</b><em>LEXICAL</em></div><img src="assets/app-recall.png" width="1440" height="960" alt="BRACE recall separating memories and source evidence"><figcaption><strong>Recall with receipts</strong><span>Durable memories and raw source evidence remain visibly different.</span></figcaption></figure>
           <figure class="proof-frame" data-proof="assistant" data-proof-image="assets/app-ai-workspace.png" data-proof-title="AI Workspace" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>AI WORKSPACE</b><em>VISIBLE BOUNDARY</em></div><img src="assets/app-ai-workspace.png" width="1440" height="960" alt="BRACE AI Workspace with a detected Codex CLI and explicit local-memory boundary"><figcaption><strong>Ask with your memory attached</strong><span>Approve the context capsule, use an installed client, then retain only the outcome worth keeping.</span></figcaption></figure>
+          <figure class="proof-frame" data-proof="automations" data-proof-image="assets/app-automations.png" data-proof-title="Local Automation Studio" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>AUTOMATION STUDIO</b><em>LOCAL RUNTIME</em></div><img src="assets/app-automations.png" width="1440" height="960" alt="BRACE Automation Studio showing a local memory health recipe and its execution traces"><figcaption><strong>Automate without surrendering control</strong><span>Typed triggers, visible permissions, dry-run previews, immutable traces, and one global pause.</span></figcaption></figure>
           <figure class="proof-frame" data-proof="graph" data-proof-image="assets/app-graph.png" data-proof-title="Five knowledge projections" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>KNOWLEDGE ATLAS</b><em>FIVE PRESETS</em></div><img src="assets/app-graph.png" width="1440" height="960" alt="BRACE knowledge atlas showing Rings, Living, Orbit, Flow, and Chronicle presets"><figcaption><strong>Change the question, not the data</strong><span>Rings, Living, Orbit, Flow, and Chronicle project one provenance-backed graph five useful ways.</span></figcaption></figure>
           <figure class="proof-frame" data-proof="inbox" data-proof-image="assets/app-inbox.png" data-proof-title="Deliberate Inbox" data-sc-tilt="3"><button type="button" class="proof-expand" data-proof-expand>Open full view</button><div class="window-bar"><span><i></i><i></i><i></i></span><b>INBOX</b><em>EXPLICIT CAPTURE</em></div><img src="assets/app-inbox.png" width="1440" height="960" alt="BRACE Inbox for explicit memory and decision capture"><figcaption><strong>Keep the useful outcome</strong><span>Capture a durable point or decision without rewriting a source file or saving a raw transcript.</span></figcaption></figure>
           <aside class="proof-outro"><strong>The product is inspectable before you install it.</strong><a href="guide/">Open the beginner guide</a></aside>

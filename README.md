@@ -35,6 +35,7 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 
 - Structured SQLite memory with migrations, full-text search, evidence, decisions, events, entities, relationships, settings, and skills.
 - Durable memory lifecycle: explicit creation, exact deduplication, a persistent near-duplicate review queue, recoverable supersession, retrieval tracking, and content-erasing forget tombstones.
+- Durable pinned working context for recurring priorities, plus device-local saved recall questions for repeated investigations.
 - Project indexing with heading-aware chunks, incremental hashes, allowlisted text formats, ignored credentials/dependencies/build output, no symlink traversal, and private-path-free provenance URIs.
 - Lexical search by default. Semantic and hybrid reciprocal-rank fusion only when a real embedding model returns compatible vectors.
 - Optional loopback Ollama embeddings and an advanced HTTPS OpenAI-compatible adapter.
@@ -43,11 +44,16 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 - A triage-focused **Inbox**, an evidence-aware **AI Workspace**, and explicit retention: an answer becomes durable memory only when you choose to retain it.
 - Guided, permissioned setup for **Codex CLI**, **Claude Code**, and **Antigravity**, plus exact configuration for any stdio MCP client. BRACE backs up client configuration and verifies its entry before reporting it configured.
 - Session continuity through the `brace_memory_compass` prompt and explicit `brace_session_start` / `brace_session_handoff` tools.
+- A typed local Automation Studio with schedules and BRACE-event triggers, AND/OR conditions, derived permissions, dry-run previews, immutable execution traces, retries, and a global pause. No arbitrary code or shell execution.
+- Explicit time-scoped recall across memory and source evidence: Today, 7 days, 30 days, or All time.
+- A keyboard-first desktop workflow with back/forward workspace history, recent commands, global recall focus, recoverable Quick Capture drafts, attention badges, memory and timeline filtering, and responsive compact navigation.
 - Declarative, permission-scoped BRACE Skills. No arbitrary JavaScript, shell, or dynamic code execution.
 - Official MCP v2 stdio tools with structured results and read-only defaults. Writes and destructive forgetting use separate opt-in flags.
 - A hardened Electron boundary with context isolation, sandboxing, navigation and popup denial, a narrow preload bridge, CSP, and external application-data storage.
 - Privacy-safe JSON export, consistent SQLite backup, per-memory forgetting, and confirmed delete-all.
 - Synthetic Northstar demo data and screenshots. The repository contains no personal memory seed.
+
+![BRACE Automation Studio using a synthetic local recipe](artifacts/screenshots/app-automations.png)
 
 ## Install
 
@@ -87,6 +93,7 @@ npm run electron:compile
 npm run electron:e2e
 npm run electron:mcp-smoke
 npm run electron:smoke
+npm run test:stress
 ```
 
 The launch site has a separate static-site test boundary:
@@ -208,6 +215,7 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md), [DATA_MODEL.md](docs/DATA_MODEL.md)
 - [Skills guide](docs/SKILLS.md)
 - [Distribution and verification](docs/DISTRIBUTION.md)
 - [Dependency and license review](docs/DEPENDENCY_REVIEW.md)
+- [Long-running profile stress testing](docs/STRESS_TESTING.md)
 - [Troubleshooting](docs/TROUBLESHOOTING.md)
 - [Roadmap](ROADMAP.md)
 - [Security policy](SECURITY.md)

@@ -60,7 +60,8 @@ async function clickText(window, text) {
   const clicked = await window.webContents.executeJavaScript(`
     (() => {
       const target = Array.from(document.querySelectorAll('button')).find(
-        (button) => button.textContent?.trim() === ${JSON.stringify(text)} &&
+        (button) => (button.textContent?.trim() === ${JSON.stringify(text)} ||
+          Array.from(button.children).some((child) => child.textContent?.trim() === ${JSON.stringify(text)})) &&
           button.getBoundingClientRect().width > 0
       );
       target?.click();
@@ -90,6 +91,12 @@ async function setInput(window, selector, value) {
 }
 
 async function screenshot(window, name) {
+  await window.webContents.executeJavaScript(`
+    (() => {
+      document.querySelector('.brace-main')?.scrollTo({ top: 0, behavior: 'instant' });
+      document.querySelector('.brace-sidebar nav')?.scrollTo({ top: 0, behavior: 'instant' });
+    })()
+  `);
   await window.webContents.executeJavaScript("document.fonts?.ready || Promise.resolve()", true);
   await wait(1_200);
   let image;
@@ -176,7 +183,7 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Stop re-explaining your work')");
   const onboarding = await screenshot(window, "app-onboarding");
   await clickText(window, "Explore synthetic demo");
-  await waitFor(window, "document.body.innerText.includes('Your context, ready when AI needs it.')");
+  await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
   const overview = await screenshot(window, "app-overview");
 
   pressKey(window, "K", ["control"]);
@@ -187,11 +194,18 @@ async function run() {
 
   pressKey(window, "N", ["control"]);
   await waitFor(window, "document.querySelector('[aria-labelledby=\"quick-capture-title\"]')");
-  const capture = await screenshot(window, "app-quick-capture");
   await setInput(window, "#quick-title", "Preserve the verified release checksum");
   await setInput(window, "#quick-content", "Every native release artifact keeps an immutable SHA-256 checksum beside its download link.");
+  await setInput(window, "#quick-tags", "release, verification");
+  await wait(300);
+  await clickText(window, "Close");
+  await waitFor(window, "!document.querySelector('[aria-labelledby=\"quick-capture-title\"]')");
+  pressKey(window, "N", ["control"]);
+  await waitFor(window, "document.querySelector('#quick-title')?.value === 'Preserve the verified release checksum' && document.body.innerText.includes('Session draft restored')");
+  const draftRecovered = await window.webContents.executeJavaScript("document.querySelector('#quick-tags')?.value === 'release, verification'");
+  const capture = await screenshot(window, "app-quick-capture");
   await clickText(window, "Save memory");
-  await waitFor(window, "document.body.innerText.includes('Memory saved locally.') && !document.querySelector('[aria-labelledby=\"quick-capture-title\"]')");
+  await waitFor(window, "document.body.innerText.includes('Memory saved locally.') && !document.querySelector('[aria-labelledby=\"quick-capture-title\"]') && !sessionStorage.getItem('brace.capture-draft')");
 
   service.store.createMemory({
     kind: "procedure",
@@ -208,7 +222,7 @@ async function run() {
     content: "Compare every downloaded release artifact with the published SHA-256 checksum before installation.",
   });
   await window.reload();
-  await waitFor(window, "document.body.innerText.includes('Your context, ready when AI needs it.')");
+  await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
   await clickText(window, "Memory");
   await window.webContents.executeJavaScript(
     "document.querySelector('button[aria-label=\"Open memory review queue\"]')?.click()",
@@ -221,6 +235,22 @@ async function run() {
   const reviewResolved = service.snapshot().memoryQuality.pendingReview === 0 &&
     service.store.listTimeline().some((event) => event.eventType === "memory.reviewed");
 
+  await clickText(window, "Memory");
+  await waitFor(window, "document.querySelector('.memory-toolbelt')");
+  await setInput(window, ".memory-toolbelt input", "checksum");
+  await waitFor(window, "document.querySelector('.memory-result-line')?.textContent?.includes('3 of')");
+  const memoryFilteringReady = await window.webContents.executeJavaScript("document.querySelectorAll('.brace-memory-card').length === 3");
+  const memoryLibrary = await screenshot(window, "app-memory-library");
+  await window.webContents.executeJavaScript("document.querySelector('.brace-memory-card')?.click()");
+  await waitFor(window, "document.body.innerText.includes('Copy memory') && document.body.innerText.includes('Find related context')");
+  await clickText(window, "Pin for daily use");
+  await waitFor(window, "document.body.innerText.includes('Unpin memory')");
+  const pinningReady = service.snapshot().stats.pinnedMemories === 1;
+  await clickText(window, "Copy memory");
+  await waitFor(window, "document.body.innerText.includes('Copied')");
+  await clickText(window, "Find related context");
+  await waitFor(window, "document.body.innerText.includes('Source evidence')");
+
   await clickText(window, "Recall");
   await setInput(window, "input[placeholder^='What did we decide']", "canonical source files");
   await window.webContents.executeJavaScript(
@@ -231,6 +261,10 @@ async function run() {
 
   await clickText(window, "Timeline");
   await waitFor(window, "document.body.innerText.includes('Keep imported files canonical')");
+  await setInput(window, ".timeline-toolbelt input", "canonical");
+  await clickText(window, "Decisions");
+  await waitFor(window, "document.querySelector('.timeline-toolbelt>span')?.textContent?.trim() === '1 events'");
+  const timelineFilteringReady = await window.webContents.executeJavaScript("document.querySelectorAll('.brace-timeline-card article').length === 1");
   const timeline = await screenshot(window, "app-timeline");
 
   await clickText(window, "Knowledge map");
@@ -284,6 +318,24 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Decision Journal') && document.querySelectorAll('[role=switch]').length === 2");
   const skills = await screenshot(window, "app-skills");
 
+  await clickText(window, "Automations");
+  await waitFor(window, "document.body.innerText.includes('Automation studio') && document.body.innerText.includes('No recipes yet')");
+  await clickText(window, "Create automation");
+  await waitFor(window, "document.querySelector('.automation-builder') && document.body.innerText.includes('Make BRACE work while you work.')");
+  await setInput(window, ".automation-builder-identity input", "Release memory health check");
+  await setInput(window, ".automation-builder-identity textarea", "Inspect local memory quality before a release without changing memory.");
+  await clickText(window, "Create paused");
+  await waitFor(window, "!document.querySelector('.automation-builder') && document.body.innerText.includes('Release memory health check')");
+  await clickText(window, "Preview");
+  await waitFor(window, "document.body.innerText.includes('Preview completed without changing memory.') && document.body.innerText.includes('preview')");
+  await window.webContents.executeJavaScript("document.querySelector('.automation-master-switch')?.click()");
+  await waitFor(window, "document.querySelector('.automation-master-switch')?.getAttribute('aria-checked') === 'true'");
+  await clickText(window, "Run now");
+  await waitFor(window, "document.body.innerText.includes('Automation finished with status: success.')");
+  await window.webContents.executeJavaScript("document.querySelector('.automation-run-summary')?.click()");
+  await waitFor(window, "document.querySelector('.automation-run.is-expanded') && document.body.innerText.includes('RECIPE SNAPSHOT')");
+  const automations = await screenshot(window, "app-automations");
+
   await clickText(window, "Connections");
   await waitFor(window, "document.body.innerText.includes('Portable MCP configuration') && document.body.innerText.includes('Read-only by default') && document.body.innerText.includes('Codex CLI')");
   const connectionMarker = process.platform === "win32" ? "BRACE_MCP_DIRECT" : "--mcp";
@@ -300,6 +352,18 @@ async function run() {
   await clickText(window, "Compact");
   const preferenceReady = await window.webContents.executeJavaScript("document.documentElement.dataset.density === 'compact' && JSON.parse(localStorage.getItem('brace.ui')).density === 'compact'");
   const settings = await screenshot(window, "app-settings");
+  pressKey(window, "Left", ["alt"]);
+  await waitFor(window, "document.body.innerText.includes('Portable MCP configuration')");
+  pressKey(window, "Right", ["alt"]);
+  await waitFor(window, "document.body.innerText.includes('Make the workspace fit you')");
+  const navigationReady = await window.webContents.executeJavaScript("document.querySelector('button[aria-label=\"Go to previous workspace\"]:not(:disabled)') !== null && localStorage.getItem('brace.last-view') === 'settings'");
+  await clickText(window, "Memory");
+  window.setContentSize(760, 900);
+  await waitFor(window, "document.querySelector('.memory-toolbelt') && window.innerWidth === 760 && Math.abs(parseFloat(getComputedStyle(document.querySelector('.brace-sidebar')).width) - 76) < 1");
+  const responsiveMetrics = await window.webContents.executeJavaScript("({ viewport: window.innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth, sidebarWidth: parseFloat(getComputedStyle(document.querySelector('.brace-sidebar')).width) })");
+  const responsiveReady = responsiveMetrics.documentWidth <= responsiveMetrics.viewport + 1 && responsiveMetrics.bodyWidth <= responsiveMetrics.viewport + 1 && Math.abs(responsiveMetrics.sidebarWidth - 76) < 1;
+  const responsive = await screenshot(window, "app-responsive");
+  window.setContentSize(1440, 960);
 
   const snapshot = service.snapshot();
   const databaseExists = fs.existsSync(service.databasePath);
@@ -307,15 +371,27 @@ async function run() {
     profileIsTemporary: service.databasePath.startsWith(userData),
     databaseExists,
     stats: snapshot.stats,
-    screenshots: [onboarding, overview, commands, capture, memoryReview, recall, timeline, graph, inbox, aiWorkspace, skills, connections, settings].map((target) =>
+    screenshots: [onboarding, overview, commands, capture, memoryReview, memoryLibrary, recall, timeline, graph, inbox, aiWorkspace, skills, automations, connections, settings, responsive].map((target) =>
       process.env.CI ? path.basename(target) : path.relative(root, target),
     ),
     graphInteraction,
     connectionReady,
     connectionHasWorkspacePath,
     preferenceReady,
+    draftRecovered,
+    memoryFilteringReady,
+    timelineFilteringReady,
+    pinningReady,
+    navigationReady,
+    responsiveMetrics,
+    responsiveReady,
     reviewBefore,
     reviewResolved,
+    automationReady: snapshot.stats.automations === 1 &&
+      snapshot.stats.enabledAutomations === 1 &&
+      snapshot.stats.automationRuns === 2 &&
+      snapshot.automations?.runs.some((run) => run.status === "preview") &&
+      snapshot.automations?.runs.some((run) => run.status === "success"),
     consoleErrors,
   };
   process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
@@ -333,8 +409,15 @@ async function run() {
     !connectionReady ||
     connectionHasWorkspacePath ||
     !preferenceReady ||
+    !draftRecovered ||
+    !memoryFilteringReady ||
+    !timelineFilteringReady ||
+    !pinningReady ||
+    !navigationReady ||
+    !responsiveReady ||
     reviewBefore !== 1 ||
     !reviewResolved ||
+    !report.automationReady ||
     consoleErrors.length
   ) {
     process.exitCode = 1;

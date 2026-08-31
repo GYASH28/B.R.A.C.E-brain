@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { browserPreviewSnapshot, searchBrowserPreview } from "./browser-preview";
 import type {
   BraceConnector,
+  BraceAutomation,
   BraceMemory,
   BraceSnapshot,
   ConnectorAccess,
@@ -22,11 +23,14 @@ export type BraceView =
   | "graph"
   | "projects"
   | "skills"
+  | "automations"
   | "connections"
   | "settings";
 
 interface BraceState {
   view: BraceView;
+  viewHistory: BraceView[];
+  viewHistoryIndex: number;
   snapshot: BraceSnapshot | null;
   connectors: BraceConnector[];
   selectedMemory: BraceMemory | null;
@@ -37,6 +41,7 @@ interface BraceState {
   error: string | null;
   notice: string | null;
   setView: (view: BraceView) => void;
+  navigateHistory: (direction: -1 | 1) => void;
   setSearchQuery: (query: string) => void;
   setSelectedMemory: (memory: BraceMemory | null) => void;
   clearMessage: () => void;
@@ -47,8 +52,9 @@ interface BraceState {
   runAssistant: (client: "codex" | "claude", prompt: string) => Promise<void>;
   clearAssistantHistory: () => Promise<void>;
   initializeDemo: () => Promise<void>;
-  search: (query?: string) => Promise<void>;
+  search: (query?: string, options?: { since?: string | null }) => Promise<void>;
   createMemory: (input: Record<string, unknown>) => Promise<void>;
+  toggleMemoryPin: (id: string, pinned: boolean) => Promise<BraceMemory | null>;
   resolveMemoryReview: (input: {
     leftId: string;
     rightId: string;
@@ -64,6 +70,12 @@ interface BraceState {
   exportData: () => Promise<void>;
   backupData: () => Promise<void>;
   deleteAll: (confirmation: string) => Promise<void>;
+  saveAutomation: (input: Record<string, unknown>, id?: string) => Promise<BraceAutomation | null>;
+  toggleAutomation: (id: string, enabled: boolean) => Promise<void>;
+  runAutomation: (id: string, dryRun?: boolean) => Promise<void>;
+  retryAutomation: (runId: string, dryRun?: boolean) => Promise<void>;
+  deleteAutomation: (id: string) => Promise<void>;
+  pauseAutomations: (paused: boolean) => Promise<void>;
 }
 
 function desktop() {
@@ -101,6 +113,8 @@ export const useBrace = create<BraceState>((set, get) => {
 
   return {
     view: "home",
+    viewHistory: ["home"],
+    viewHistoryIndex: 0,
     snapshot: null,
     connectors: [],
     selectedMemory: null,
@@ -110,7 +124,19 @@ export const useBrace = create<BraceState>((set, get) => {
     operation: null,
     error: null,
     notice: null,
-    setView: (view) => set({ view }),
+    setView: (view) => set((state) => {
+      if (state.view === view) return state;
+      const history = [...state.viewHistory.slice(0, state.viewHistoryIndex + 1), view].slice(-30);
+      try { localStorage.setItem("brace.last-view", view); } catch {}
+      return { view, viewHistory: history, viewHistoryIndex: history.length - 1 };
+    }),
+    navigateHistory: (direction) => set((state) => {
+      const index = Math.max(0, Math.min(state.viewHistory.length - 1, state.viewHistoryIndex + direction));
+      if (index === state.viewHistoryIndex) return state;
+      const view = state.viewHistory[index];
+      try { localStorage.setItem("brace.last-view", view); } catch {}
+      return { view, viewHistoryIndex: index };
+    }),
     setSearchQuery: (searchQuery) => set({ searchQuery }),
     setSelectedMemory: (selectedMemory) => set({ selectedMemory }),
     clearMessage: () => set({ error: null, notice: null }),
@@ -118,6 +144,12 @@ export const useBrace = create<BraceState>((set, get) => {
       set({ loading: true, error: null });
       try {
         await refresh();
+        const allowed: BraceView[] = ["home", "inbox", "assistant", "search", "memories", "review", "timeline", "graph", "projects", "skills", "automations", "connections", "settings"];
+        let saved: BraceView | null = null;
+        try { saved = localStorage.getItem("brace.last-view") as BraceView | null; } catch {}
+        if (saved && allowed.includes(saved)) {
+          set({ view: saved, viewHistory: [saved], viewHistoryIndex: 0 });
+        }
       } catch (error) {
         set({ loading: false, error: message(error) });
       }
@@ -174,7 +206,7 @@ export const useBrace = create<BraceState>((set, get) => {
           : structuredClone(browserPreviewSnapshot);
         set({ snapshot, notice: "Synthetic Northstar workspace is ready.", view: "home" });
       }),
-    search: async (value) =>
+    search: async (value, options) =>
       perform("Searching local memory…", async () => {
         const query = (value ?? get().searchQuery).trim();
         if (!query) {
@@ -183,9 +215,10 @@ export const useBrace = create<BraceState>((set, get) => {
         }
         const api = desktop();
         const result = api?.searchBrace
-          ? await api.searchBrace({ query, limit: 30 })
-          : searchBrowserPreview(query);
-        set({ searchQuery: query, searchResult: result, view: "search" });
+          ? await api.searchBrace({ query, limit: 30, ...(options?.since ? { since: options.since } : {}) })
+          : searchBrowserPreview(query, options);
+        set({ searchQuery: query, searchResult: result });
+        get().setView("search");
       }),
     createMemory: async (input) =>
       perform("Saving memory…", async () => {
@@ -195,6 +228,17 @@ export const useBrace = create<BraceState>((set, get) => {
         await refresh();
         set({ notice: "Memory saved locally." });
       }),
+    toggleMemoryPin: async (id, pinned) => {
+      let updated: BraceMemory | null = null;
+      await perform(pinned ? "Pinning memory…" : "Unpinning memory…", async () => {
+        const api = desktop();
+        if (!api?.setBraceMemoryPinned) throw new Error("Pinned memory is available in the desktop app.");
+        updated = await api.setBraceMemoryPinned(id, pinned);
+        await refresh();
+        set({ selectedMemory: updated, notice: pinned ? "Memory pinned to your working set." : "Memory removed from your working set." });
+      });
+      return updated;
+    },
     resolveMemoryReview: async (input) =>
       perform("Resolving memory review…", async () => {
         const api = desktop();
@@ -290,6 +334,78 @@ export const useBrace = create<BraceState>((set, get) => {
           await refresh();
           set({ view: "home", notice: "Local BRACE data was deleted. Imported files were untouched." });
         }
+      }),
+    saveAutomation: async (input, id) => {
+      let saved: BraceAutomation | null = null;
+      await perform(id ? "Updating automation…" : "Creating automation…", async () => {
+        const api = desktop();
+        if (!api?.createBraceAutomation || !api?.updateBraceAutomation) {
+          throw new Error("Automation editing is available in the desktop app.");
+        }
+        saved = id
+          ? await api.updateBraceAutomation(id, input)
+          : await api.createBraceAutomation(input);
+        await refresh();
+        set({ notice: `${saved.name} saved locally. New automations start paused until you enable them.` });
+      });
+      return saved;
+    },
+    toggleAutomation: async (id, enabled) =>
+      perform(enabled ? "Enabling automation…" : "Pausing automation…", async () => {
+        const api = desktop();
+        if (!api?.setBraceAutomationEnabled) {
+          throw new Error("Automation controls are available in the desktop app.");
+        }
+        await api.setBraceAutomationEnabled(id, enabled);
+        await refresh();
+        set({ notice: enabled ? "Automation enabled." : "Automation paused." });
+      }),
+    runAutomation: async (id, dryRun = false) =>
+      perform(dryRun ? "Previewing automation…" : "Running automation…", async () => {
+        const api = desktop();
+        if (!api?.runBraceAutomation) {
+          throw new Error("Automation runs are available in the desktop app.");
+        }
+        const run = await api.runBraceAutomation(id, { dryRun, payload: { eventType: "manual" } });
+        await refresh();
+        set({
+          notice: run.status === "failed"
+            ? `Automation failed: ${run.error || "Inspect its run trace."}`
+            : dryRun
+              ? "Preview completed without changing memory."
+              : `Automation finished with status: ${run.status}.`,
+        });
+      }),
+    retryAutomation: async (runId, dryRun = false) =>
+      perform(dryRun ? "Previewing retry…" : "Retrying automation…", async () => {
+        const api = desktop();
+        if (!api?.retryBraceAutomationRun) {
+          throw new Error("Automation retry is available in the desktop app.");
+        }
+        const run = await api.retryBraceAutomationRun(runId, dryRun);
+        await refresh();
+        set({ notice: `Retry finished with status: ${run.status}.` });
+      }),
+    deleteAutomation: async (id) =>
+      perform("Deleting automation…", async () => {
+        const api = desktop();
+        if (!api?.deleteBraceAutomation) {
+          throw new Error("Automation deletion is available in the desktop app.");
+        }
+        if (await api.deleteBraceAutomation(id)) {
+          await refresh();
+          set({ notice: "Automation deleted. Its run audit remains available." });
+        }
+      }),
+    pauseAutomations: async (paused) =>
+      perform(paused ? "Pausing all automations…" : "Resuming automations…", async () => {
+        const api = desktop();
+        if (!api?.setBraceAutomationsPaused) {
+          throw new Error("The global automation switch is available in the desktop app.");
+        }
+        await api.setBraceAutomationsPaused(paused);
+        await refresh();
+        set({ notice: paused ? "All automatic triggers are paused. Manual previews still work." : "Automatic triggers resumed." });
       }),
   };
 });

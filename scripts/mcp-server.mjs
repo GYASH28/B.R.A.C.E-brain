@@ -8,11 +8,13 @@ import memoryModule from "../core/memory-store.js";
 import dataPathModule from "../core/data-paths.js";
 import embeddingModule from "../core/embedding-adapters.js";
 import skillModule from "../core/skill-runtime.js";
+import automationModule from "../core/automation-engine.js";
 
 const { MemoryStore } = memoryModule;
 const { databasePath } = dataPathModule;
 const { createOllamaEmbeddingAdapter } = embeddingModule;
 const { runSkillAction } = skillModule;
+const { AutomationEngine } = automationModule;
 
 const memoryKind = z.enum([
   "project",
@@ -59,8 +61,11 @@ export function createBraceMcpServer(options = {}) {
   const writesEnabled = options.writesEnabled ?? environment.BRACE_MCP_WRITE === "1";
   const destructiveEnabled = options.destructiveEnabled ?? environment.BRACE_MCP_DESTRUCTIVE === "1";
   const embeddingAdapter = options.embeddingAdapter || createEmbeddingAdapter(environment);
+  const automations = new AutomationEngine(store, {
+    runSkill: (name, action, input) => runSkillAction(store, name, action, input),
+  });
   const server = new McpServer(
-    { name: "brace", version: "0.4.0" },
+    { name: "brace", version: "0.5.0" },
     {
       instructions: [
         "BRACE is a local-first memory layer.",
@@ -73,7 +78,7 @@ export function createBraceMcpServer(options = {}) {
     },
   );
 
-  const searchAll = async ({ query, scope, projectId, kinds, limit }) => {
+  const searchAll = async ({ query, scope, projectId, kinds, since, limit }) => {
     let queryVector = null;
     let warning = null;
     if (embeddingAdapter) {
@@ -86,8 +91,8 @@ export function createBraceMcpServer(options = {}) {
     const vectorOptions = queryVector
       ? { queryVector, embeddingModel: embeddingAdapter.model }
       : {};
-    const memories = store.search(query, { scope, kinds, limit, ...vectorOptions });
-    const sources = store.searchSources(query, { projectId, limit, ...vectorOptions });
+    const memories = store.search(query, { scope, kinds, since, limit, ...vectorOptions });
+    const sources = store.searchSources(query, { projectId, since, limit, ...vectorOptions });
     const mode = [memories.mode, sources.mode].includes("hybrid")
       ? "hybrid"
       : [memories.mode, sources.mode].includes("semantic")
@@ -139,6 +144,7 @@ export function createBraceMcpServer(options = {}) {
         scope: z.string().max(200).optional(),
         projectId: z.string().max(200).optional(),
         kinds: z.array(memoryKind).max(9).optional(),
+        since: z.string().datetime().optional(),
         limit: z.number().int().min(1).max(50).default(12),
       }),
       outputSchema: z.object({
@@ -167,6 +173,7 @@ export function createBraceMcpServer(options = {}) {
         topic: z.string().min(1).max(2_000),
         scope: z.string().max(200).optional(),
         projectId: z.string().max(200).optional(),
+        since: z.string().datetime().optional(),
         limit: z.number().int().min(1).max(20).default(8),
       }),
       outputSchema: z.object({
@@ -186,8 +193,8 @@ export function createBraceMcpServer(options = {}) {
         openWorldHint: false,
       },
     },
-    async ({ topic, scope, projectId, limit }) => {
-      const context = await searchAll({ query: topic, scope, projectId, limit });
+    async ({ topic, scope, projectId, since, limit }) => {
+      const context = await searchAll({ query: topic, scope, projectId, since, limit });
       return jsonResult({
         topic,
         ...context,
@@ -338,7 +345,7 @@ export function createBraceMcpServer(options = {}) {
       async ({ topic, scope, summary, decisions, lessons, openQuestions, nextActions, sourceUri }) => {
         const section = (label, values) =>
           values.length ? `\n\n## ${label}\n${values.map((value) => `- ${value}`).join("\n")}` : "";
-        return jsonResult(store.createMemory({
+        const result = store.createMemory({
           kind: "summary",
           scope,
           title: `Session handoff: ${topic}`,
@@ -348,7 +355,29 @@ export function createBraceMcpServer(options = {}) {
           sourceUri,
           confidence: 0.82,
           importance: 0.72,
-        }));
+        });
+        if (!result.duplicate) {
+          await automations.dispatch("memory.created", {
+            id: result.memory.id,
+            title: result.memory.title,
+            kind: result.memory.kind,
+            scope: result.memory.scope,
+            tags: result.memory.tags,
+            sourceUri: result.memory.sourceUri,
+          });
+        }
+        await automations.dispatch("session.handoff", {
+          title: topic,
+          summary,
+          scope,
+          client: "mcp-client",
+          memoryId: result.memory.id,
+          decisions,
+          lessons,
+          openQuestions,
+          nextActions,
+        });
+        return jsonResult(result);
       },
     );
 
@@ -376,7 +405,20 @@ export function createBraceMcpServer(options = {}) {
         }),
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       },
-      async (input) => jsonResult(store.createMemory(input)),
+      async (input) => {
+        const result = store.createMemory(input);
+        if (!result.duplicate) {
+          await automations.dispatch("memory.created", {
+            id: result.memory.id,
+            title: result.memory.title,
+            kind: result.memory.kind,
+            scope: result.memory.scope,
+            tags: result.memory.tags,
+            sourceUri: result.memory.sourceUri,
+          });
+        }
+        return jsonResult(result);
+      },
     );
 
     server.registerTool(
@@ -396,7 +438,19 @@ export function createBraceMcpServer(options = {}) {
         outputSchema: z.object({ decision: z.record(z.string(), z.unknown()) }),
         annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
       },
-      async (input) => jsonResult({ decision: store.createDecision(input) }),
+      async (input) => {
+        const decision = store.createDecision(input);
+        await automations.dispatch("decision.created", {
+          id: decision.id,
+          title: decision.title,
+          decision: decision.decision,
+          rationale: decision.rationale,
+          projectId: decision.project_id,
+          scope: decision.project_id ? `project:${decision.project_id}` : "global",
+          status: decision.status,
+        });
+        return jsonResult({ decision });
+      },
     );
 
     server.registerTool(

@@ -1,6 +1,6 @@
 # Data model and memory lifecycle
 
-Schema version 3 is stored in SQLite and migrated transactionally by `MemoryStore`. WAL mode supports safe concurrent readers from the desktop and MCP processes.
+Schema version 5 is stored in SQLite and migrated transactionally by `MemoryStore`. WAL mode supports safe concurrent readers from the desktop and MCP processes.
 
 ## Tables
 
@@ -20,6 +20,8 @@ Schema version 3 is stored in SQLite and migrated transactionally by `MemoryStor
 | `memory_reviews` | Resolved overlap pairs and the chosen canonical memory, without duplicated content | Removed with either memory or delete-all |
 | `skills` | Normalized manifest, install path, permissions, status, checksum | User-controlled |
 | `settings` | Versioned local configuration | User-controlled |
+| `automations` | Typed local recipe, derived permissions, enablement, schedule cursor, and version | User-controlled |
+| `automation_runs` | Redacted trigger, immutable recipe snapshot, step trace, outcome, timing, and retry relationship | Append-oriented; retained if a recipe is deleted |
 
 ## Memory fields
 
@@ -30,6 +32,7 @@ A durable memory contains:
 - title, summary, and content;
 - active, superseded, or forgotten status;
 - confidence and importance in the inclusive range 0 to 1;
+- an explicit pinned flag for recurring working context;
 - tags;
 - source identifier, stable URI, and bounded excerpt when known;
 - optional embedding model and vector;
@@ -51,6 +54,8 @@ Before storage, BRACE:
 
 BRACE does not store raw chain-of-thought. Users and authorized clients should write concise durable outcomes, not hidden model reasoning.
 
+Pinned memory is a presentation and retrieval-priority signal, not a second copy. Pinning updates the same durable record, survives restart and backup, and can be filtered independently. It does not bypass lifecycle, provenance, redaction, or forgetting rules.
+
 ## Evidence
 
 Evidence has an outcome of `promoted`, `rejected`, `deferred`, or `observed`, plus a bounded summary, reference, and observation time. It is displayed separately from the memory's own content.
@@ -65,11 +70,13 @@ Supersession retains the old record with a pointer to the new one. It is appropr
 
 Forgetting removes the memory's content, summary, source excerpt, evidence, FTS record, and vector. BRACE retains only a non-sensitive tombstone with an identifier, forgotten status, and audit timestamps. Search excludes it.
 
-Delete-all is broader: it removes projects, sources, chunks, memories, review outcomes, decisions, events, entities, relations, skills, and settings while leaving a valid empty schema. Imported project originals remain untouched.
+Delete-all is broader: it removes projects, sources, chunks, memories, review outcomes, decisions, events, entities, relations, skills, automations, run history, and settings while leaving a valid empty schema. Imported project originals remain untouched.
 
 ## Retrieval
 
 Lexical recall uses FTS5 rank. Semantic recall uses cosine similarity only for compatible real vectors. Hybrid recall combines ranked lists with reciprocal-rank fusion.
+
+Recall can also apply an explicit ISO timestamp boundary to memory and source-chunk update times. The desktop exposes Today, 7 days, 30 days, and All time without conflating memory timestamps with source provenance.
 
 Every response reports:
 

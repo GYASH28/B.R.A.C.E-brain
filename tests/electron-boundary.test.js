@@ -31,6 +31,7 @@ test("Electron renderer is isolated behind a narrow BRACE bridge", () => {
     "getBraceSnapshot",
     "searchBrace",
     "createBraceMemory",
+    "setBraceMemoryPinned",
     "resolveBraceMemoryReview",
     "forgetBraceMemory",
     "addBraceProject",
@@ -43,6 +44,14 @@ test("Electron renderer is isolated behind a narrow BRACE bridge", () => {
     "runBraceAssistant",
     "clearBraceAssistantHistory",
     "copyBraceText",
+    "getBraceAutomations",
+    "createBraceAutomation",
+    "updateBraceAutomation",
+    "setBraceAutomationEnabled",
+    "runBraceAutomation",
+    "retryBraceAutomationRun",
+    "deleteBraceAutomation",
+    "setBraceAutomationsPaused",
   ]) {
     assert.match(preload, new RegExp(`${operation}:`));
   }
@@ -57,4 +66,6 @@ test("desktop storage is external and startup contains no machine path fallback"
   assert.match(service, /brace\.sqlite3/);
   assert.doesNotMatch(main, /BRAIN_VAULT_DIR|REQUESTED_VAULT|LEGACY_VAULT/);
   assert.doesNotMatch(main, /local-api|agent-runtime|backup-manager/);
+  assert.match(service, /brace:set-memory-pinned/);
+  assert.match(service, /Boolean\(pinned\)/);
 });

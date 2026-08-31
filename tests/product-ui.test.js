@@ -8,6 +8,7 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
 test("product navigation maps to implemented memory workflows", () => {
   const app = read("src/components/brace/brace-app.tsx");
+  const store = read("src/lib/brace/store.ts");
   for (const label of [
     "Command center",
     "Knowledge map",
@@ -18,6 +19,7 @@ test("product navigation maps to implemented memory workflows", () => {
     "Timeline",
     "Projects",
     "Skills",
+    "Automations",
     "Connections",
     "Settings",
   ]) {
@@ -32,12 +34,19 @@ test("product navigation maps to implemented memory workflows", () => {
     "Create SQLite backup",
     "Export portable JSON",
     "Delete all",
+    "Create automation",
   ]) {
     assert.match(app, new RegExp(capability));
   }
   assert.match(app, /function InboxView\(\)/);
   assert.match(app, /function AiWorkspaceView\(\)/);
+  assert.match(app, /function AutomationsView\(\)/);
+  assert.match(app, /function AutomationBuilder\(/);
+  assert.match(app, /Execution traces/);
+  assert.match(store, /Preview completed without changing memory/);
   assert.match(app, /Retain latest answer/);
+  assert.match(app, /Saved recalls/);
+  assert.match(app, /Pin for daily use/);
   assert.match(app, /No answer becomes durable memory automatically/);
 });
 
@@ -52,6 +61,15 @@ test("browser preview is visibly synthetic and desktop mutations do not silently
   assert.match(store, /Skill installation is available in the desktop app/);
 });
 
+test("recall exposes explicit time scopes instead of implying timeless search", () => {
+  const app = read("src/components/brace/brace-app.tsx");
+  for (const label of ["Today", "7 days", "30 days", "All time"]) {
+    assert.match(app, new RegExp(label));
+  }
+  assert.match(app, /sinceFor/);
+  assert.match(app, /Time scope/);
+});
+
 test("premium workspace interactions remain real, keyboard reachable, and locally persisted", () => {
   const app = read("src/components/brace/brace-app.tsx");
   const styles = read("src/app/globals.css");
@@ -63,7 +81,7 @@ test("premium workspace interactions remain real, keyboard reachable, and locall
     "Keyboard map",
     "Graph preset",
     "Make the workspace fit you",
-    "Stored in your local database",
+    "Session draft",
     "Memory intelligence",
     "Keep both as distinct",
     "review queue",
@@ -78,6 +96,45 @@ test("premium workspace interactions remain real, keyboard reachable, and locall
   assert.match(app, /data-node-index/);
   assert.match(styles, /data-motion="calm"/);
   assert.match(styles, /data-contrast="high"/);
+});
+
+test("liquid rain atmosphere is native, bounded, and reduced-motion aware", () => {
+  const app = read("src/components/brace/brace-app.tsx");
+  const styles = read("src/app/globals.css");
+
+  assert.match(app, /function RainGlass\(\)/);
+  assert.match(app, /prefers-reduced-motion: reduce/);
+  assert.match(app, /visibilitychange/);
+  assert.match(app, /Math\.min\(window\.devicePixelRatio \|\| 1, 1\.4\)/);
+  assert.match(styles, /BRACE LIQUID MEMORY/);
+  assert.match(styles, /\.brace-rain/);
+  assert.match(styles, /backdrop-filter:blur/);
+});
+
+test("refinement layer provides wayfinding, draft recovery, filtering, and useful detail actions", () => {
+  const app = read("src/components/brace/brace-app.tsx");
+  const store = read("src/lib/brace/store.ts");
+  const styles = read("src/app/globals.css");
+
+  for (const capability of [
+    "Go to previous workspace",
+    "Go to next workspace",
+    "Session draft restored",
+    "Clear filters",
+    "Reset timeline filters",
+    "Copy memory",
+    "Find related context",
+    "Recent commands first",
+  ]) {
+    assert.match(app, new RegExp(capability));
+  }
+  assert.match(store, /viewHistoryIndex/);
+  assert.match(store, /brace\.last-view/);
+  assert.match(app, /brace\.capture-draft/);
+  assert.match(app, /Alt \+ ← \/ →/);
+  assert.match(styles, /:focus-visible/);
+  assert.match(styles, /memory-toolbelt/);
+  assert.match(styles, /timeline-toolbelt/);
 });
 
 test("knowledge atlas exposes five truthful projections over one real graph", () => {

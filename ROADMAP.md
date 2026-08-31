@@ -18,10 +18,19 @@ This roadmap is directional, not a promise of dates. Privacy, data portability, 
 - Guided Codex CLI, Claude Code, and Antigravity configuration with recoverable backups.
 - Explicit session-start and session-handoff continuity through MCP.
 
+## Implemented after 0.5
+
+- Typed local automation recipes with manual, schedule, memory, decision, project-index, and handoff triggers.
+- Bounded AND/OR conditions, permission-derived actions, dry-run previews, immutable traces, retries, and global pause.
+- Time-scoped recall over both durable memory and indexed source evidence.
+- Durable pinned working context, device-local saved recall questions, and a release-blocking 5,000-record stress/recovery gate.
+
 ## Next memory-quality work
 
 - Richer evidence promotion and rejection workflows.
-- Saved recall filters and scoped evaluation sets.
+- Scoped recall evaluation sets.
+- Opt-in operating-system background scheduling only after platform lifecycle and consent behavior are defined.
+- Permissioned connector actions only after each external data boundary has its own threat model and failure semantics.
 - Import adapters for additional plain-text knowledge tools without copying their private data into the repository.
 
 ## Later, only after the boundary is clear

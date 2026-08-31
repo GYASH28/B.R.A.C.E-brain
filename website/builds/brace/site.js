@@ -6,6 +6,10 @@
   script.async = false;
   script.addEventListener("load", () => {
     document.documentElement.dataset.braceRuntime = "v5";
+    const fieldScript = document.createElement("script");
+    fieldScript.src = new URL("site-v6.js", current?.src || location.href).href;
+    fieldScript.async = false;
+    document.body.append(fieldScript);
   }, { once: true });
   script.addEventListener("error", () => {
     document.body.classList.remove("has-opening-film");

@@ -32,10 +32,11 @@ async function check(name, assertion) {
 }
 
 try {
-  await page.goto(`${base}/`, { waitUntil: "networkidle" });
+  await page.goto(`${base}/`, { waitUntil: "domcontentloaded", timeout: 15_000 });
+  await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v5");
 
   await check("command palette search and destination", async () => {
-    await page.locator("[data-command-open]").click();
+    await page.keyboard.press("Control+K");
     await page.locator("#command-input").fill("graph");
     if (!await page.locator('[data-command-target="#constellation"]:visible').count()) throw new Error("Constellation destination did not remain visible");
     await page.locator("#command-dialog [data-dialog-close]").click();
@@ -72,6 +73,22 @@ try {
     await toggle.click();
     if (!await page.locator(".pipeline-memory").evaluate((element) => element.hidden)) throw new Error("Memory layer stayed visible");
     await toggle.click();
+  });
+
+  await check("device-local saved recall", async () => {
+    await page.locator("#recall-query").fill("Which sources remain canonical?");
+    await page.locator("[data-save-query]").click();
+    if (!await page.locator("[data-saved-queries] span").count()) throw new Error("Saved question did not render");
+    const stored = await page.evaluate(() => JSON.parse(localStorage.getItem("brace.website.saved-questions") || "[]"));
+    if (!stored.includes("Which sources remain canonical?")) throw new Error("Saved question did not persist locally");
+  });
+
+  await check("field ledger chapter stamps", async () => {
+    await page.locator("#boundary").evaluate((section) => section.scrollIntoView({ block: "center" }));
+    await page.waitForFunction(() => document.querySelector('[data-ledger-chapter="04"]')?.hasAttribute("aria-current"));
+    const current = await page.locator('[data-ledger-chapter="04"]').getAttribute("aria-current");
+    if (current === null) throw new Error("Custody chapter did not become current");
+    if (await page.locator('[data-ledger-chapter="04"] > b').textContent() !== "OPEN") throw new Error("Ledger did not stamp the open chapter");
   });
 
   await check("copy recall result", async () => {
@@ -111,14 +128,18 @@ try {
   });
 
   await check("product screenshot lightbox", async () => {
-    await page.locator('[data-proof="graph"] [data-proof-expand]').click();
+    const trigger = page.locator('[data-proof="graph"] [data-proof-expand]');
+    await trigger.focus();
+    await trigger.press("Enter");
     if (!await page.locator("#proof-dialog").evaluate((dialog) => dialog.open)) throw new Error("Product lightbox did not open");
     if (!String(await page.locator("#proof-dialog-title").textContent()).includes("Five knowledge")) throw new Error("Product title did not update");
     await page.locator("#proof-dialog [data-dialog-close]").click();
   });
 
   await check("package advisor", async () => {
-    await page.locator('[data-package-goal="portable"]').click();
+    const portable = page.locator('[data-package-goal="portable"]');
+    await portable.focus();
+    await portable.press("Enter");
     if (!String(await page.locator("#package-advice").textContent()).includes("AppImage")) throw new Error("Portable advice did not render");
     if (!await page.locator('[data-platform-card="linux"]').evaluate((card) => card.classList.contains("is-advised"))) throw new Error("Linux package was not highlighted");
   });

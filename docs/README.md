@@ -7,6 +7,7 @@ This directory is the maintained documentation hub for BRACE. Start with the rou
 - [Getting started](GETTING_STARTED.md) — install, first launch, demo workspace, import, recall, and backup.
 - [Troubleshooting](TROUBLESHOOTING.md) — startup, indexing, MCP, embedding, and packaging problems.
 - [Privacy model](PRIVACY.md) — data locations, network boundaries, exports, backups, and deletion.
+- [Automations](AUTOMATIONS.md) — recipes, triggers, conditions, actions, permissions, previews, traces, and limits.
 
 ## Understand the system
 
@@ -24,6 +25,7 @@ This directory is the maintained documentation hub for BRACE. Start with the rou
 
 - [Distribution](DISTRIBUTION.md) — package production and artifact verification.
 - [Dependency review](DEPENDENCY_REVIEW.md) — license and dependency-release gate.
+- [Long-running profile stress testing](STRESS_TESTING.md) — large-corpus, restart, recovery, latency, and integrity gates.
 - [0.5.0 release notes](RELEASE_NOTES_0.5.0.md) — current unified-product preview.
 - [0.4.0 release notes](RELEASE_NOTES_0.4.0.md) — previous memory-quality release.
 - [0.3.0 release notes](RELEASE_NOTES_0.3.0.md) — previous visual-system release.

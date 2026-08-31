@@ -5,7 +5,7 @@ const path = require("node:path");
 const { createHash, randomUUID } = require("node:crypto");
 const { DatabaseSync, backup: backupSqlite } = require("node:sqlite");
 
-const SCHEMA_VERSION = 3;
+const SCHEMA_VERSION = 5;
 const MEMORY_KINDS = new Set([
   "project",
   "decision",
@@ -38,6 +38,13 @@ function clamp(value, minimum, maximum, fallback) {
 
 function normalizeText(value) {
   return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function normalizeSince(value) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) throw new Error("Search time boundaries must be valid ISO dates.");
+  return parsed.toISOString();
 }
 
 function normalizeForHash(value) {
@@ -157,6 +164,7 @@ function hydrateMemory(row) {
     status: row.status,
     confidence: row.confidence,
     importance: row.importance,
+    pinned: Boolean(row.pinned),
     tags: safeJsonParse(row.tags_json, []),
     sourceId: row.source_id,
     sourceUri: row.source_uri,
@@ -169,6 +177,49 @@ function hydrateMemory(row) {
     supersededBy: row.superseded_by,
     duplicateOf: row.duplicate_of,
     redacted: Boolean(row.redacted),
+  };
+}
+
+function hydrateAutomation(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    enabled: Boolean(row.enabled),
+    trigger: {
+      type: row.trigger_type,
+      config: safeJsonParse(row.trigger_config_json, {}),
+    },
+    conditionLogic: row.condition_logic,
+    conditions: safeJsonParse(row.conditions_json, []),
+    actions: safeJsonParse(row.actions_json, []),
+    permissions: safeJsonParse(row.permissions_json, []),
+    version: Number(row.version),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    lastRunAt: row.last_run_at,
+    nextRunAt: row.next_run_at,
+  };
+}
+
+function hydrateAutomationRun(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    automationId: row.automation_id,
+    automationName: row.automation_name,
+    status: row.status,
+    triggerType: row.trigger_type,
+    triggerPayload: safeJsonParse(row.trigger_payload_json, {}),
+    automationSnapshot: safeJsonParse(row.automation_snapshot_json, {}),
+    steps: safeJsonParse(row.steps_json, []),
+    error: row.error,
+    startedAt: row.started_at,
+    finishedAt: row.finished_at,
+    durationMs: row.duration_ms === null ? null : Number(row.duration_ms),
+    retryOf: row.retry_of,
+    dryRun: Boolean(row.dry_run),
   };
 }
 
@@ -260,6 +311,7 @@ class MemoryStore {
           status TEXT NOT NULL DEFAULT 'active',
           confidence REAL NOT NULL DEFAULT 0.7,
           importance REAL NOT NULL DEFAULT 0.5,
+          pinned INTEGER NOT NULL DEFAULT 0,
           tags_json TEXT NOT NULL DEFAULT '[]',
           source_id TEXT REFERENCES sources(id) ON DELETE SET NULL,
           source_uri TEXT,
@@ -277,6 +329,7 @@ class MemoryStore {
         CREATE INDEX memories_scope_status_idx ON memories(scope, status);
         CREATE INDEX memories_hash_idx ON memories(content_hash, status);
         CREATE INDEX memories_updated_idx ON memories(updated_at DESC);
+        CREATE INDEX memories_pinned_idx ON memories(status, pinned DESC, importance DESC, updated_at DESC);
         CREATE VIRTUAL TABLE memories_fts USING fts5(
           title,
           summary,
@@ -386,7 +439,43 @@ class MemoryStore {
           reviewed_at TEXT NOT NULL
         );
         CREATE INDEX IF NOT EXISTS memory_reviews_time_idx ON memory_reviews(reviewed_at DESC);
-        PRAGMA user_version = 3;
+        CREATE TABLE automations (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL DEFAULT '',
+          enabled INTEGER NOT NULL DEFAULT 0,
+          trigger_type TEXT NOT NULL,
+          trigger_config_json TEXT NOT NULL DEFAULT '{}',
+          condition_logic TEXT NOT NULL DEFAULT 'and' CHECK(condition_logic IN ('and', 'or')),
+          conditions_json TEXT NOT NULL DEFAULT '[]',
+          actions_json TEXT NOT NULL DEFAULT '[]',
+          permissions_json TEXT NOT NULL DEFAULT '[]',
+          version INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          last_run_at TEXT,
+          next_run_at TEXT
+        );
+        CREATE INDEX automations_due_idx ON automations(enabled, next_run_at);
+        CREATE TABLE automation_runs (
+          id TEXT PRIMARY KEY,
+          automation_id TEXT REFERENCES automations(id) ON DELETE SET NULL,
+          automation_name TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('running', 'success', 'failed', 'skipped', 'preview')),
+          trigger_type TEXT NOT NULL,
+          trigger_payload_json TEXT NOT NULL DEFAULT '{}',
+          automation_snapshot_json TEXT NOT NULL DEFAULT '{}',
+          steps_json TEXT NOT NULL DEFAULT '[]',
+          error TEXT,
+          started_at TEXT NOT NULL,
+          finished_at TEXT,
+          duration_ms INTEGER,
+          retry_of TEXT REFERENCES automation_runs(id) ON DELETE SET NULL,
+          dry_run INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX automation_runs_time_idx ON automation_runs(started_at DESC);
+        CREATE INDEX automation_runs_status_idx ON automation_runs(status, started_at DESC);
+        PRAGMA user_version = 5;
         COMMIT;
       `);
     }
@@ -447,6 +536,66 @@ class MemoryStore {
         PRAGMA user_version = 3;
         COMMIT;
       `);
+    }
+    if (current > 0 && current < 4) {
+      this.db.exec(`
+        BEGIN IMMEDIATE;
+        CREATE TABLE IF NOT EXISTS automations (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL DEFAULT '',
+          enabled INTEGER NOT NULL DEFAULT 0,
+          trigger_type TEXT NOT NULL,
+          trigger_config_json TEXT NOT NULL DEFAULT '{}',
+          condition_logic TEXT NOT NULL DEFAULT 'and' CHECK(condition_logic IN ('and', 'or')),
+          conditions_json TEXT NOT NULL DEFAULT '[]',
+          actions_json TEXT NOT NULL DEFAULT '[]',
+          permissions_json TEXT NOT NULL DEFAULT '[]',
+          version INTEGER NOT NULL DEFAULT 1,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          last_run_at TEXT,
+          next_run_at TEXT
+        );
+        CREATE INDEX IF NOT EXISTS automations_due_idx ON automations(enabled, next_run_at);
+        CREATE TABLE IF NOT EXISTS automation_runs (
+          id TEXT PRIMARY KEY,
+          automation_id TEXT REFERENCES automations(id) ON DELETE SET NULL,
+          automation_name TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('running', 'success', 'failed', 'skipped', 'preview')),
+          trigger_type TEXT NOT NULL,
+          trigger_payload_json TEXT NOT NULL DEFAULT '{}',
+          automation_snapshot_json TEXT NOT NULL DEFAULT '{}',
+          steps_json TEXT NOT NULL DEFAULT '[]',
+          error TEXT,
+          started_at TEXT NOT NULL,
+          finished_at TEXT,
+          duration_ms INTEGER,
+          retry_of TEXT REFERENCES automation_runs(id) ON DELETE SET NULL,
+          dry_run INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE INDEX IF NOT EXISTS automation_runs_time_idx ON automation_runs(started_at DESC);
+        CREATE INDEX IF NOT EXISTS automation_runs_status_idx ON automation_runs(status, started_at DESC);
+        PRAGMA user_version = 4;
+        COMMIT;
+      `);
+    }
+    if (current > 0 && current < 5) {
+      const hasPinned = this.db.prepare("PRAGMA table_info(memories)").all()
+        .some((column) => column.name === "pinned");
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        if (!hasPinned) this.db.exec("ALTER TABLE memories ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0");
+        this.db.exec(`
+          CREATE INDEX IF NOT EXISTS memories_pinned_idx
+            ON memories(status, pinned DESC, importance DESC, updated_at DESC);
+          PRAGMA user_version = 5;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
     }
     return { from: current, to: SCHEMA_VERSION };
   }
@@ -601,6 +750,7 @@ class MemoryStore {
     if (!clean) return { mode: "lexical", query: clean, results: [] };
     const limit = Math.min(100, Math.max(1, Number(options.limit) || 20));
     const candidateLimit = Math.min(500, Math.max(limit * 5, 50));
+    const since = normalizeSince(options.since);
     const lexical = [];
     const match = ftsQuery(clean);
     if (match) {
@@ -609,6 +759,10 @@ class MemoryStore {
       if (options.projectId) {
         filters.push("s.project_id = ?");
         params.push(options.projectId);
+      }
+      if (since) {
+        filters.push("c.updated_at >= ?");
+        params.push(since);
       }
       params.push(candidateLimit);
       this.db.prepare(`
@@ -631,6 +785,10 @@ class MemoryStore {
       if (options.projectId) {
         filters.push("s.project_id = ?");
         params.push(options.projectId);
+      }
+      if (since) {
+        filters.push("c.updated_at >= ?");
+        params.push(since);
       }
       this.db.prepare(`
         SELECT c.*, s.title AS source_title, s.uri AS source_uri,
@@ -749,9 +907,9 @@ class MemoryStore {
       this.db.prepare(`
         INSERT INTO memories(
           id, kind, scope, title, summary, content, status, confidence,
-          importance, tags_json, source_id, source_uri, source_excerpt,
+          importance, pinned, tags_json, source_id, source_uri, source_excerpt,
           content_hash, created_at, updated_at, accessed_at, duplicate_of, redacted
-        ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         id,
         kind,
@@ -761,6 +919,7 @@ class MemoryStore {
         content,
         clamp(input.confidence, 0, 1, 0.7),
         clamp(input.importance, 0, 1, 0.5),
+        input.pinned ? 1 : 0,
         JSON.stringify(normalizeTags(input.tags)),
         input.sourceId || null,
         normalizeText(input.sourceUri) || null,
@@ -820,10 +979,11 @@ class MemoryStore {
       filters.push("kind = ?");
       params.push(options.kind);
     }
+    if (options.pinned === true) filters.push("pinned = 1");
     params.push(limit);
     return this.db.prepare(`
       SELECT * FROM memories WHERE ${filters.join(" AND ")}
-      ORDER BY importance DESC, updated_at DESC LIMIT ?
+      ORDER BY pinned DESC, importance DESC, updated_at DESC LIMIT ?
     `).all(...params).map(hydrateMemory);
   }
 
@@ -848,7 +1008,7 @@ class MemoryStore {
     this.db.prepare(`
       UPDATE memories SET
         kind=?, scope=?, title=?, summary=?, content=?, status=?, confidence=?,
-        importance=?, tags_json=?, source_uri=?, source_excerpt=?, content_hash=?,
+        importance=?, pinned=?, tags_json=?, source_uri=?, source_excerpt=?, content_hash=?,
         updated_at=?, superseded_by=?
       WHERE id=?
     `).run(
@@ -860,6 +1020,7 @@ class MemoryStore {
       merged.status,
       clamp(merged.confidence, 0, 1, 0.7),
       clamp(merged.importance, 0, 1, 0.5),
+      merged.pinned ? 1 : 0,
       JSON.stringify(normalizeTags(merged.tags)),
       normalizeText(merged.sourceUri) || null,
       redactSecrets(normalizeText(merged.sourceExcerpt)).value.slice(0, 1_000) || null,
@@ -874,6 +1035,14 @@ class MemoryStore {
       `).run(current.id, current.id);
     }
     return this.getMemory(current.id);
+  }
+
+  setMemoryPinned(id, pinned) {
+    const memory = this.getMemory(id);
+    if (!memory || memory.status !== "active") throw new Error("An active memory is required.");
+    this.db.prepare("UPDATE memories SET pinned = ?, updated_at = ? WHERE id = ?")
+      .run(pinned ? 1 : 0, nowIso(), memory.id);
+    return this.getMemory(memory.id);
   }
 
   touchMemory(id) {
@@ -897,6 +1066,7 @@ class MemoryStore {
     if (!clean) return { mode: "lexical", query: clean, results: [] };
     const limit = Math.min(100, Math.max(1, Number(options.limit) || 20));
     const candidateLimit = Math.min(500, Math.max(limit * 5, 50));
+    const since = normalizeSince(options.since);
     const lexical = [];
     const match = ftsQuery(clean);
     if (match) {
@@ -905,6 +1075,10 @@ class MemoryStore {
       if (options.scope) {
         filters.push("m.scope = ?");
         params.push(normalizeText(options.scope));
+      }
+      if (since) {
+        filters.push("m.updated_at >= ?");
+        params.push(since);
       }
       if (Array.isArray(options.kinds) && options.kinds.length) {
         const kinds = options.kinds.filter((kind) => MEMORY_KINDS.has(kind));
@@ -938,6 +1112,10 @@ class MemoryStore {
       if (options.scope) {
         filters.push("scope = ?");
         params.push(normalizeText(options.scope));
+      }
+      if (since) {
+        filters.push("updated_at >= ?");
+        params.push(since);
       }
       const rows = this.db.prepare(`
         SELECT * FROM memories WHERE ${filters.join(" AND ")}
@@ -1532,6 +1710,201 @@ class MemoryStore {
     return Number(this.db.prepare("DELETE FROM skills WHERE name = ?").run(name).changes) === 1;
   }
 
+  createAutomation(input) {
+    const timestamp = nowIso();
+    const id = String(input.id || randomUUID());
+    const name = normalizeText(input.name).slice(0, 120);
+    if (!name) throw new Error("An automation name is required.");
+    this.db.prepare(`
+      INSERT INTO automations(
+        id, name, description, enabled, trigger_type, trigger_config_json,
+        condition_logic, conditions_json, actions_json, permissions_json,
+        version, created_at, updated_at, last_run_at, next_run_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, NULL, ?)
+    `).run(
+      id,
+      name,
+      normalizeText(input.description).slice(0, 600),
+      input.enabled ? 1 : 0,
+      normalizeText(input.trigger?.type).slice(0, 80),
+      JSON.stringify(input.trigger?.config || {}),
+      input.conditionLogic === "or" ? "or" : "and",
+      JSON.stringify(Array.isArray(input.conditions) ? input.conditions : []),
+      JSON.stringify(Array.isArray(input.actions) ? input.actions : []),
+      JSON.stringify(normalizeTags(input.permissions)),
+      timestamp,
+      timestamp,
+      input.nextRunAt || null,
+    );
+    return this.getAutomation(id);
+  }
+
+  getAutomation(id) {
+    return hydrateAutomation(
+      this.db.prepare("SELECT * FROM automations WHERE id = ?").get(String(id || "")),
+    );
+  }
+
+  listAutomations(options = {}) {
+    const filters = [];
+    const parameters = [];
+    if (options.enabled !== undefined) {
+      filters.push("enabled = ?");
+      parameters.push(options.enabled ? 1 : 0);
+    }
+    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const limit = Math.min(500, Math.max(1, Number(options.limit) || 200));
+    return this.db.prepare(`
+      SELECT * FROM automations ${where}
+      ORDER BY enabled DESC, updated_at DESC LIMIT ?
+    `).all(...parameters, limit).map(hydrateAutomation);
+  }
+
+  updateAutomation(id, changes) {
+    const current = this.getAutomation(id);
+    if (!current) throw new Error("Automation not found.");
+    const next = {
+      name: changes.name === undefined ? current.name : normalizeText(changes.name).slice(0, 120),
+      description: changes.description === undefined
+        ? current.description
+        : normalizeText(changes.description).slice(0, 600),
+      enabled: changes.enabled === undefined ? current.enabled : Boolean(changes.enabled),
+      trigger: changes.trigger === undefined ? current.trigger : changes.trigger,
+      conditionLogic: changes.conditionLogic === undefined ? current.conditionLogic : changes.conditionLogic,
+      conditions: changes.conditions === undefined ? current.conditions : changes.conditions,
+      actions: changes.actions === undefined ? current.actions : changes.actions,
+      permissions: changes.permissions === undefined ? current.permissions : changes.permissions,
+      nextRunAt: changes.nextRunAt === undefined ? current.nextRunAt : changes.nextRunAt,
+    };
+    if (!next.name) throw new Error("An automation name is required.");
+    this.db.prepare(`
+      UPDATE automations SET
+        name=?, description=?, enabled=?, trigger_type=?, trigger_config_json=?,
+        condition_logic=?, conditions_json=?, actions_json=?, permissions_json=?,
+        version=version+1, updated_at=?, next_run_at=?
+      WHERE id=?
+    `).run(
+      next.name,
+      next.description,
+      next.enabled ? 1 : 0,
+      normalizeText(next.trigger?.type).slice(0, 80),
+      JSON.stringify(next.trigger?.config || {}),
+      next.conditionLogic === "or" ? "or" : "and",
+      JSON.stringify(Array.isArray(next.conditions) ? next.conditions : []),
+      JSON.stringify(Array.isArray(next.actions) ? next.actions : []),
+      JSON.stringify(normalizeTags(next.permissions)),
+      nowIso(),
+      next.nextRunAt || null,
+      current.id,
+    );
+    return this.getAutomation(current.id);
+  }
+
+  setAutomationEnabled(id, enabled, nextRunAt = undefined) {
+    const current = this.getAutomation(id);
+    if (!current) throw new Error("Automation not found.");
+    this.db.prepare(`
+      UPDATE automations SET enabled=?, updated_at=?, next_run_at=? WHERE id=?
+    `).run(
+      enabled ? 1 : 0,
+      nowIso(),
+      enabled ? (nextRunAt === undefined ? current.nextRunAt : nextRunAt) : null,
+      current.id,
+    );
+    return this.getAutomation(current.id);
+  }
+
+  markAutomationRun(id, lastRunAt, nextRunAt) {
+    const result = this.db.prepare(`
+      UPDATE automations SET last_run_at=?, next_run_at=?, updated_at=? WHERE id=?
+    `).run(lastRunAt || nowIso(), nextRunAt || null, nowIso(), id);
+    if (Number(result.changes) !== 1) throw new Error("Automation not found.");
+    return this.getAutomation(id);
+  }
+
+  deleteAutomation(id) {
+    return Number(this.db.prepare("DELETE FROM automations WHERE id = ?").run(id).changes) === 1;
+  }
+
+  listDueAutomations(at = nowIso(), limit = 20) {
+    return this.db.prepare(`
+      SELECT * FROM automations
+      WHERE enabled=1 AND next_run_at IS NOT NULL AND next_run_at <= ?
+      ORDER BY next_run_at ASC LIMIT ?
+    `).all(String(at), Math.min(100, Math.max(1, Number(limit) || 20))).map(hydrateAutomation);
+  }
+
+  createAutomationRun(input) {
+    const id = String(input.id || randomUUID());
+    const startedAt = input.startedAt || nowIso();
+    this.db.prepare(`
+      INSERT INTO automation_runs(
+        id, automation_id, automation_name, status, trigger_type,
+        trigger_payload_json, automation_snapshot_json, steps_json, error,
+        started_at, finished_at, duration_ms, retry_of, dry_run
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, NULL, NULL, ?, ?)
+    `).run(
+      id,
+      input.automationId || null,
+      normalizeText(input.automationName || "Deleted automation").slice(0, 120),
+      input.status || "running",
+      normalizeText(input.triggerType || "manual").slice(0, 80),
+      JSON.stringify(input.triggerPayload || {}),
+      JSON.stringify(input.automationSnapshot || {}),
+      JSON.stringify(input.steps || []),
+      startedAt,
+      input.retryOf || null,
+      input.dryRun ? 1 : 0,
+    );
+    return this.getAutomationRun(id);
+  }
+
+  finishAutomationRun(id, input) {
+    const current = this.getAutomationRun(id);
+    if (!current) throw new Error("Automation run not found.");
+    const finishedAt = input.finishedAt || nowIso();
+    const durationMs = Math.max(0, Number(input.durationMs) || (
+      new Date(finishedAt).getTime() - new Date(current.startedAt).getTime()
+    ));
+    this.db.prepare(`
+      UPDATE automation_runs SET status=?, steps_json=?, error=?,
+        finished_at=?, duration_ms=? WHERE id=?
+    `).run(
+      input.status,
+      JSON.stringify(Array.isArray(input.steps) ? input.steps : []),
+      input.error ? normalizeText(input.error).slice(0, 2_000) : null,
+      finishedAt,
+      durationMs,
+      current.id,
+    );
+    return this.getAutomationRun(current.id);
+  }
+
+  getAutomationRun(id) {
+    return hydrateAutomationRun(
+      this.db.prepare("SELECT * FROM automation_runs WHERE id = ?").get(String(id || "")),
+    );
+  }
+
+  listAutomationRuns(options = {}) {
+    const filters = [];
+    const parameters = [];
+    if (options.automationId) {
+      filters.push("automation_id = ?");
+      parameters.push(String(options.automationId));
+    }
+    if (options.status) {
+      filters.push("status = ?");
+      parameters.push(String(options.status));
+    }
+    const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
+    const limit = Math.min(500, Math.max(1, Number(options.limit) || 100));
+    return this.db.prepare(`
+      SELECT * FROM automation_runs ${where}
+      ORDER BY started_at DESC LIMIT ?
+    `).all(...parameters, limit).map(hydrateAutomationRun);
+  }
+
   exportData() {
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -1582,6 +1955,8 @@ class MemoryStore {
         manifest_json: undefined,
         permissions_json: undefined,
       })),
+      automations: this.listAutomations({ limit: 500 }),
+      automationRuns: this.listAutomationRuns({ limit: 500 }),
     };
   }
 
@@ -1598,6 +1973,8 @@ class MemoryStore {
   deleteAll() {
     this.transaction(() => {
       for (const table of [
+        "automation_runs",
+        "automations",
         "relations",
         "entities",
         "events",
@@ -1627,12 +2004,16 @@ class MemoryStore {
       sources: count("sources"),
       sourceChunks: count("source_chunks"),
       memories: count("memories", "WHERE status='active'"),
+      pinnedMemories: count("memories", "WHERE status='active' AND pinned=1"),
       forgotten: count("memories", "WHERE status='forgotten'"),
       decisions: count("decisions"),
       events: count("events"),
       entities: count("entities"),
       relations: count("relations"),
       skills: count("skills"),
+      automations: count("automations"),
+      enabledAutomations: count("automations", "WHERE enabled=1"),
+      automationRuns: count("automation_runs"),
     };
   }
 }

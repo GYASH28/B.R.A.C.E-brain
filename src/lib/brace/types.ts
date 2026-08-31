@@ -19,6 +19,7 @@ export interface BraceMemory {
   status: "active" | "superseded" | "forgotten";
   confidence: number;
   importance: number;
+  pinned: boolean;
   tags: string[];
   sourceId: string | null;
   sourceUri: string | null;
@@ -119,6 +120,87 @@ export interface BraceSkill {
   actions: BraceSkillAction[];
 }
 
+export type AutomationTriggerType =
+  | "manual"
+  | "schedule.interval"
+  | "schedule.daily"
+  | "memory.created"
+  | "decision.created"
+  | "project.indexed"
+  | "session.handoff";
+
+export type AutomationActionType =
+  | "memory.create"
+  | "decision.create"
+  | "memory.search"
+  | "memory.quality_scan"
+  | "timeline.digest"
+  | "project.reindex"
+  | "skill.run";
+
+export interface BraceAutomationCondition {
+  field: "title" | "kind" | "scope" | "tags" | "client" | "projectId" | "eventType";
+  operator: "equals" | "not_equals" | "contains" | "not_contains" | "includes";
+  value: unknown;
+}
+
+export interface BraceAutomationAction {
+  type: AutomationActionType;
+  config: Record<string, unknown>;
+}
+
+export interface BraceAutomation {
+  id: string;
+  name: string;
+  description: string;
+  enabled: boolean;
+  trigger: { type: AutomationTriggerType; config: Record<string, unknown> };
+  conditionLogic: "and" | "or";
+  conditions: BraceAutomationCondition[];
+  actions: BraceAutomationAction[];
+  permissions: string[];
+  version: number;
+  createdAt: string;
+  updatedAt: string;
+  lastRunAt: string | null;
+  nextRunAt: string | null;
+}
+
+export interface BraceAutomationRun {
+  id: string;
+  automationId: string | null;
+  automationName: string;
+  status: "running" | "success" | "failed" | "skipped" | "preview";
+  triggerType: string;
+  triggerPayload: Record<string, unknown>;
+  automationSnapshot: Partial<BraceAutomation>;
+  steps: Array<Record<string, unknown>>;
+  error: string | null;
+  startedAt: string;
+  finishedAt: string | null;
+  durationMs: number | null;
+  retryOf: string | null;
+  dryRun: boolean;
+}
+
+export interface BraceAutomationTemplate {
+  id: string;
+  name: string;
+  description: string;
+  trigger: BraceAutomation["trigger"];
+  conditionLogic: "and" | "or";
+  conditions: BraceAutomationCondition[];
+  actions: BraceAutomationAction[];
+}
+
+export interface BraceAutomationSnapshot {
+  paused: boolean;
+  definitions: BraceAutomation[];
+  runs: BraceAutomationRun[];
+  templates: BraceAutomationTemplate[];
+  schedulerError: { message: string; occurredAt: string } | null;
+}
+
 export interface BraceSnapshot {
   stats: {
     schemaVersion: number;
@@ -126,12 +208,16 @@ export interface BraceSnapshot {
     sources: number;
     sourceChunks: number;
     memories: number;
+    pinnedMemories: number;
     forgotten: number;
     decisions: number;
     events: number;
     entities: number;
     relations: number;
     skills: number;
+    automations: number;
+    enabledAutomations: number;
+    automationRuns: number;
   };
   projects: BraceProject[];
   memories: BraceMemory[];
@@ -146,6 +232,7 @@ export interface BraceSnapshot {
   assistant?: {
     history: AssistantTurn[];
   };
+  automations?: BraceAutomationSnapshot;
   storage?: { directory: string; database: string };
   connections?: {
     command: string;
@@ -218,6 +305,7 @@ export interface BraceElectronApi {
   getBraceMemory: (id: string) => Promise<BraceMemory | null>;
   createBraceMemory: (input: Record<string, unknown>) => Promise<unknown>;
   updateBraceMemory: (id: string, changes: Record<string, unknown>) => Promise<unknown>;
+  setBraceMemoryPinned: (id: string, pinned: boolean) => Promise<BraceMemory>;
   resolveBraceMemoryReview: (input: {
     leftId: string;
     rightId: string;
@@ -247,6 +335,17 @@ export interface BraceElectronApi {
   }) => Promise<{ cancelled: boolean; turn?: AssistantTurn }>;
   clearBraceAssistantHistory: () => Promise<boolean>;
   copyBraceText: (value: string) => Promise<boolean>;
+  getBraceAutomations: () => Promise<BraceAutomationSnapshot>;
+  createBraceAutomation: (input: Record<string, unknown>) => Promise<BraceAutomation>;
+  updateBraceAutomation: (id: string, input: Record<string, unknown>) => Promise<BraceAutomation>;
+  setBraceAutomationEnabled: (id: string, enabled: boolean) => Promise<BraceAutomation>;
+  runBraceAutomation: (
+    id: string,
+    input: { dryRun?: boolean; payload?: Record<string, unknown> },
+  ) => Promise<BraceAutomationRun>;
+  retryBraceAutomationRun: (runId: string, dryRun: boolean) => Promise<BraceAutomationRun>;
+  deleteBraceAutomation: (id: string) => Promise<boolean>;
+  setBraceAutomationsPaused: (paused: boolean) => Promise<BraceAutomationSnapshot>;
 }
 
 declare global {

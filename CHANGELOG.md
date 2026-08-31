@@ -4,6 +4,28 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Added
+
+- Added a typed local Automation Studio with templates, manual and schedule triggers, BRACE event triggers, bounded AND/OR conditions, derived permission previews, dry runs, global pause, immutable traces, and snapshot-based retries.
+- Added schema version 4 with local automation definitions and durable execution history, followed by schema version 5 with durable pinned working context.
+- Added Today, 7 days, 30 days, and All time recall scopes across durable memory and indexed source chunks, including MCP timestamp boundaries.
+- Added workspace back/forward history, attention badges, recent command ranking, global recall focus, recoverable session capture drafts, type-and-tag capture controls, memory and timeline filters, and copy/related-context actions.
+- Added device-local saved recall questions, explicit pin/unpin actions, pinned-memory ordering and filtering, and a 5,000-record long-running profile stress gate covering latency, churn, WAL concurrency, backup recovery, restart persistence, malformed input, redaction, and SQLite integrity.
+
+### Changed
+
+- Refined the desktop information hierarchy, keyboard flow, focus treatment, responsive navigation, compact-window header, filter toolbelts, transient success feedback, and reset/empty states around real local actions.
+- Re-authored the desktop and every launch-site chapter as a pearl liquid-glass system: luminous stone and restrained mauve content fields, smoked and clear functional glass, live white-light droplets, pressure-shaped neomorphic controls, device-local saved questions, a persistent chapter ledger, and equal Windows/Linux distribution priority.
+
+### Security
+
+- Automation recipes reject arbitrary JavaScript, shell, HTTP, deletion, export, backup, and connector mutations; template lookup rejects prototype keys and secret-like run data is redacted.
+
+### Verified
+
+- Synthetic Electron journeys now prove capture-draft recovery and clearing, multi-view history, memory and timeline filtering, responsive collapse without horizontal overflow, automation execution, graph interaction, privacy-safe connections, and zero renderer-console errors.
+- The release stress gate proves 5,000-memory operation with explicit p95/p99 recall, bounded graph/list payloads, export, restart, memory-growth, backup parity, concurrent-connection, and database-integrity ceilings.
+
 ### Planned
 
 - Collect structured feedback from the 0.5.0 preview.

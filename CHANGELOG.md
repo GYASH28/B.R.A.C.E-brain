@@ -15,7 +15,8 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 ### Changed
 
 - Refined the desktop information hierarchy, keyboard flow, focus treatment, responsive navigation, compact-window header, filter toolbelts, transient success feedback, and reset/empty states around real local actions.
-- Re-authored the desktop and every launch-site chapter as a pearl liquid-glass system: luminous stone and restrained mauve content fields, smoked and clear functional glass, live white-light droplets, pressure-shaped neomorphic controls, device-local saved questions, a persistent chapter ledger, and equal Windows/Linux distribution priority.
+- Re-authored the public website as a quieter high-key cobalt and white Liquid Glass product reel, replacing the six competing interactive chapters with one scroll-scrubbed Remotion memory film, one local-custody passage, the retained sideways real-product gallery, and a calm equal-platform installation plate.
+- Re-skinned the integrated beginner guide with the same white frosted-glass and blue atmospheric system while preserving every installation, memory, automation, connection, privacy, and troubleshooting workflow.
 
 ### Security
 
@@ -25,6 +26,7 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 - Synthetic Electron journeys now prove capture-draft recovery and clearing, multi-view history, memory and timeline filtering, responsive collapse without horizontal overflow, automation execution, graph interaction, privacy-safe connections, and zero renderer-console errors.
 - The release stress gate proves 5,000-memory operation with explicit p95/p99 recall, bounded graph/list payloads, export, restart, memory-growth, backup parity, concurrent-connection, and database-integrity ceilings.
+- The new website film is rendered separately for desktop and portrait, encoded with dense scrub keyframes, and checked for continuous playhead movement, reduced-motion poster behavior, healthy lateral-gallery overflow, keyboard focus, responsive layout, and WCAG 2.2 AA contrast.
 
 ### Planned
 

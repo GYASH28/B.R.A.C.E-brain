@@ -4,12 +4,14 @@
   "private": true,
   "scripts": {
     "studio": "remotion studio src/index.jsx --no-open",
-    "render": "npm run render:desktop && npm run render:portrait",
-    "render:desktop": "remotion render src/index.jsx BraceOpening ../builds/brace/assets/brace-opening.mp4 --codec=h264 --crf=23 --pixel-format=yuv420p",
-    "render:portrait": "remotion render src/index.jsx BraceOpeningPortrait ../builds/brace/assets/brace-opening-portrait.mp4 --codec=h264 --crf=23 --pixel-format=yuv420p",
+    "render": "npm run prepare:out && npm run render:desktop && npm run render:portrait && npm run encode:scrub",
+    "prepare:out": "node -e \"require('fs').mkdirSync('out',{recursive:true})\"",
+    "render:desktop": "remotion render src/index.jsx BraceOpening out/brace-opening-source.mp4 --codec=h264 --crf=23 --pixel-format=yuv420p",
+    "render:portrait": "remotion render src/index.jsx BraceOpeningPortrait out/brace-opening-portrait-source.mp4 --codec=h264 --crf=23 --pixel-format=yuv420p",
+    "encode:scrub": "node scripts/encode-scrub.mjs",
     "poster": "npm run poster:desktop && npm run poster:portrait",
-    "poster:desktop": "remotion still src/index.jsx BraceOpening ../builds/brace/assets/brace-opening-poster.jpg --frame=118 --image-format=jpeg --jpeg-quality=92",
-    "poster:portrait": "remotion still src/index.jsx BraceOpeningPortrait ../builds/brace/assets/brace-opening-portrait-poster.jpg --frame=118 --image-format=jpeg --jpeg-quality=92"
+    "poster:desktop": "remotion still src/index.jsx BraceOpening ../builds/brace/assets/brace-opening-poster.jpg --frame=96 --image-format=jpeg --jpeg-quality=92",
+    "poster:portrait": "remotion still src/index.jsx BraceOpeningPortrait ../builds/brace/assets/brace-opening-portrait-poster.jpg --frame=96 --image-format=jpeg --jpeg-quality=92"
   },
   "dependencies": {
     "@remotion/cli": "4.0.506",

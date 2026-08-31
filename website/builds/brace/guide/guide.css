@@ -1,30 +1,46 @@
 @import url("./guide-base.css");
-@import url("./guide-v5.css");
-@import url("./guide-v5-guards.css");
 
-.guide-footer { background:#05080f;color:#e2ebe3; }
-.guide-footer>p,.guide-footer>nav a { color:#b7c1b8!important; }
+.guide-body{
+  --brace-line:rgba(31,91,163,.15);--brace-line-strong:rgba(31,91,163,.26);
+  color:#123c70;background:radial-gradient(circle at 12% 8%,rgba(255,255,255,.9),transparent 30rem),radial-gradient(circle at 86% 38%,rgba(224,243,255,.7),transparent 36rem),linear-gradient(145deg,#cbe5ff,#86b8f4 58%,#70a8ed)
+}
+.guide-bar{top:max(12px,env(safe-area-inset-top));left:50%;width:min(1120px,calc(100% - 28px));height:66px;padding:7px 9px 7px 14px;transform:translateX(-50%);border:1px solid rgba(255,255,255,.88);border-radius:23px;background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(238,248,255,.55));box-shadow:inset 0 1px #fff,0 22px 70px rgba(17,71,145,.18);-webkit-backdrop-filter:blur(28px) saturate(1.2);backdrop-filter:blur(28px) saturate(1.2)}
+.product-mark{color:#0d3a76;text-decoration:none}.product-mark img{border-radius:11px}.product-mark span small,.guide-bar>nav a{color:#4e7094}.guide-bar>nav a:hover{color:#0b418b}
+.guide-bar>.bar-action{padding:11px 16px;border:1px solid rgba(12,71,149,.22);border-radius:14px;color:#fff;background:linear-gradient(145deg,#226cc9,#104ea6);box-shadow:inset 0 1px rgba(255,255,255,.35),0 12px 28px rgba(15,73,153,.24);text-decoration:none}
+.guide-hero{padding-top:clamp(152px,20vh,210px);border-color:var(--brace-line);background:radial-gradient(circle at 76% 30%,rgba(255,255,255,.78),transparent 26rem),linear-gradient(rgba(22,78,148,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(22,78,148,.03) 1px,transparent 1px),rgba(226,242,255,.64);background-size:auto,56px 56px,56px 56px,auto}
+.surface-kicker,.guide-route span,.guide-toc>strong,.step-header p{color:#195aa7}.guide-hero h1,.step-header h2{color:#0b3269}.guide-lede,.guide-step>p,.details-body p,.platform-grid p{color:#466b93}
+.guide-route,.guide-toc{border-color:rgba(255,255,255,.86);background:linear-gradient(145deg,rgba(255,255,255,.78),rgba(238,248,255,.42));box-shadow:inset 0 1px #fff,0 24px 65px rgba(18,70,142,.13);-webkit-backdrop-filter:blur(22px);backdrop-filter:blur(22px)}
+.guide-route a,.guide-toc a{border-color:var(--brace-line);color:#4a7098}.guide-route a:hover,.guide-toc a:hover,.guide-toc a[aria-current=true]{color:#0d468f;background:rgba(255,255,255,.54)}
+.toc-status{border-color:var(--brace-line)}.toc-status strong{color:#194f8d}.toc-status small{color:#6683a3}
+.guide-step+.guide-step{border-color:var(--brace-line)}.step-header>span{border-color:rgba(255,255,255,.88);color:#1557a6;background:linear-gradient(145deg,rgba(255,255,255,.88),rgba(225,242,255,.55));box-shadow:inset 0 1px #fff,0 10px 25px rgba(20,73,140,.12)}
+.guide-step a{color:#0c54aa}.guide-step code,.location-list code,.permission-table code{color:#174f8f}
+.platform-grid>section,.choice-list>li,.do-dont>div,.shortcut-deck>p,.permission-table,.guide-step details,.feature-walkthrough>article,.instruction-list>li,.control-list>div,.location-list>p{border-color:rgba(255,255,255,.84)!important;background:linear-gradient(145deg,rgba(255,255,255,.74),rgba(233,246,255,.44))!important;box-shadow:inset 0 1px #fff,0 16px 42px rgba(17,69,140,.1)!important;color:#214f83}
+.platform-grid>section:hover,.choice-list>li:hover,.do-dont>div:hover,.shortcut-deck>p:hover{box-shadow:inset 0 1px #fff,0 22px 52px rgba(17,69,140,.16)!important}
+.platform-title,.choice-list strong,.shortcut-deck strong,.instruction-list strong,.control-list dt{color:#123f78}.platform-title span{background:#1a60b8;color:#fff}
+.guide-note{border-color:rgba(255,255,255,.82)!important;border-left-color:#1b63ba!important;background:rgba(245,251,255,.58)!important;color:#315d8c!important}
+.guide-shot{border-color:rgba(255,255,255,.88);background:rgba(245,251,255,.7);box-shadow:0 34px 86px rgba(17,67,135,.2),inset 0 1px #fff}.guide-shot figcaption{border-color:var(--brace-line);color:#456a91;background:rgba(242,250,255,.9)}
+.guide-step pre{border-color:rgba(255,255,255,.2)!important;background:#0d2e59!important;box-shadow:0 20px 48px rgba(15,55,111,.22)}.guide-step pre code{color:#eaf6ff}.copy-code{color:#0f4c96!important;background:#fff!important}
+.permission-table [role=row]{border-color:var(--brace-line)!important}.faq-list details summary{color:#153f74}
+.guide-reading-progress{background:rgba(255,255,255,.3)!important}.guide-reading-progress i{background:#145bb2!important}
+.guide-footer{color:#133c70;background:rgba(211,234,255,.9);border-color:rgba(255,255,255,.7)}.guide-footer>p,.guide-footer>nav a{color:#4c7097!important}
+@media(max-width:860px){.guide-bar{width:calc(100% - 18px)}.guide-bar>nav{display:none}.guide-toc{background:rgba(240,249,255,.9)}.guide-route{overflow-x:auto}.guide-route a{min-width:116px}}
+@media(prefers-reduced-motion:reduce){.guide-body{background:#cce6ff}}
 
-/* Clear liquid-glass guide: the long-form content stays neutral while the
-   navigation and actionable surfaces carry the translucent material. */
-.guide-body{background:radial-gradient(circle at 84% 7%,rgba(255,255,255,.085),transparent 29rem),radial-gradient(circle at 8% 44%,rgba(255,255,255,.035),transparent 38rem),linear-gradient(180deg,#060606,#121214 38%,#070707 100%)}
-.guide-bar{border-color:rgba(255,255,255,.15);background:rgba(17,17,19,.72);box-shadow:inset 0 1px rgba(255,255,255,.12),0 20px 64px rgba(0,0,0,.38)}.guide-bar::after{background:linear-gradient(112deg,rgba(255,255,255,.075),transparent 24%,transparent 76%,rgba(255,255,255,.04))}
-.product-mark{border-color:rgba(255,255,255,.08)}.product-mark span small,.guide-bar>nav a{color:rgba(255,255,255,.52)}.guide-bar>nav a:hover{color:#fff;background:rgba(255,255,255,.04)}
-.guide-bar .bar-action{border-color:rgba(255,255,255,.7);background:linear-gradient(145deg,#fff,#d7d7da 58%,#f5f5f7);color:#111113;box-shadow:inset 0 1px #fff,inset 0 -3px 7px rgba(0,0,0,.15),0 12px 30px rgba(0,0,0,.32)}
-.guide-hero{border-color:rgba(255,255,255,.07)}.guide-hero::before{color:rgba(255,255,255,.02)}.guide-hero::after{border-color:rgba(255,255,255,.06);box-shadow:0 0 0 86px rgba(255,255,255,.011),0 0 0 170px rgba(255,255,255,.007)}
-.surface-kicker,.guide-route a span,.guide-toc>strong,.step-header p{color:#dedee2}.surface-kicker::before{background:linear-gradient(90deg,#fff,transparent)}.guide-hero h1,.step-header h2{color:#f5f5f7}.guide-lede,.guide-step>p,.details-body p,.platform-grid p{color:rgba(235,235,238,.66)}
-.guide-route,.guide-toc{border-color:rgba(255,255,255,.11);background:rgba(20,20,22,.48);box-shadow:inset 0 1px rgba(255,255,255,.06),0 24px 64px rgba(0,0,0,.24)}.guide-route a,.guide-toc nav a{color:rgba(235,235,238,.54)}.guide-route a:hover,.guide-toc nav a:hover,.guide-toc nav a[aria-current="true"]{color:#fff;background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.025))}
-.guide-step{border-color:rgba(255,255,255,.075)}.guide-step::before{color:rgba(255,255,255,.019)}.step-header>span{border-color:rgba(255,255,255,.14);background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.03));color:#f5f5f7}
-.platform-grid>section,.choice-list>li,.do-dont>div,.shortcut-deck>p,.permission-table,.guide-step details,.feature-walkthrough>article{border-color:rgba(255,255,255,.105);background:linear-gradient(155deg,rgba(34,34,37,.58),rgba(15,15,17,.52));box-shadow:inset 0 1px rgba(255,255,255,.055),0 18px 48px rgba(0,0,0,.18)}
-.platform-grid>section:hover,.choice-list>li:hover,.do-dont>div:hover,.shortcut-deck>p:hover{border-color:rgba(255,255,255,.18);box-shadow:inset 0 1px rgba(255,255,255,.08),0 24px 60px rgba(0,0,0,.25)}
-.guide-note{border-color:rgba(255,255,255,.12)!important;border-left-color:rgba(255,255,255,.46)!important;background:rgba(25,25,27,.42)!important}.guide-shot{border-color:rgba(255,255,255,.12);background:#101012;box-shadow:0 32px 86px rgba(0,0,0,.38),inset 0 1px rgba(255,255,255,.06)}.guide-shot figcaption{background:rgba(14,14,16,.84);border-color:rgba(255,255,255,.075)}.guide-step pre{border-color:rgba(255,255,255,.11)!important;background:rgba(3,3,4,.84)!important}
-.guide-footer{background:#060606;color:#f1f1f3}.guide-footer>p,.guide-footer>nav a{color:#aaaab0!important}
-@media(max-width:860px){.guide-toc{background:rgba(17,17,19,.9)}}
-
-/* Pearl content layer under the clear guide controls. */
-.guide-body{background:radial-gradient(circle at 84% 7%,rgba(255,255,255,.28),transparent 29rem),radial-gradient(circle at 8% 44%,rgba(216,190,204,.17),transparent 38rem),radial-gradient(circle at 82% 76%,rgba(235,226,217,.1),transparent 32rem),linear-gradient(180deg,#6c666a,#4b464a 38%,#5d575b 100%)}
-.guide-bar{background:linear-gradient(145deg,rgba(255,255,255,.13),rgba(255,255,255,.025)),rgba(39,36,40,.58);box-shadow:inset 0 1px rgba(255,255,255,.18),0 20px 64px rgba(42,33,39,.3)}
-.guide-route,.guide-toc{background:linear-gradient(145deg,rgba(255,255,255,.1),rgba(255,255,255,.02)),rgba(40,37,41,.5);box-shadow:inset 0 1px rgba(255,255,255,.11),0 24px 64px rgba(42,33,39,.23)}
-.platform-grid>section,.choice-list>li,.do-dont>div,.shortcut-deck>p,.permission-table,.guide-step details,.feature-walkthrough>article{background:linear-gradient(155deg,rgba(255,255,255,.11),rgba(255,255,255,.02)),rgba(41,38,42,.5);box-shadow:inset 0 1px rgba(255,255,255,.1),0 18px 48px rgba(42,33,39,.2)}
-.guide-note{background:rgba(46,42,46,.44)!important}.guide-footer{background:#474245}.guide-footer>p,.guide-footer>nav a{color:#c8c3c7!important}.guide-shot figcaption{background:rgba(43,39,43,.74)}
-@media(max-width:860px){.guide-toc{background:rgba(43,39,43,.82)}}
+/* High-key guide contrast contract. The historical guide floor used light-on-dark
+   secondary ink, so these explicit high-key values own every instructional state. */
+.guide-body .guide-step>p,
+.guide-body .details-body p,
+.guide-body .platform-grid p,
+.guide-body .choice-list span,
+.guide-body .do-dont span,
+.guide-body .instruction-list p,
+.guide-body .feature-walkthrough p,
+.guide-body .permission-table>div,
+.guide-body .control-list dd,
+.guide-body .location-list p{color:#315b87!important}
+.guide-body .guide-shot figcaption,
+.guide-body .guide-footer>p,
+.guide-body .guide-footer>nav a{color:#2b547f!important}
+.guide-body .guide-note strong,
+.guide-body .guide-shot figcaption strong,
+.guide-body .guide-step h3{color:#123e72!important}

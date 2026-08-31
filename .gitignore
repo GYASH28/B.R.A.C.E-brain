@@ -25,6 +25,7 @@ node_modules
 # website verification output
 /website/builds/*/node_modules/
 /website/builds/*/lab/
+/website/remotion-opening/out/
 
 # misc
 .DS_Store

@@ -184,22 +184,22 @@ export const useBrace = create<BraceState>((set, get) => {
       perform("Recalling context and asking AI…", async () => {
         const api = desktop();
         if (!api?.runBraceAssistant) {
-          throw new Error("The embedded AI Workspace is available in the desktop app.");
+          throw new Error("Ask BRACE is available in the desktop app.");
         }
         const result = await api.runBraceAssistant({ client, prompt });
         if (result.cancelled) return;
         await refresh();
-        set({ notice: "AI Workspace turn completed. Nothing was promoted to durable memory automatically." });
+        set({ notice: "Answer received. Nothing was added to durable memory automatically." });
       }),
     clearAssistantHistory: async () =>
-      perform("Clearing AI Workspace history…", async () => {
+      perform("Clearing Ask BRACE history…", async () => {
         const api = desktop();
         if (!api?.clearBraceAssistantHistory) {
-          throw new Error("AI Workspace history is available in the desktop app.");
+          throw new Error("Ask BRACE history is available in the desktop app.");
         }
         if (await api.clearBraceAssistantHistory()) {
           await refresh();
-          set({ notice: "Local AI Workspace history cleared." });
+          set({ notice: "Local Ask BRACE history cleared." });
         }
       }),
     initializeDemo: async () =>

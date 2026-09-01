@@ -61,7 +61,7 @@ async function clickText(window, text) {
     (() => {
       const target = Array.from(document.querySelectorAll('button')).find(
         (button) => (button.textContent?.trim() === ${JSON.stringify(text)} ||
-          Array.from(button.children).some((child) => child.textContent?.trim() === ${JSON.stringify(text)})) &&
+          Array.from(button.querySelectorAll('*')).some((child) => child.textContent?.trim() === ${JSON.stringify(text)})) &&
           button.getBoundingClientRect().width > 0
       );
       target?.click();
@@ -182,9 +182,18 @@ async function run() {
   window.showInactive();
   await waitFor(window, "document.body.innerText.includes('Stop re-explaining your work')");
   const onboarding = await screenshot(window, "app-onboarding");
-  await clickText(window, "Explore synthetic demo");
+  await clickText(window, "Try an example workspace");
   await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
   const overview = await screenshot(window, "app-overview");
+
+  pressKey(window, "?");
+  await waitFor(window, "document.body.innerText.includes('What do you want to do?') && document.body.innerText.includes('Connect an AI tool')");
+  const helpReady = await window.webContents.executeJavaScript("document.querySelectorAll('.help-task-grid button').length === 4 && document.querySelectorAll('.shortcut-list p').length === 6");
+  const help = await screenshot(window, "app-help");
+  await clickText(window, "Find something");
+  await waitFor(window, "document.body.innerText.includes('Search your memory.')");
+  await clickText(window, "Home");
+  await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
 
   pressKey(window, "K", ["control"]);
   await waitFor(window, "document.querySelector('[aria-label=\"Command palette\"]')");
@@ -223,7 +232,7 @@ async function run() {
   });
   await window.reload();
   await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
-  await clickText(window, "Memory library");
+  await clickText(window, "Library");
   await window.webContents.executeJavaScript(
     "document.querySelector('button[aria-label=\"Open memory review queue\"]')?.click()",
   );
@@ -235,7 +244,7 @@ async function run() {
   const reviewResolved = service.snapshot().memoryQuality.pendingReview === 0 &&
     service.store.listTimeline().some((event) => event.eventType === "memory.reviewed");
 
-  await clickText(window, "Memory library");
+  await clickText(window, "Library");
   await waitFor(window, "document.querySelector('.memory-toolbelt')");
   await setInput(window, ".memory-toolbelt input", "checksum");
   await waitFor(window, "document.querySelector('.memory-result-line')?.textContent?.includes('3 of')");
@@ -243,6 +252,11 @@ async function run() {
   const memoryLibrary = await screenshot(window, "app-memory-library");
   await window.webContents.executeJavaScript("document.querySelector('.brace-memory-card')?.click()");
   await waitFor(window, "document.body.innerText.includes('Copy memory') && document.body.innerText.includes('Find related context')");
+  await clickText(window, "Forget…");
+  await waitFor(window, "document.body.innerText.includes('Forget this memory?')");
+  const forgetGuardReady = await window.webContents.executeJavaScript("document.querySelector('.memory-forget-bar.is-confirming .memory-forget-confirm') !== null");
+  await clickText(window, "Cancel");
+  await waitFor(window, "!document.body.innerText.includes('Forget this memory?')");
   await clickText(window, "Pin for daily use");
   await waitFor(window, "document.body.innerText.includes('Unpin memory')");
   const pinningReady = service.snapshot().stats.pinnedMemories === 1;
@@ -251,7 +265,7 @@ async function run() {
   await clickText(window, "Continue with AI");
   await waitFor(window, "document.body.innerText.includes('Every turn has a visible boundary') && document.querySelector('.ai-composer textarea')?.value.includes('Verify')");
   const memoryHandoffReady = await window.webContents.executeJavaScript("document.querySelector('.ai-composer textarea')?.value.includes('Use this durable BRACE memory as the starting context') && document.body.innerText.includes('Draft stays on this device until you send it.')");
-  await clickText(window, "Memory library");
+  await clickText(window, "Library");
   await waitFor(window, "document.querySelector('.memory-toolbelt')");
   await setInput(window, ".memory-toolbelt input", "checksum");
   await window.webContents.executeJavaScript("document.querySelector('.brace-memory-card')?.click()");
@@ -259,7 +273,7 @@ async function run() {
   await clickText(window, "Find related context");
   await waitFor(window, "document.body.innerText.includes('Source evidence')");
 
-  await clickText(window, "Recall");
+  await clickText(window, "Search");
   await setInput(window, "input[placeholder^='What did we decide']", "canonical source files");
   await window.webContents.executeJavaScript(
     "document.querySelector(\"input[placeholder^='What did we decide']\").closest('form').requestSubmit()",
@@ -267,6 +281,7 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Source evidence') && document.body.innerText.includes('Architecture Decisions')");
   const recall = await screenshot(window, "app-recall");
 
+  await clickText(window, "Library");
   await clickText(window, "Timeline");
   await waitFor(window, "document.body.innerText.includes('Keep imported files canonical')");
   await setInput(window, ".timeline-toolbelt input", "canonical");
@@ -275,7 +290,7 @@ async function run() {
   const timelineFilteringReady = await window.webContents.executeJavaScript("document.querySelectorAll('.brace-timeline-card article').length === 1");
   const timeline = await screenshot(window, "app-timeline");
 
-  await clickText(window, "Knowledge map");
+  await clickText(window, "Map");
   await waitFor(window, "document.querySelector('svg[aria-label*=\"knowledge nodes\"]')");
   const graphInteraction = await window.webContents.executeJavaScript(`
     (async () => {
@@ -315,19 +330,20 @@ async function run() {
   const graph = await screenshot(window, "app-graph");
 
   await clickText(window, "Capture");
-  await waitFor(window, "document.body.innerText.includes('Catch a thought') && document.body.innerText.includes('Review queue')");
+  await waitFor(window, "document.body.innerText.includes('Capture') && document.body.innerText.includes('Review queue')");
   const inbox = await screenshot(window, "app-inbox");
 
-  await clickText(window, "Ask AI");
+  await clickText(window, "Ask BRACE");
   await waitFor(window, "document.body.innerText.includes('Every turn has a visible boundary') && document.body.innerText.includes('History is not memory')");
   const aiWorkspace = await screenshot(window, "app-ai-workspace");
 
+  await clickText(window, "Automations");
   await clickText(window, "Skills");
   await waitFor(window, "document.body.innerText.includes('Decision Journal') && document.querySelectorAll('[role=switch]').length === 2");
   const skills = await screenshot(window, "app-skills");
 
   await clickText(window, "Automations");
-  await waitFor(window, "document.body.innerText.includes('Automation studio') && document.body.innerText.includes('No recipes yet')");
+  await waitFor(window, "document.body.innerText.includes('Automations') && document.body.innerText.includes('No recipes yet')");
   await clickText(window, "Create automation");
   await waitFor(window, "document.querySelector('.automation-builder') && document.body.innerText.includes('Make BRACE work while you work.')");
   await setInput(window, ".automation-builder-identity input", "Release memory health check");
@@ -365,7 +381,7 @@ async function run() {
   pressKey(window, "Right", ["alt"]);
   await waitFor(window, "document.body.innerText.includes('Make the workspace fit you')");
   const navigationReady = await window.webContents.executeJavaScript("document.querySelector('button[aria-label=\"Go to previous workspace\"]:not(:disabled)') !== null && localStorage.getItem('brace.last-view') === 'settings'");
-  await clickText(window, "Memory library");
+  await clickText(window, "Library");
   window.setContentSize(760, 900);
   await waitFor(window, "document.querySelector('.memory-toolbelt') && window.innerWidth === 760 && Math.abs(parseFloat(getComputedStyle(document.querySelector('.brace-sidebar')).width) - 76) < 1");
   const responsiveMetrics = await window.webContents.executeJavaScript("({ viewport: window.innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth, sidebarWidth: parseFloat(getComputedStyle(document.querySelector('.brace-sidebar')).width) })");
@@ -379,13 +395,15 @@ async function run() {
     profileIsTemporary: service.databasePath.startsWith(userData),
     databaseExists,
     stats: snapshot.stats,
-    screenshots: [onboarding, overview, commands, capture, memoryReview, memoryLibrary, recall, timeline, graph, inbox, aiWorkspace, skills, automations, connections, settings, responsive].map((target) =>
+    screenshots: [onboarding, overview, help, commands, capture, memoryReview, memoryLibrary, recall, timeline, graph, inbox, aiWorkspace, skills, automations, connections, settings, responsive].map((target) =>
       process.env.CI ? path.basename(target) : path.relative(root, target),
     ),
     graphInteraction,
     connectionReady,
     connectionHasWorkspacePath,
     preferenceReady,
+    helpReady,
+    forgetGuardReady,
     draftRecovered,
     memoryFilteringReady,
     timelineFilteringReady,
@@ -418,6 +436,8 @@ async function run() {
     !connectionReady ||
     connectionHasWorkspacePath ||
     !preferenceReady ||
+    !helpReady ||
+    !forgetGuardReady ||
     !draftRecovered ||
     !memoryFilteringReady ||
     !timelineFilteringReady ||

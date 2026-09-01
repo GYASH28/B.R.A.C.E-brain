@@ -60,7 +60,7 @@ npm run electron:smoke -- "dist/installer/BRACE-0.5.0.AppImage"
 
 The smoke harness starts the application with a unique token, waits for both renderer and shell readiness in the local log, checks that the process exits, and removes the temporary profile.
 
-The full source E2E uses a temporary profile, initializes only the synthetic Northstar demo, exercises command capture, review, Recall, Timeline, all five Knowledge Atlas views, Inbox, AI Workspace, Skills, Connections, Settings, and persistence, captures real product screenshots, and fails on renderer console errors or leaked workspace paths.
+The full source E2E uses a temporary profile, initializes only the synthetic Northstar demo, exercises task help, command capture, protected forgetting, Search, contextual Library/Timeline/Map/Review navigation, Capture, Ask BRACE, Automations/Skills, AI connections, Settings, and persistence, captures real product screenshots, and fails on renderer console errors or leaked workspace paths.
 
 ## Package inspection
 

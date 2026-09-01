@@ -41,7 +41,7 @@
           <a href="#install"><span>01</span> Install</a>
           <a href="#first-run"><span>02</span> First run</a>
           <a href="#import"><span>03</span> Import</a>
-          <a href="#recall"><span>04</span> Recall</a>
+          <a href="#recall"><span>04</span> Search</a>
           <a href="#structure"><span>05</span> Automate</a>
           <a href="#connect"><span>06</span> Connect</a>
           <a href="#privacy"><span>07</span> Protect</a>
@@ -156,15 +156,15 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <li><span>1</span><div><strong>Name the durable point.</strong><p>Use a specific title such as “Keep imported files canonical,” not “Architecture notes.”</p></div></li>
             <li><span>2</span><div><strong>Choose its scope.</strong><p>Use global memory only when it applies everywhere. Otherwise keep it within a project scope.</p></div></li>
             <li><span>3</span><div><strong>Attach provenance when available.</strong><p>A source URI and excerpt let future retrieval show why the memory exists.</p></div></li>
-            <li><span>4</span><div><strong>Search in Recall.</strong><p>Choose Today, 7 days, 30 days, or All time. BRACE reports lexical, semantic, or hybrid mode and keeps memories separate from source evidence.</p></div></li>
+            <li><span>4</span><div><strong>Search your memory.</strong><p>Open <b>Search</b>, then choose Today, 7 days, 30 days, or All time. BRACE reports lexical, semantic, or hybrid mode and keeps memories separate from source evidence.</p></div></li>
           </ol>
           <figure class="guide-shot">
             <img src="../assets/app-inbox.png" width="1440" height="960" alt="BRACE Inbox with separate memory and decision capture modes">
             <figcaption><strong>Capture deliberately.</strong> Inbox stores a useful outcome or explicit decision, never a raw transcript by default.</figcaption>
           </figure>
           <figure class="guide-shot">
-            <img src="../assets/app-recall.png" width="1440" height="960" alt="BRACE Recall results with Durable memory and Source evidence sections">
-            <figcaption><strong>Recall is evidence-aware.</strong> Durable context is not disguised as a source excerpt.</figcaption>
+            <img src="../assets/app-recall.png" width="1440" height="960" alt="BRACE Search results with Durable memory and Source evidence sections">
+            <figcaption><strong>Search is evidence-aware.</strong> Durable context is not disguised as a source excerpt.</figcaption>
           </figure>
           <p>Semantic retrieval is optional. In Settings, enable a loopback Ollama endpoint and choose an embedding model. If the provider is unavailable, BRACE completes lexical search and reports the fallback.</p>
         </section>
@@ -174,7 +174,7 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <span>05</span>
             <div><p>AUTOMATE + STRUCTURE</p><h2>Let local memory maintain itself—visibly.</h2></div>
           </header>
-          <p>Recall answers a question. These workspace views show how that answer stays precise, reaches an AI, and fits into the larger history. Every view reads the same local database.</p>
+          <p>Search answers a question. These workspace views show how that answer stays precise, reaches an AI, and fits into the larger history. Every view reads the same local database.</p>
           <div class="feature-walkthrough">
             <article>
               <img src="../assets/app-automations.png" width="1440" height="960" alt="BRACE Automation Studio with a local recipe, permission envelope, and execution history">
@@ -194,7 +194,7 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             </article>
             <article>
               <img src="../assets/app-graph.png" width="1440" height="960" alt="BRACE knowledge graph using synthetic Northstar projects, sources, memories, decisions, and entities">
-              <div><strong>Knowledge map</strong><p>Open <b>Knowledge map</b> and move the same graph through <b>Rings</b>, <b>Living</b>, <b>Orbit</b>, <b>Flow</b>, or <b>Chronicle</b>. Filter by type, select a node, or use the arrow keys to inspect typed relationships and travel back to provenance.</p></div>
+              <div><strong>Knowledge map</strong><p>Open <b>Library → Map</b> and move the same graph through <b>Rings</b>, <b>Living</b>, <b>Orbit</b>, <b>Flow</b>, or <b>Chronicle</b>. Filter by type, select a node, or use the arrow keys to inspect typed relationships and travel back to provenance.</p></div>
             </article>
             <article>
               <img src="../assets/app-skills.png" width="1440" height="960" alt="BRACE Skills showing synthetic declarative skills and their permissions">
@@ -265,7 +265,7 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <div><p>TROUBLESHOOTING</p><h2>Common first-run questions.</h2></div>
           </header>
           <div class="faq-list">
-            <details><summary>Why does Recall say “lexical”?</summary><div class="details-body"><p>That is the private default and it is fully functional. Enable a local Ollama embedding model only if you want semantic or hybrid ranking.</p></div></details>
+            <details><summary>Why does Search say “lexical”?</summary><div class="details-body"><p>That is the private default and it is fully functional. Enable a local Ollama embedding model only if you want semantic or hybrid ranking.</p></div></details>
             <details><summary>Why is an imported file missing?</summary><div class="details-body"><p>BRACE rejects binary, oversized, hidden, credential-like, database, dependency, build, cache, and symlink content. Check that the file is supported and inside the selected folder.</p></div></details>
             <details><summary>Why can my AI search but not remember?</summary><div class="details-body"><p>MCP is read-only by default. Add <code>BRACE_MCP_WRITE=1</code> to that client's BRACE server environment, then restart the client.</p></div></details>
             <details><summary>Can I use a cloud embedding endpoint?</summary><div class="details-body"><p>The core adapter permits HTTPS endpoints, but the desktop first-run interface intentionally exposes local Ollama only. Remote embedding configuration is an advanced source-level option and sends indexed text to that provider.</p></div></details>

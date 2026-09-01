@@ -41,12 +41,12 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 - Optional loopback Ollama embeddings and an advanced HTTPS OpenAI-compatible adapter.
 - A real decision timeline and a provenance-backed knowledge graph.
 - Five deterministic views over the same graph: **Rings**, **Living**, **Orbit**, **Flow**, and chronological **Chronicle**. Changing a view never changes the underlying memory.
-- A triage-focused **Capture** inbox, an evidence-aware **Ask AI** workspace, and explicit retention: a selected memory can prepare an editable local handoff draft, but no draft crosses the provider boundary until you send it and no answer becomes durable memory until you retain it.
+- A triage-focused **Capture** inbox, an evidence-aware **Ask BRACE** workspace, and explicit retention: a selected memory can prepare an editable local handoff draft, but no draft crosses the provider boundary until you send it and no answer becomes durable memory until you retain it.
 - Guided, permissioned setup for **Codex CLI**, **Claude Code**, and **Antigravity**, plus exact configuration for any stdio MCP client. BRACE backs up client configuration and verifies its entry before reporting it configured.
 - Session continuity through the `brace_memory_compass` prompt and explicit `brace_session_start` / `brace_session_handoff` tools.
 - A typed local Automation Studio with schedules and BRACE-event triggers, AND/OR conditions, derived permissions, dry-run previews, immutable execution traces, retries, and a global pause. No arbitrary code or shell execution.
 - Explicit time-scoped recall across memory and source evidence: Today, 7 days, 30 days, or All time.
-- A keyboard-first desktop workflow with back/forward workspace history, recent commands, global recall focus, recoverable Quick Capture drafts, attention badges, memory and timeline filtering, and responsive compact navigation.
+- A keyboard-first desktop workflow with eight clear main destinations, contextual Library and Automation tabs, task-based help, back/forward workspace history, recent commands, global search focus, recoverable Quick Capture drafts, attention badges, memory and timeline filtering, and responsive compact navigation.
 - Declarative, permission-scoped BRACE Skills. No arbitrary JavaScript, shell, or dynamic code execution.
 - Official MCP v2 stdio tools with structured results and read-only defaults. Writes and destructive forgetting use separate opt-in flags.
 - A hardened Electron boundary with context isolation, sandboxing, navigation and popup denial, a narrow preload bridge, CSP, and external application-data storage.
@@ -120,7 +120,7 @@ The demo is idempotent, clearly labelled, and stored in the same local applicati
 
 ## Connect an AI through MCP
 
-Open **AI connections** and choose **read-only** or **remember** next to a detected Codex CLI, Claude Code, or Antigravity installation. BRACE previews the exact authority boundary, creates a recoverable configuration backup, performs the client-specific setup, and then re-reads the file before calling it **Configured**. Running a turn in **Ask AI** is the live connection check.
+Open **AI connections** and choose **read-only** or **remember** next to a detected Codex CLI, Claude Code, or Antigravity installation. BRACE previews the exact authority boundary, creates a recoverable configuration backup, performs the client-specific setup, and then re-reads the file before calling it **Configured**. Running a turn in **Ask BRACE** is the live connection check.
 
 Read-only clients can recall context and create a session brief. Remember access adds non-destructive durable memory and decision tools; forgetting always remains separately gated. Retrieved private context may be sent to the model provider configured by that client. BRACE never copies provider API keys and never promotes an AI answer automatically.
 

@@ -6,6 +6,7 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Added
 
+- Added task-based **Help & shortcuts**, Library and Automations context tabs, progressive Quick Capture options, a two-step memory-forget guard, and a light frosted first-run path that explains the local boundary in plain language.
 - Added a typed local Automation Studio with templates, manual and schedule triggers, BRACE event triggers, bounded AND/OR conditions, derived permission previews, dry runs, global pause, immutable traces, and snapshot-based retries.
 - Added schema version 4 with local automation definitions and durable execution history, followed by schema version 5 with durable pinned working context.
 - Added Today, 7 days, 30 days, and All time recall scopes across durable memory and indexed source chunks, including MCP timestamp boundaries.
@@ -16,6 +17,8 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Changed
 
+- Reduced the persistent sidebar from twelve competing destinations to eight clear entry points: Home, Search, Capture, Ask BRACE, Library, Projects, Automations, and AI connections. Timeline, Map, Review, and Skills now appear where their parent workflow is active; Settings and Help remain stable utilities.
+- Replaced expert-facing navigation terms and premature focus actions with user-facing language and intentional submits. Global search no longer moves the workspace merely because the field receives focus.
 - Rebuilt the desktop as a light-first Frosted Workspace with grouped Work, Library, and System navigation; a real next-useful-move home surface; clearer evidence paper; higher-contrast graph, automation, connection, capture, and AI states; and optional dim/system themes.
 - Refined the keyboard flow, focus treatment, responsive navigation, compact-window header, filter toolbelts, transient success feedback, and reset/empty states around real local actions.
 - Re-authored the public website as a quieter high-key cobalt and white Liquid Glass product reel, replacing the six competing interactive chapters with one scroll-scrubbed Remotion memory film, one local-custody passage, the retained sideways real-product gallery, and a calm equal-platform installation plate.
@@ -27,6 +30,7 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Verified
 
+- The synthetic Electron journey now verifies the task-based help routes, six-key shortcut reference, progressive capture draft restoration, protected memory forgetting, contextual Library/Automation navigation, and compact utility rail in addition to the full product workflow.
 - Synthetic Electron journeys now prove capture-draft recovery and clearing, multi-view history, memory and timeline filtering, memory-to-AI draft handoff, responsive collapse without horizontal overflow, automation execution, graph interaction, privacy-safe connections, and zero renderer-console errors.
 - The release stress gate proves 5,000-memory operation with explicit p95/p99 recall, bounded graph/list payloads, export, restart, memory-growth, backup parity, concurrent-connection, and database-integrity ceilings.
 - The new website film is rendered separately for desktop and portrait, encoded with dense scrub keyframes, and checked for continuous playhead movement, reduced-motion poster behavior, healthy lateral-gallery overflow, keyboard focus, responsive layout, and WCAG 2.2 AA contrast.

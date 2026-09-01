@@ -87,22 +87,32 @@ import {
   type GraphPreset,
 } from "@/lib/brace/graph-layouts";
 
-type NavSection = "Work" | "Library" | "System";
+type NavSection = "Work" | "Organize" | "Connect";
 
-const nav: Array<{ view: BraceView; label: string; icon: LucideIcon; section: NavSection }> = [
-  { view: "home", label: "Home", icon: LayoutDashboard, section: "Work" },
-  { view: "search", label: "Recall", icon: Search, section: "Work" },
-  { view: "inbox", label: "Capture", icon: Inbox, section: "Work" },
-  { view: "assistant", label: "Ask AI", icon: MessageSquareText, section: "Work" },
-  { view: "memories", label: "Memory library", icon: Brain, section: "Library" },
-  { view: "timeline", label: "Timeline", icon: Clock3, section: "Library" },
-  { view: "graph", label: "Knowledge map", icon: Network, section: "Library" },
-  { view: "projects", label: "Projects", icon: FolderInput, section: "System" },
-  { view: "automations", label: "Automations", icon: Workflow, section: "System" },
-  { view: "connections", label: "AI connections", icon: GitBranch, section: "System" },
-  { view: "skills", label: "Skills", icon: Zap, section: "System" },
-  { view: "settings", label: "Settings", icon: Settings, section: "System" },
+const nav: Array<{ view: BraceView; label: string; icon: LucideIcon; section: NavSection; sidebar: boolean }> = [
+  { view: "home", label: "Home", icon: LayoutDashboard, section: "Work", sidebar: true },
+  { view: "search", label: "Search", icon: Search, section: "Work", sidebar: true },
+  { view: "inbox", label: "Capture", icon: Inbox, section: "Work", sidebar: true },
+  { view: "assistant", label: "Ask BRACE", icon: MessageSquareText, section: "Work", sidebar: true },
+  { view: "memories", label: "Library", icon: Brain, section: "Organize", sidebar: true },
+  { view: "timeline", label: "Timeline", icon: Clock3, section: "Organize", sidebar: false },
+  { view: "graph", label: "Map", icon: Network, section: "Organize", sidebar: false },
+  { view: "projects", label: "Projects", icon: FolderInput, section: "Organize", sidebar: true },
+  { view: "automations", label: "Automations", icon: Workflow, section: "Organize", sidebar: true },
+  { view: "skills", label: "Skills", icon: Zap, section: "Organize", sidebar: false },
+  { view: "connections", label: "AI connections", icon: GitBranch, section: "Connect", sidebar: true },
+  { view: "settings", label: "Settings", icon: Settings, section: "Connect", sidebar: false },
 ];
+
+const sidebarNav = nav.filter((item) => item.sidebar);
+const libraryViews: BraceView[] = ["memories", "review", "timeline", "graph"];
+const automationViews: BraceView[] = ["automations", "skills"];
+
+function navIsActive(destination: BraceView, current: BraceView) {
+  if (destination === "memories") return libraryViews.includes(current);
+  if (destination === "automations") return automationViews.includes(current);
+  return destination === current;
+}
 
 const kindTone: Record<string, string> = {
   project: "border-sky-400/20 bg-sky-400/10 text-sky-200",
@@ -237,7 +247,7 @@ export function BraceApp() {
       }
       if (!editing && /^[1-9]$/.test(event.key)) {
         event.preventDefault();
-        const destination = nav[Number(event.key) - 1];
+        const destination = sidebarNav[Number(event.key) - 1];
         if (destination) setView(destination.view);
         return;
       }
@@ -285,11 +295,11 @@ export function BraceApp() {
         </div>
 
         <nav className="brace-nav flex-1 overflow-y-auto px-3 py-3" aria-label="BRACE navigation">
-          {(["Work", "Library", "System"] as NavSection[]).map((section) => (
+          {(["Work", "Organize", "Connect"] as NavSection[]).map((section) => (
             <div className="brace-nav-section" data-section={section.toLowerCase()} key={section}>
               {!collapsed && <span className="brace-nav-section-label">{section}</span>}
-              {nav.filter((item) => item.section === section).map((item) => {
-                const active = view === item.view || (item.view === "memories" && view === "review");
+              {sidebarNav.filter((item) => item.section === section).map((item) => {
+                const active = navIsActive(item.view, view);
                 const Icon = item.icon;
                 const badge = item.view === "memories"
                   ? snapshot.memoryQuality.pendingReview
@@ -330,6 +340,26 @@ export function BraceApp() {
           )}
           <button
             type="button"
+            onClick={() => setShortcutsOpen(true)}
+            className={`brace-sidebar-utility ${collapsed ? "justify-center" : "gap-3 px-3"}`}
+            aria-label="Open help and shortcuts"
+            title={collapsed ? "Help and shortcuts" : undefined}
+          >
+            <BookOpen className="h-4 w-4" />
+            {!collapsed && <span>Help & shortcuts</span>}
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("settings")}
+            className={`brace-sidebar-utility ${view === "settings" ? "is-active" : ""} ${collapsed ? "justify-center" : "gap-3 px-3"}`}
+            aria-current={view === "settings" ? "page" : undefined}
+            title={collapsed ? "Settings" : undefined}
+          >
+            <Settings className="h-4 w-4" />
+            {!collapsed && <span>Settings</span>}
+          </button>
+          <button
+            type="button"
             onClick={() => setCollapsed((value) => !value)}
             className={`flex h-9 w-full items-center rounded-lg text-white/35 hover:bg-white/[0.04] hover:text-white/70 ${collapsed ? "justify-center" : "gap-3 px-3"}`}
             aria-label={collapsed ? "Expand navigation" : "Collapse navigation"}
@@ -342,6 +372,7 @@ export function BraceApp() {
 
       <div className="relative z-10 flex min-w-0 flex-1 flex-col">
         <Header onCommand={() => setCommandOpen(true)} onQuickCapture={() => setQuickCaptureOpen(true)} />
+        <WorkspaceContextNav />
         {snapshot.environment === "browser-preview" && (
           <div className="flex items-center gap-2 border-b border-sky-300/10 bg-sky-300/[0.05] px-5 py-2 text-[11px] text-sky-100/70">
             <Info className="h-3.5 w-3.5" />
@@ -375,7 +406,7 @@ export function BraceApp() {
       {selectedMemory && <MemoryDetail memory={selectedMemory} onClose={() => setSelectedMemory(null)} />}
       {commandOpen && <CommandPalette onClose={() => setCommandOpen(false)} onQuickCapture={() => { setCommandOpen(false); setQuickCaptureOpen(true); }} onShortcuts={() => { setCommandOpen(false); setShortcutsOpen(true); }} />}
       {quickCaptureOpen && <QuickCapture onClose={() => setQuickCaptureOpen(false)} />}
-      {shortcutsOpen && <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} />}
+      {shortcutsOpen && <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} onQuickCapture={() => { setShortcutsOpen(false); setQuickCaptureOpen(true); }} />}
       {operation && (
         <div className="fixed bottom-5 right-5 z-[80] flex items-center gap-3 rounded-xl border border-white/10 bg-[#171b20]/95 px-4 py-3 text-xs text-white/75 shadow-2xl backdrop-blur" role="status">
           <LoaderCircle className="h-4 w-4 animate-spin text-[#7dd3fc]" />
@@ -538,21 +569,21 @@ function Onboarding() {
         </header>
         <div className="grid flex-1 items-center gap-14 py-14 lg:grid-cols-[1.08fr_.92fr]">
           <section>
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.06] px-3 py-1.5 text-[11px] font-medium text-emerald-100/75">
-              <ShieldCheck className="h-3.5 w-3.5" /> Local-first by default
+            <div className="brace-onboarding-trust mb-6 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] font-medium">
+              <ShieldCheck className="h-3.5 w-3.5" /> Your files stay on this computer
             </div>
             <h1 className="max-w-2xl text-balance text-5xl font-medium leading-[1.02] tracking-[-0.055em] sm:text-6xl">
               Stop re-explaining your work to every AI.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/52">
-              BRACE turns project files, decisions, and durable context into one private memory layer your AI tools can share.
+              Choose one project folder. BRACE makes its useful context searchable and ready for the AI tools you connect.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <button type="button" onClick={() => void addProject()} className="brace-primary h-11 px-5">
-                <FolderInput className="h-4 w-4" /> Import a project
+                <FolderInput className="h-4 w-4" /> Choose a project folder
               </button>
               <button type="button" onClick={() => void initializeDemo()} className="brace-secondary h-11 px-5">
-                <Sparkles className="h-4 w-4 text-[#9bdcff]" /> Explore synthetic demo
+                <Sparkles className="h-4 w-4" /> Try an example workspace
               </button>
             </div>
             {error && (
@@ -563,7 +594,7 @@ function Onboarding() {
               </div>
             )}
             <p className="mt-6 flex items-center gap-2 text-[11px] text-white/32">
-              <CloudOff className="h-3.5 w-3.5" /> No account, telemetry, or automatic cloud upload.
+              <CloudOff className="h-3.5 w-3.5" /> No account or cloud upload. You can remove the example whenever you want.
             </p>
           </section>
           <section className="relative">
@@ -571,9 +602,9 @@ function Onboarding() {
             <div className="brace-onboarding-window relative overflow-hidden rounded-3xl p-3">
               <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 pb-3 pt-1 text-[10px] text-white/30"><span className="h-2 w-2 rounded-full bg-sky-300" /><span className="h-2 w-2 rounded-full bg-violet-300" /><span className="h-2 w-2 rounded-full bg-emerald-300" /><span className="ml-2">How BRACE works</span></div>
               <div className="space-y-2 p-3">
-                <OnboardingStep number="01" icon={FolderInput} title="Connect work" text="Choose a specific project folder. Originals stay where they are." />
-                <OnboardingStep number="02" icon={Database} title="Build local memory" text="BRACE indexes sources, decisions, evidence, and relationships into SQLite." />
-                <OnboardingStep number="03" icon={GitBranch} title="Connect every AI" text="MCP clients retrieve the same provenance-backed context." />
+                <OnboardingStep number="01" icon={FolderInput} title="Choose a folder" text="Pick one project. BRACE reads supported files without moving or editing them." />
+                <OnboardingStep number="02" icon={Search} title="Find what matters" text="Search decisions, lessons, and original source passages in one place." />
+                <OnboardingStep number="03" icon={MessageSquareText} title="Continue with AI" text="Send only the context you choose to a compatible AI client." />
               </div>
             </div>
           </section>
@@ -594,8 +625,46 @@ function OnboardingStep({ number, icon: Icon, title, text }: { number: string; i
   );
 }
 
+function WorkspaceContextNav() {
+  const { view, setView, snapshot } = useBrace();
+  const group = libraryViews.includes(view)
+    ? {
+        label: "Library",
+        icon: Brain,
+        items: [
+          { view: "memories" as const, label: "Memories" },
+          { view: "timeline" as const, label: "Timeline" },
+          { view: "graph" as const, label: "Map" },
+          { view: "review" as const, label: "Review", badge: snapshot?.memoryQuality.pendingReview || 0 },
+        ],
+      }
+    : automationViews.includes(view)
+      ? {
+          label: "Automate",
+          icon: Workflow,
+          items: [
+            { view: "automations" as const, label: "Workflows" },
+            { view: "skills" as const, label: "Skills" },
+          ],
+        }
+      : null;
+  if (!group) return null;
+  const GroupIcon = group.icon;
+  return (
+    <nav className="brace-context-nav" aria-label={`${group.label} views`}>
+      <span className="brace-context-nav-label"><GroupIcon className="h-3.5 w-3.5" />{group.label}</span>
+      <div>
+        {group.items.map((item) => {
+          const active = view === item.view;
+          return <button key={item.view} type="button" onClick={() => setView(item.view)} className={active ? "is-active" : ""} aria-current={active ? "page" : undefined}>{item.label}{"badge" in item && item.badge > 0 && <small>{item.badge}</small>}</button>;
+        })}
+      </div>
+    </nav>
+  );
+}
+
 function Header({ onCommand, onQuickCapture }: { onCommand: () => void; onQuickCapture: () => void }) {
-  const { view, viewHistory, viewHistoryIndex, navigateHistory, setView, setSearchQuery, search, searchQuery, snapshot } = useBrace();
+  const { view, viewHistory, viewHistoryIndex, navigateHistory, setSearchQuery, search, searchQuery, snapshot } = useBrace();
   const currentLabel = nav.find((item) => item.view === view)?.label || (view === "review" ? "Review queue" : "BRACE");
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -613,8 +682,7 @@ function Header({ onCommand, onQuickCapture }: { onCommand: () => void; onQuickC
           id="brace-global-search"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          onFocus={() => setView("search")}
-          placeholder="Recall a decision, source, or lesson…"
+          placeholder="Search memories and sources…"
           className="brace-command h-11 w-full rounded-xl pl-10 pr-16 text-sm text-white outline-none placeholder:text-white/25"
         />
         <button type="button" onClick={onCommand} className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1 rounded-lg border border-white/10 bg-black/20 px-2 py-1 text-[9px] text-white/35 hover:text-white/70" aria-label="Open command palette"><Command className="h-3 w-3" />Ctrl K</button>
@@ -638,17 +706,19 @@ function CommandPalette({ onClose, onQuickCapture, onShortcuts }: { onClose: () 
     try { return JSON.parse(localStorage.getItem("brace.recent-commands") || "[]"); } catch { return []; }
   });
   const commands = useMemo(() => [
-    ...nav.map((item, index) => ({
+    ...nav.map((item) => ({
       id: item.view,
       label: item.label,
       detail: `Open ${item.label.toLowerCase()}`,
-      category: "Workspace",
+      category: item.section,
       icon: item.icon,
-      key: String(index + 1),
+      key: sidebarNav.some((destination) => destination.view === item.view)
+        ? String(sidebarNav.findIndex((destination) => destination.view === item.view) + 1)
+        : "",
       run: () => { setView(item.view); onClose(); },
     })),
     { id: "capture", label: "Capture a memory", detail: "Save durable context from anywhere", category: "Action", icon: Plus, key: "Ctrl N", run: onQuickCapture },
-    { id: "shortcuts", label: "Keyboard map", detail: "See every shortcut", category: "Help", icon: Keyboard, key: "?", run: onShortcuts },
+    { id: "shortcuts", label: "Help & shortcuts", detail: "Common tasks and keyboard controls", category: "Help", icon: Keyboard, key: "?", run: onShortcuts },
   ], [onClose, onQuickCapture, onShortcuts, setView]);
   const filtered = useMemo(() => {
     const needles = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -696,9 +766,9 @@ function CommandPalette({ onClose, onQuickCapture, onShortcuts }: { onClose: () 
         <div className="command-palette-list" role="listbox" aria-label="Available commands">
           {filtered.map((item, index) => {
             const Icon = item.icon;
-            return <button key={item.id} type="button" role="option" aria-selected={index === active} className={index === active ? "is-active" : ""} onMouseEnter={() => setActive(index)} onClick={() => execute(item)}><span><Icon className="h-4 w-4" /></span><span><strong>{item.label}</strong><small>{item.category} · {item.detail}</small></span><kbd>{item.key}</kbd></button>;
+            return <button key={item.id} type="button" role="option" aria-selected={index === active} className={index === active ? "is-active" : ""} onMouseEnter={() => setActive(index)} onClick={() => execute(item)}><span><Icon className="h-4 w-4" /></span><span><strong>{item.label}</strong><small>{item.category} · {item.detail}</small></span>{item.key && <kbd>{item.key}</kbd>}</button>;
           })}
-          {!filtered.length && <div className="command-empty">No matching command. Try “graph” or “capture”.</div>}
+          {!filtered.length && <div className="command-empty">No matching command. Try “map”, “search”, or “capture”.</div>}
         </div>
         <footer><span><CornerDownLeft className="h-3 w-3" /> run</span><span>↑↓ move</span><span>Everything stays local</span></footer>
       </section>
@@ -716,6 +786,7 @@ function QuickCapture({ onClose }: { onClose: () => void }) {
   const [kind, setKind] = useState(String(draft.kind || localStorage.getItem("brace.last-memory-kind") || "fact"));
   const [scope, setScope] = useState(String(draft.scope || "global"));
   const [tags, setTags] = useState(String(draft.tags || ""));
+  const [moreOpen, setMoreOpen] = useState(Boolean(draft.tags || (draft.scope && draft.scope !== "global") || (draft.kind && !["fact", "decision", "lesson", "warning", "procedure"].includes(draft.kind))));
   const hasDraft = Boolean(draft.title || draft.content);
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -744,12 +815,17 @@ function QuickCapture({ onClose }: { onClose: () => void }) {
           <div className="capture-label"><label htmlFor="quick-content">What should BRACE remember?</label><span>{content.length.toLocaleString()} characters</span></div>
           <textarea id="quick-content" required maxLength={100_000} value={content} onChange={(event) => setContent(event.target.value)} onKeyDown={(event) => { if ((event.metaKey || event.ctrlKey) && event.key === "Enter") event.currentTarget.form?.requestSubmit(); }} placeholder="Keep it concise. Do not store credentials or raw private transcripts." />
           <div className="capture-kind-chips" role="group" aria-label="Common memory types">{[["fact", "Fact"], ["decision", "Decision"], ["lesson", "Lesson"], ["warning", "Warning"], ["procedure", "Procedure"]].map(([value, label]) => <button key={value} type="button" className={kind === value ? "is-active" : ""} aria-pressed={kind === value} onClick={() => setKind(value)}>{label}</button>)}</div>
-          <div className="quick-capture-meta">
-            <label>Type<select value={kind} onChange={(event) => setKind(event.target.value)}><option value="fact">Fact</option><option value="project">Project context</option><option value="decision">Decision</option><option value="lesson">Lesson</option><option value="warning">Warning</option><option value="preference">Preference</option><option value="procedure">Procedure</option></select></label>
-            <label>Scope<select value={scope} onChange={(event) => setScope(event.target.value)}><option value="global">Global</option>{snapshot?.projects.map((project) => <option key={project.id} value={`project:${project.id}`}>{project.name}</option>)}</select></label>
-          </div>
-          <label htmlFor="quick-tags">Tags <span className="normal-case tracking-normal text-white/20">comma separated</span></label>
-          <input id="quick-tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="architecture, follow-up" />
+          <details className="capture-more" open={moreOpen} onToggle={(event) => setMoreOpen(event.currentTarget.open)}>
+            <summary><SlidersHorizontal className="h-4 w-4" /><span>More options<small>Project, uncommon type, or tags</small></span><ChevronRight className="ml-auto h-4 w-4" /></summary>
+            <div>
+              <div className="quick-capture-meta">
+                <label>Type<select value={kind} onChange={(event) => setKind(event.target.value)}><option value="fact">Fact</option><option value="project">Project context</option><option value="decision">Decision</option><option value="lesson">Lesson</option><option value="warning">Warning</option><option value="preference">Preference</option><option value="procedure">Procedure</option></select></label>
+                <label>Project<select value={scope} onChange={(event) => setScope(event.target.value)}><option value="global">Any project</option>{snapshot?.projects.map((project) => <option key={project.id} value={`project:${project.id}`}>{project.name}</option>)}</select></label>
+              </div>
+              <label htmlFor="quick-tags">Tags <span>comma separated</span></label>
+              <input id="quick-tags" value={tags} onChange={(event) => setTags(event.target.value)} placeholder="architecture, follow-up" />
+            </div>
+          </details>
         </div>
         <footer><span><ShieldCheck className="h-4 w-4" /> Session draft · ⌘↵ saves</span><div><button type="button" onClick={onClose} className="brace-secondary">Close</button><button type="submit" className="brace-primary">Save memory <CornerDownLeft className="h-3.5 w-3.5" /></button></div></footer>
       </form>
@@ -757,24 +833,28 @@ function QuickCapture({ onClose }: { onClose: () => void }) {
   );
 }
 
-function ShortcutsOverlay({ onClose }: { onClose: () => void }) {
+function ShortcutsOverlay({ onClose, onQuickCapture }: { onClose: () => void; onQuickCapture: () => void }) {
+  const { setView } = useBrace();
   const shortcuts = [
     ["Ctrl / ⌘ K", "Open command palette"],
     ["Ctrl / ⌘ N", "Quick capture"],
-    ["/", "Focus global recall"],
+    ["/", "Focus search"],
     ["Alt + ← / →", "Move through workspace history"],
-    ["Ctrl / ⌘ ↵", "Save from quick capture"],
-    ["1 — 9", "Open a workspace view"],
-    ["↑ ↓", "Move through commands or graph nodes"],
-    ["Enter", "Open the selected command or node"],
-    ["Esc", "Close the active layer"],
-    ["?", "Show this keyboard map"],
+    ["1 — 8", "Open a main destination"],
+    ["Esc", "Close the current panel"],
   ];
+  const go = (destination: BraceView) => { setView(destination); onClose(); };
   return (
     <div className="brace-dialog-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <section className="shortcuts-sheet" role="dialog" aria-modal="true" aria-labelledby="shortcuts-title">
-        <header><div><span>KEYBOARD MAP</span><h1 id="shortcuts-title">Move at the speed of recall.</h1></div><button type="button" onClick={onClose} aria-label="Close keyboard map"><X className="h-4 w-4" /></button></header>
-        <div>{shortcuts.map(([keys, action]) => <p key={keys}><kbd>{keys}</kbd><span>{action}</span></p>)}</div>
+        <header><div><span>HELP & SHORTCUTS</span><h1 id="shortcuts-title">What do you want to do?</h1><p>Start with a task. BRACE will take you to the right place.</p></div><button type="button" onClick={onClose} aria-label="Close help"><X className="h-4 w-4" /></button></header>
+        <div className="help-task-grid">
+          <button type="button" onClick={() => go("search")}><Search className="h-4 w-4" /><span><strong>Find something</strong><small>Search memories and original sources</small></span><ChevronRight className="ml-auto h-4 w-4" /></button>
+          <button type="button" onClick={onQuickCapture}><Plus className="h-4 w-4" /><span><strong>Save something</strong><small>Capture a decision, lesson, or warning</small></span><ChevronRight className="ml-auto h-4 w-4" /></button>
+          <button type="button" onClick={() => go("assistant")}><MessageSquareText className="h-4 w-4" /><span><strong>Continue with AI</strong><small>Ask with selected local context</small></span><ChevronRight className="ml-auto h-4 w-4" /></button>
+          <button type="button" onClick={() => go("connections")}><GitBranch className="h-4 w-4" /><span><strong>Connect an AI tool</strong><small>Start safely with read-only access</small></span><ChevronRight className="ml-auto h-4 w-4" /></button>
+        </div>
+        <div className="shortcut-list"><span>Keyboard shortcuts</span>{shortcuts.map(([keys, action]) => <p key={keys}><kbd>{keys}</kbd><span>{action}</span></p>)}</div>
       </section>
     </div>
   );
@@ -813,9 +893,9 @@ function Overview() {
   if (failedRuns) focusItems.push({ title: "Inspect a failed automation", detail: `${failedRuns} run${failedRuns === 1 ? "" : "s"} stopped safely`, view: "automations", icon: Workflow, tone: "warning" });
   if (staleProject) focusItems.push({ title: `Refresh ${staleProject.name}`, detail: staleProject.last_indexed_at ? `Last indexed ${formatDate(staleProject.last_indexed_at)}` : "This project has not been indexed yet", view: "projects", icon: FolderSync, tone: "source" });
   if (!connectors.some((connector) => connector.configured)) focusItems.push({ title: "Connect an AI client", detail: "Start read-only and keep the memory boundary visible", view: "connections", icon: GitBranch, tone: "connection" });
-  focusItems.push({ title: "Ask a recurring question", detail: "Recall decisions and evidence before starting new work", view: "search", icon: Search, tone: "recall" });
+  focusItems.push({ title: "Search before you continue", detail: "Find earlier decisions and evidence before starting new work", view: "search", icon: Search, tone: "recall" });
   return (
-    <Page eyebrow="Local working set" title="Continue from what mattered." description="A compact field record of decisions, evidence, and unfinished context—kept on this machine and ready for the next tool.">
+    <Page eyebrow="Ready when you are" title="Continue from what mattered." description="Pick up an important memory, search your sources, or take the next useful action.">
       <section className="brace-hero-grid">
         <button type="button" onClick={() => featured && setSelectedMemory(featured)} className="brace-memory-signal group text-left" disabled={!featured}>
           <div className="memory-signal-orbit" aria-hidden="true"><span /><span /><span /></div>
@@ -836,7 +916,7 @@ function Overview() {
               return <button key={`${item.view}-${item.title}`} type="button" onClick={() => setView(item.view)} className="focus-stack-item" data-tone={item.tone}><span>{String(index + 1).padStart(2, "0")}</span><i><Icon className="h-4 w-4" /></i><div><strong>{item.title}</strong><small>{item.detail}</small></div><ArrowRight className="ml-auto h-4 w-4" /></button>;
             })}
           </div>
-          <button type="button" onClick={() => setView("search")} className="vitals-recall"><Search className="h-4 w-4" /> Recall before you continue <ArrowRight className="ml-auto h-4 w-4" /></button>
+          <button type="button" onClick={() => setView("search")} className="vitals-recall"><Search className="h-4 w-4" /> Search your memory <ArrowRight className="ml-auto h-4 w-4" /></button>
         </div>
       </section>
 
@@ -952,7 +1032,7 @@ function InboxView() {
     }
   };
   return (
-    <Page eyebrow="Safe local capture" title="Inbox" description="Catch a thought, name a decision, or clear a memory review without rewriting an imported source file.">
+    <Page eyebrow="Save something useful" title="Capture" description="Keep a decision, lesson, or useful outcome so you can find it again later. Your imported files are never rewritten.">
       <div className="grid gap-5 xl:grid-cols-[1.08fr_.92fr]">
         <section className="inbox-composer">
           <div className="inbox-mode" role="group" aria-label="Inbox capture type">
@@ -1020,7 +1100,7 @@ function AiWorkspaceView() {
   return (
     <div className="ai-workspace">
       <header className="ai-workspace-head">
-        <div><div className="brace-eyebrow"><span />Original workspace, safer core</div><h1>AI Workspace</h1><p>BRACE recalls local context first, then sends only the approved capsule through your installed AI client.</p></div>
+        <div><div className="brace-eyebrow"><span />Ask with your context</div><h1>Ask BRACE</h1><p>Write your question, review the attached local context, then choose when to send it to your AI client.</p></div>
         <div className="ai-runtime-state"><span className={available.length ? "is-online" : ""} /><div><strong>{available.length ? `${available.length} local client${available.length === 1 ? "" : "s"} ready` : "No runnable client detected"}</strong><small>Read-only agent workspace · persistent local history</small></div></div>
       </header>
       <div className="ai-boundary"><ShieldCheck className="h-4 w-4" /><span><strong>Every turn has a visible boundary.</strong> BRACE previews how many memory and source records will be sent. Retrieved context may be sent to the selected provider. Imported projects cannot be edited from this surface.</span></div>
@@ -1086,11 +1166,11 @@ function SearchView() {
     if (searchQuery.trim()) persistSaved([searchQuery, ...savedRecalls]);
   };
   return (
-    <Page eyebrow="Retrieval" title="Recall with provenance." description="Search durable memory and source chunks separately. BRACE never presents generated context as a source file.">
+    <Page eyebrow="Find anything" title="Search your memory." description="Search saved memories and original source passages together. BRACE keeps the two clearly separated.">
       <form onSubmit={submit} className="relative max-w-4xl">
         <Search className="absolute left-5 top-1/2 h-5 w-5 -translate-y-1/2 text-white/30" />
         <input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="What did we decide about imported project files?" className="h-14 w-full rounded-2xl border border-white/[0.1] bg-white/[0.04] pl-14 pr-28 text-[15px] outline-none placeholder:text-white/23 focus:border-[#7dd3fc]/45" autoFocus />
-        <button type="submit" className="brace-primary absolute right-2 top-2 h-10 px-4">Recall</button>
+        <button type="submit" className="brace-primary absolute right-2 top-2 h-10 px-4">Search</button>
       </form>
       <div className="recall-range mt-3 flex flex-wrap items-center gap-2 text-[10px] text-white/30">
         <span className="mr-1 flex items-center gap-1.5 text-white/40"><CalendarClock className="h-3.5 w-3.5" />Time scope</span>
@@ -1154,7 +1234,7 @@ function MemoriesView() {
           ? right.importance - left.importance
           : new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime());
   return (
-    <Page eyebrow="Durable context" title="Memory" description="Concise facts, lessons, procedures, warnings, and preferences—kept separate from raw source material." actions={<><button type="button" aria-label="Open memory review queue" onClick={() => setView("review")} className="brace-secondary h-10 px-4"><Archive className="h-4 w-4" />Review queue{snapshot.memoryQuality.pendingReview > 0 && <span className="rounded-full bg-sky-300/15 px-1.5 py-0.5 text-[9px] text-sky-100">{snapshot.memoryQuality.pendingReview}</span>}</button><button type="button" onClick={() => setComposerOpen((value) => !value)} className="brace-primary h-10 px-4"><Plus className="h-4 w-4" />Remember</button></>}>
+    <Page eyebrow="Everything you saved" title="Library" description="Browse your decisions, lessons, procedures, warnings, and preferences. Original source passages stay separate." actions={<><button type="button" aria-label="Open memory review queue" onClick={() => setView("review")} className="brace-secondary h-10 px-4"><Archive className="h-4 w-4" />Review queue{snapshot.memoryQuality.pendingReview > 0 && <span className="rounded-full bg-sky-300/15 px-1.5 py-0.5 text-[9px] text-sky-100">{snapshot.memoryQuality.pendingReview}</span>}</button><button type="button" onClick={() => setComposerOpen((value) => !value)} className="brace-primary h-10 px-4"><Plus className="h-4 w-4" />Add memory</button></>}>
       {composerOpen && <MemoryComposer onClose={() => setComposerOpen(false)} />}
       <div className="memory-toolbelt mb-4">
         <label><Search className="h-4 w-4" /><span className="sr-only">Filter memories</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Filter by title, tag, scope…" /></label>
@@ -1302,7 +1382,7 @@ function TimelineView() {
     return matchesType && (!needle || `${event.title} ${event.summary} ${event.eventType}`.toLowerCase().includes(needle));
   });
   return (
-    <Page eyebrow="Change over time" title="Timeline & decisions" description="An auditable history of explicit decisions, memory changes, evidence, and indexing events." actions={<button type="button" onClick={() => setFormOpen((value) => !value)} className="brace-primary h-10 px-4"><GitBranch className="h-4 w-4" />Record decision</button>}>
+    <Page eyebrow="What changed" title="Timeline" description="See decisions, memory changes, evidence, and project updates in the order they happened." actions={<button type="button" onClick={() => setFormOpen((value) => !value)} className="brace-primary h-10 px-4"><GitBranch className="h-4 w-4" />Record decision</button>}>
       {formOpen && <DecisionComposer onClose={() => setFormOpen(false)} />}
       <div className="timeline-toolbelt mx-auto mb-4 max-w-4xl"><label><Search className="h-4 w-4" /><span className="sr-only">Filter timeline</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find an event or decision…" /></label><div role="group" aria-label="Filter timeline by event type">{[["all", "All"], ["memory", "Memory"], ["decision", "Decisions"], ["project", "Projects"], ["evidence", "Evidence"]].map(([value, label]) => <button key={value} type="button" className={type === value ? "is-active" : ""} aria-pressed={type === value} onClick={() => setType(value)}>{label}</button>)}</div><span>{filteredEvents.length} events</span></div>
       <div className="brace-card brace-timeline-card mx-auto max-w-4xl overflow-hidden px-5 py-3 sm:px-8">
@@ -1362,7 +1442,7 @@ function GraphView() {
   const connectedEdges = selected ? snapshot.graph.edges.filter((edge) => edge.from === selected.id || edge.to === selected.id) : [];
   const connectedNodes = connectedEdges.map((edge) => snapshot.graph.nodes.find((node) => node.id === (edge.from === selected?.id ? edge.to : edge.from))).filter(Boolean) as GraphNode[];
   return (
-    <Page eyebrow="Living relationships" title="Knowledge atlas" description="Travel one memory graph through the two original maps, the two public maps, and a new time-based Chronicle.">
+    <Page eyebrow="See the connections" title="Knowledge map" description="Explore how projects, sources, decisions, memories, and named ideas relate to one another.">
       <div className="graph-toolbar">
         <label className="graph-search"><Search className="h-4 w-4" /><span className="sr-only">Find a node</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a memory, source, or entity…" /></label>
         <div className="graph-layout graph-layout--five" aria-label="Graph preset">
@@ -1420,7 +1500,7 @@ function ProjectsView() {
   const { snapshot, addProject, reindexProject } = useBrace();
   if (!snapshot) return null;
   return (
-    <Page eyebrow="Source context" title="Projects" description="BRACE reads supported text files into a local index. It never moves, edits, or follows symlinks out of the selected folder." actions={<button type="button" onClick={() => void addProject()} className="brace-primary h-10 px-4"><FolderInput className="h-4 w-4" />Import folder</button>}>
+    <Page eyebrow="Your source folders" title="Projects" description="Choose the folders BRACE can search. Your original files stay in place and are never edited." actions={<button type="button" onClick={() => void addProject()} className="brace-primary h-10 px-4"><FolderInput className="h-4 w-4" />Add project folder</button>}>
       <div className="grid gap-4 lg:grid-cols-2">
         {snapshot.projects.map((project) => <ProjectCard key={project.id} project={project} onReindex={() => void reindexProject(project.id)} />)}
       </div>
@@ -1440,7 +1520,7 @@ function SkillsView() {
   const { snapshot, toggleSkill, installSkill } = useBrace();
   if (!snapshot) return null;
   return (
-    <Page eyebrow="Declarative extensions" title="BRACE Skills" description="Small, permission-scoped workflows that can read or write only the capabilities declared in their manifest. No arbitrary shell or JavaScript execution." actions={<button type="button" onClick={() => void installSkill()} className="brace-primary h-10 px-4"><PackagePlus className="h-4 w-4" />Install manifest</button>}>
+    <Page eyebrow="Reusable actions" title="Skills" description="Add small, permission-scoped actions. BRACE shows exactly what each skill can read or change before you enable it." actions={<button type="button" onClick={() => void installSkill()} className="brace-primary h-10 px-4"><PackagePlus className="h-4 w-4" />Install skill file</button>}>
       <div className="grid gap-4 lg:grid-cols-2">
         {snapshot.skills.map((skill) => <SkillCard key={skill.name} skill={skill} onToggle={(enabled) => void toggleSkill(skill.name, enabled)} />)}
       </div>
@@ -1537,9 +1617,9 @@ function AutomationsView() {
   if (!snapshot || !automations) return null;
   return (
     <Page
-      eyebrow="Local orchestration"
-      title="Automation studio"
-      description="Compose private memory workflows from typed triggers, conditions, and actions. Every run is inspectable; arbitrary scripts and hidden network calls are impossible."
+      eyebrow="Let BRACE handle the routine"
+      title="Automations"
+      description="Start with a safe template or build a local workflow. You can preview every action before enabling it and inspect every run afterward."
       actions={
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => void pauseAutomations(!automations.paused)} className={`brace-secondary h-10 px-4 ${automations.paused ? "automation-resume" : ""}`}>
@@ -1552,7 +1632,7 @@ function AutomationsView() {
     >
       <section className={`automation-pulse ${automations.paused ? "is-paused" : ""}`} aria-label="Automation runtime status">
         <div className="automation-pulse-orbit" aria-hidden="true"><i /><i /><i /></div>
-        <div><span><i />{automations.paused ? "AUTOMATIC TRIGGERS PAUSED" : "LOCAL AUTOMATION RUNTIME ACTIVE"}</span><h2>{definitions.filter((item) => item.enabled).length} recipes listening.</h2><p>Schedules and BRACE events execute on this device while the desktop app is open. Manual previews remain available when paused.</p></div>
+        <div><span><i />{automations.paused ? "AUTOMATIONS PAUSED" : "RUNNING ON THIS DEVICE"}</span><h2>{definitions.filter((item) => item.enabled).length} active workflow{definitions.filter((item) => item.enabled).length === 1 ? "" : "s"}.</h2><p>Enabled workflows run while BRACE is open. You can pause everything at any time, and previews never change memory.</p></div>
         <dl><div><dt>Recipes</dt><dd>{definitions.length}</dd></div><div><dt>Successful</dt><dd>{successful}</dd></div><div><dt>Attention</dt><dd className={failed ? "text-rose-200" : ""}>{failed}</dd></div></dl>
       </section>
 
@@ -1561,7 +1641,7 @@ function AutomationsView() {
       )}
 
       <section className="mt-5">
-        <div className="mb-3 flex items-end justify-between gap-4"><div><span className="brace-label">Blueprints</span><p className="mt-1 text-[11px] text-white/30">Start from a safe recipe, inspect it, then choose when to enable it.</p></div><span className="text-[9px] text-white/22">No code · no cloud</span></div>
+        <div className="mb-3 flex items-end justify-between gap-4"><div><span className="brace-label">Start with a template</span><p className="mt-1 text-[11px] text-white/30">Choose one, review what it will do, then decide whether to enable it.</p></div><span className="text-[9px] text-white/22">No code · no cloud</span></div>
         <div className="automation-template-strip">
           {automations.templates.map((template) => (
             <button key={template.id} type="button" onClick={() => setBuilder({ source: template })} className="automation-template">
@@ -1779,7 +1859,7 @@ function ConnectionsView() {
     window.setTimeout(() => setCopied(false), 1_800);
   };
   return (
-    <Page eyebrow="One memory. Every AI." title="Connection studio" description="Detect an AI client, choose its memory permission, and connect it to the same local BRACE brain with a guided, recoverable setup." actions={<button type="button" onClick={() => void refreshConnectors()} className="brace-secondary h-10 px-4"><RefreshCw className="h-4 w-4" />Detect again</button>}>
+    <Page eyebrow="Use the same memory everywhere" title="AI connections" description="Choose an installed AI tool, review its permission, and connect it with a guided setup you can undo." actions={<button type="button" onClick={() => void refreshConnectors()} className="brace-secondary h-10 px-4"><RefreshCw className="h-4 w-4" />Check again</button>}>
       <section className="connector-access mb-5" aria-label="Connector memory permission">
         <div><ShieldCheck className="h-4 w-4" /><span><strong>Memory permission</strong><small>Forgetting is never enabled by guided setup.</small></span></div>
         <div role="group" aria-label="Choose memory access">
@@ -1898,6 +1978,7 @@ function MemoryDetail({ memory, onClose }: { memory: BraceMemory; onClose: () =>
   const { forgetMemory, setSearchQuery, search, toggleMemoryPin, setAssistantDraft, setView } = useBrace();
   const [full, setFull] = useState<BraceMemory>(memory);
   const [copied, setCopied] = useState(false);
+  const [confirmForget, setConfirmForget] = useState(false);
   useEffect(() => {
     const api = window.electron;
     if (api?.getBraceMemory) void api.getBraceMemory(memory.id).then((value) => value && setFull(value));
@@ -1928,7 +2009,9 @@ function MemoryDetail({ memory, onClose }: { memory: BraceMemory; onClose: () =>
       <aside className="brace-detail-panel flex h-full w-full max-w-[520px] flex-col border-l border-white/[0.08] bg-[#101318] shadow-2xl">
         <div className="flex h-[72px] items-center justify-between border-b border-white/[0.07] px-5"><span className={`rounded-md border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider ${kindTone[full.kind]}`}>{full.kind}</span><button type="button" onClick={onClose} className="rounded-lg p-2 text-white/35 hover:bg-white/5 hover:text-white" aria-label="Close memory"><X className="h-4 w-4" /></button></div>
         <div className="flex-1 overflow-y-auto p-6"><h1 id="memory-detail-title" className="text-2xl font-medium leading-tight tracking-[-0.03em]">{full.title}</h1><p className="mt-3 text-sm leading-6 text-white/48">{full.summary}</p><div className="memory-detail-actions"><button type="button" onClick={() => void togglePin()}>{full.pinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}{full.pinned ? "Unpin memory" : "Pin for daily use"}</button><button type="button" onClick={() => void copyMemory()}>{copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}{copied ? "Copied" : "Copy memory"}</button><button type="button" onClick={findRelated}><Search className="h-3.5 w-3.5" />Find related context</button><button type="button" onClick={handOffToAi} className="is-handoff"><MessageSquareText className="h-3.5 w-3.5" />Continue with AI</button></div><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Durable content</h2><p className="mt-3 whitespace-pre-wrap text-[13px] leading-6 text-white/66">{full.content}</p></div><dl className="mt-7 grid grid-cols-2 gap-4 border-t border-white/[0.06] pt-6 text-[10px]"><div><dt className="text-white/25">Scope</dt><dd className="mt-1 truncate text-white/52">{full.scope}</dd></div><div><dt className="text-white/25">Confidence</dt><dd className="mt-1 text-white/52">{Math.round(full.confidence * 100)}%</dd></div><div><dt className="text-white/25">Updated</dt><dd className="mt-1 text-white/52">{formatDate(full.updatedAt)}</dd></div><div><dt className="text-white/25">Embedding</dt><dd className="mt-1 text-white/52">{full.embeddingModel || "Lexical only"}</dd></div></dl><div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Provenance</h2><div className="mt-3 rounded-xl border border-sky-300/10 bg-sky-300/[0.035] p-4"><div className="flex items-center gap-2 text-xs text-sky-100/70"><FileText className="h-4 w-4" />{shortUri(full.sourceUri)}</div>{full.sourceExcerpt && <p className="mt-2 text-[11px] leading-5 text-white/36">{full.sourceExcerpt}</p>}</div></div>{full.evidence && full.evidence.length > 0 && <div className="mt-7 border-t border-white/[0.06] pt-6"><h2 className="brace-label">Evidence</h2>{full.evidence.map((evidence) => <div key={evidence.id} className="mt-3 rounded-xl border border-white/[0.06] p-4"><div className="text-[10px] uppercase text-white/25">{evidence.outcome}</div><p className="mt-1 text-xs text-white/55">{evidence.summary}</p><p className="mt-2 font-mono text-[9px] text-white/25">{evidence.reference}</p></div>)}</div>}</div>
-        <div className="flex items-center justify-between border-t border-white/[0.07] p-5"><span className="text-[10px] text-white/25">Forgetting keeps only a non-sensitive audit tombstone.</span><button type="button" onClick={() => void forgetMemory(full.id)} className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-xs text-rose-200/60 hover:bg-rose-400/[0.07] hover:text-rose-100"><Trash2 className="h-3.5 w-3.5" />Forget</button></div>
+        <div className={`memory-forget-bar ${confirmForget ? "is-confirming" : ""}`}>
+          {!confirmForget ? <><span>Forgetting removes this content from recall and cannot be undone from the app.</span><button type="button" onClick={() => setConfirmForget(true)}><Trash2 className="h-3.5 w-3.5" />Forget…</button></> : <><span><strong>Forget this memory?</strong> The source file, if any, stays untouched.</span><div><button type="button" onClick={() => setConfirmForget(false)}>Cancel</button><button type="button" className="memory-forget-confirm" onClick={() => void forgetMemory(full.id)}><Trash2 className="h-3.5 w-3.5" />Forget memory</button></div></>}
+        </div>
       </aside>
     </div>
   );

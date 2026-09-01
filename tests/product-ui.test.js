@@ -11,12 +11,12 @@ test("product navigation maps to implemented memory workflows", () => {
   const store = read("src/lib/brace/store.ts");
   for (const label of [
     "Home",
-    "Recall",
+    "Search",
     "Capture",
-    "Ask AI",
-    "Memory library",
+    "Ask BRACE",
+    "Library",
     "Timeline",
-    "Knowledge map",
+    "Map",
     "Projects",
     "Automations",
     "AI connections",
@@ -26,11 +26,11 @@ test("product navigation maps to implemented memory workflows", () => {
     assert.match(app, new RegExp(`label: "${label}"`));
   }
   for (const capability of [
-    "Explore synthetic demo",
-    "Import a project",
-    "Recall with provenance",
+    "Try an example workspace",
+    "Choose a project folder",
+    "Search memories and sources",
     "Record decision",
-    "Install manifest",
+    "Install skill file",
     "Create SQLite backup",
     "Export portable JSON",
     "Delete all",
@@ -47,7 +47,12 @@ test("product navigation maps to implemented memory workflows", () => {
   assert.match(app, /Retain latest answer/);
   assert.match(app, /Continue with AI/);
   assert.match(app, /NEXT USEFUL MOVE/);
-  assert.match(app, /type NavSection = "Work" \| "Library" \| "System"/);
+  assert.match(app, /type NavSection = "Work" \| "Organize" \| "Connect"/);
+  assert.match(app, /const sidebarNav = nav\.filter/);
+  assert.match(app, /function WorkspaceContextNav\(\)/);
+  assert.match(app, /Help & shortcuts/);
+  assert.match(app, /More options/);
+  assert.match(app, /Forget this memory\?/);
   assert.match(store, /assistantDraft/);
   assert.match(app, /Saved recalls/);
   assert.match(app, /Pin for daily use/);
@@ -82,7 +87,7 @@ test("premium workspace interactions remain real, keyboard reachable, and locall
     "Command palette",
     "Quick capture",
     "Capture a memory",
-    "Keyboard map",
+    "Help & shortcuts",
     "Graph preset",
     "Make the workspace fit you",
     "Session draft",

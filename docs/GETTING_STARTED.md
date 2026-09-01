@@ -91,9 +91,9 @@ Attach a source URI and excerpt when available. BRACE redacts common credential-
 
 Exact normalized duplicates reuse the active record. Similar records are returned as review candidates and are not auto-merged.
 
-## Recall
+## Search
 
-Open **Recall** and search in plain language. Results are separated into:
+Open **Search** and ask in plain language. Results are separated into:
 
 - **Durable memories**, created explicitly or through an authorized skill or MCP write.
 - **Source evidence**, rebuilt from imported project files.
@@ -118,12 +118,12 @@ If Ollama is down or returns incompatible vectors, BRACE completes lexical searc
 
 ## Connect an AI
 
-Open **Connections**. BRACE detects Codex CLI, Claude Code, and Antigravity and can configure a local `brace` MCP entry after you choose one of two scopes:
+Open **AI connections**. BRACE detects Codex CLI, Claude Code, and Antigravity and can configure a local `brace` MCP entry after you choose one of two scopes:
 
 - **Read-only** can search, inspect, and create a session-start brief.
 - **Remember** adds non-destructive durable memory, decision, skill, and session-handoff tools. Forgetting remains disabled.
 
-BRACE previews the boundary, backs up an existing client config, runs only the client-specific setup command, and verifies that the BRACE entry exists before showing **Configured**. Run one turn in **AI Workspace** to verify the live client and provider path. Results are kept in local conversation history, but nothing becomes durable memory until you choose **Retain latest answer**.
+BRACE previews the boundary, backs up an existing client config, runs only the client-specific setup command, and verifies that the BRACE entry exists before showing **Configured**. Run one turn in **Ask BRACE** to verify the live client and provider path. Results are kept in local conversation history, but nothing becomes durable memory until you choose **Retain latest answer**.
 
 Any other stdio MCP client can use the exact manual configuration shown in Connections. See [MCP.md](MCP.md) before enabling write flags or sending private retrieved context to a model provider.
 

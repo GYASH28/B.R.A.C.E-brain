@@ -4,6 +4,13 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ## [Unreleased]
 
+### Planned
+
+- Collect structured feedback from the 0.6.0 preview.
+- Add native signing and update-channel work when maintainers have signing infrastructure.
+
+## [0.6.0] - 2026-09-01
+
 ### Added
 
 - Added task-based **Help & shortcuts**, Library and Automations context tabs, progressive Quick Capture options, a two-step memory-forget guard, and a light frosted first-run path that explains the local boundary in plain language.
@@ -34,11 +41,6 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Synthetic Electron journeys now prove capture-draft recovery and clearing, multi-view history, memory and timeline filtering, memory-to-AI draft handoff, responsive collapse without horizontal overflow, automation execution, graph interaction, privacy-safe connections, and zero renderer-console errors.
 - The release stress gate proves 5,000-memory operation with explicit p95/p99 recall, bounded graph/list payloads, export, restart, memory-growth, backup parity, concurrent-connection, and database-integrity ceilings.
 - The new website film is rendered separately for desktop and portrait, encoded with dense scrub keyframes, and checked for continuous playhead movement, reduced-motion poster behavior, healthy lateral-gallery overflow, keyboard focus, responsive layout, and WCAG 2.2 AA contrast.
-
-### Planned
-
-- Collect structured feedback from the 0.5.0 preview.
-- Add native signing and update-channel work when maintainers have signing infrastructure.
 
 ## [0.5.0] - 2026-08-28
 
@@ -146,7 +148,8 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Removed private seed data, machine-specific paths, legacy local servers, arbitrary plugin execution, and broad renderer privileges from the public candidate.
 - Added secret-pattern tests, dependency auditing, strict embedding endpoint validation, sandboxed rendering, CSP, and repository hygiene controls.
 
-[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0
 [0.4.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0
 [0.3.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.3.0

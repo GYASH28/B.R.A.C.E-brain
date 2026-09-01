@@ -4,7 +4,7 @@ Do not attach a real database, export, backup, project file, or log containing p
 
 ## The desktop opens with an empty database
 
-That is the intended first run. Choose **Import a project** or **Explore synthetic demo**. BRACE never silently imports an old prototype snapshot.
+That is the intended first run. Choose **Choose a project folder** or **Try an example workspace**. BRACE never silently imports an old prototype snapshot.
 
 If content was expected after an upgrade, open **Settings** and inspect the database location. Confirm the old process and new process use the same `BRACE_DATA_DIR` or `BRACE_DATABASE_PATH` override.
 
@@ -92,21 +92,21 @@ BRACE stops execution when its manifest checksum differs from the installed reco
 
 ## Windows shows an unknown publisher
 
-0.5.0 is not code-signed. Download only from the repository release, compare the file against `SHA256SUMS.txt`, and proceed only if they match. Native signing is on the roadmap.
+0.6.0 is not code-signed. Download only from the repository release, compare the file against `SHA256SUMS.txt`, and proceed only if they match. Native signing is on the roadmap.
 
 ## AppImage does not start
 
 Make it executable:
 
 ```bash
-chmod +x BRACE-0.5.0.AppImage
-./BRACE-0.5.0.AppImage
+chmod +x BRACE-0.6.0.AppImage
+./BRACE-0.6.0.AppImage
 ```
 
 Some distributions need FUSE 2 compatibility. AppImage supports an extraction fallback:
 
 ```bash
-./BRACE-0.5.0.AppImage --appimage-extract
+./BRACE-0.6.0.AppImage --appimage-extract
 ./squashfs-root/AppRun
 ```
 

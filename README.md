@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://b-r-a-c-e-brain.vercel.app/">Website</a> ·
   <a href="https://b-r-a-c-e-brain.vercel.app/guide/">Beginner guide</a> ·
-  <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0">Download 0.5.0</a> ·
+  <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.6.0">Download 0.6.0</a> ·
   <a href="docs/README.md">Documentation</a>
 </p>
 
@@ -19,7 +19,7 @@
 
 BRACE is a local-first personal AI memory layer for people who work across multiple AI tools. It turns selected project files, explicit decisions, durable memories, evidence, timelines, and relationships into one provenance-backed store. MCP-compatible clients can recall the same context without a BRACE cloud account or hosted middleman.
 
-> Release status: **0.5.0 preview**. Linux is locally smoke-tested. Windows is built and tested by the repository's native GitHub Actions runner. Packages are not yet code-signed.
+> Release status: **0.6.0 preview**. Linux is locally smoke-tested. Windows is built and tested by the repository's native GitHub Actions runner. Packages are not yet code-signed.
 
 | If you want to… | Start here |
 | --- | --- |
@@ -57,11 +57,11 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 
 ## Install
 
-Download a package from the [BRACE 0.5.0 release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0):
+Download a package from the [BRACE 0.6.0 release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.6.0):
 
-- **Windows:** `BRACE-Setup-0.5.0.exe`
-- **Debian / Ubuntu:** `brace-brain_0.5.0_amd64.deb`
-- **Other Linux distributions:** `BRACE-0.5.0.AppImage`
+- **Windows:** `BRACE-Setup-0.6.0.exe`
+- **Debian / Ubuntu:** `brace-brain_0.6.0_amd64.deb`
+- **Other Linux distributions:** `BRACE-0.6.0.AppImage`
 
 Verify the artifact against `SHA256SUMS.txt` in the release before running it. The preview installers are not code-signed, so the operating system may display an unknown-publisher warning.
 
@@ -229,10 +229,10 @@ Application behavior is split across the framework-agnostic memory core, the har
 ## Honest limitations
 
 - Preview installers are unsigned. There is no automatic update channel.
-- macOS packaging is not part of 0.5.0.
+- macOS packaging is not part of 0.6.0.
 - Full-text search works without another service; semantic ranking requires the user to run or configure an embedding provider.
 - Remote HTTPS embeddings are an advanced source-level feature. The desktop settings intentionally expose loopback Ollama only.
-- Project indexing is text-oriented and does not parse PDFs, images, audio, or proprietary document formats in 0.5.0.
+- Project indexing is text-oriented and does not parse PDFs, images, audio, or proprietary document formats in 0.6.0.
 - BRACE does not encrypt the database itself. Rely on operating-system full-disk encryption and protect exported backups.
 - MCP stdio inherits the trust of the client process that launches it. Read-only is the default, not an authentication system.
 - The knowledge graph uses deterministic entity and relationship extraction, not an opaque model. It is inspectable but intentionally conservative.

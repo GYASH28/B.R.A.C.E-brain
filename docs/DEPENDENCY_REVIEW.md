@@ -1,13 +1,13 @@
 # Dependency and license review
 
-The 0.5.0 lockfile is the authoritative dependency inventory. `npm ci` verifies its integrity and `npm audit --audit-level=high` blocks known high or critical advisories in CI and release jobs.
+The 0.6.0 lockfile is the authoritative dependency inventory. `npm ci` verifies its integrity and `npm audit --audit-level=high` blocks known high or critical advisories in CI and release jobs.
 
 Run:
 
 ```bash
 npm run license:audit
 npm audit --audit-level=high
-npm sbom --sbom-format cyclonedx > brace-0.5.0.cdx.json
+npm sbom --sbom-format cyclonedx > brace-0.6.0.cdx.json
 ```
 
 The license audit reads the installed lock metadata, reports every declared license expression, and fails on any expression outside the reviewed allowlist. The current set is permissive or notice-based, with two relevant qualifications:

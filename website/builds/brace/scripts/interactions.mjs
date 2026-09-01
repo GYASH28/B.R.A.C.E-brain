@@ -63,7 +63,7 @@ try {
   });
   await check("equal platform downloads are versioned", async () => {
     const links = await page.locator('[data-download="windows"],[data-download="linux"],[data-download="deb"]').evaluateAll((nodes) => nodes.map((node) => node.href));
-    if (links.length !== 3 || links.some((url) => !url.includes("/releases/download/v0.5.0/"))) throw new Error("A download is not versioned");
+    if (links.length !== 3 || links.some((url) => !url.includes("/releases/download/v0.6.0/"))) throw new Error("A download is not versioned");
     const widths = await page.locator(".platforms article").evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
     if (Math.abs(widths[0] - widths[1]) > 2) throw new Error("Windows and Linux are not equal width");
   });

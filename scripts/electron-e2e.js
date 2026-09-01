@@ -183,7 +183,7 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Stop re-explaining your work')");
   const onboarding = await screenshot(window, "app-onboarding");
   await clickText(window, "Try an example workspace");
-  await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
+  await waitFor(window, "document.body.innerText.includes('Think through the whole picture.')");
   const overview = await screenshot(window, "app-overview");
 
   pressKey(window, "?");
@@ -193,7 +193,7 @@ async function run() {
   await clickText(window, "Find something");
   await waitFor(window, "document.body.innerText.includes('Search your memory.')");
   await clickText(window, "Home");
-  await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
+  await waitFor(window, "document.body.innerText.includes('Think through the whole picture.')");
 
   pressKey(window, "K", ["control"]);
   await waitFor(window, "document.querySelector('[aria-label=\"Command palette\"]')");
@@ -231,7 +231,7 @@ async function run() {
     content: "Compare every downloaded release artifact with the published SHA-256 checksum before installation.",
   });
   await window.reload();
-  await waitFor(window, "document.body.innerText.includes('Continue from what mattered.')");
+  await waitFor(window, "document.body.innerText.includes('Think through the whole picture.')");
   await clickText(window, "Library");
   await window.webContents.executeJavaScript(
     "document.querySelector('button[aria-label=\"Open memory review queue\"]')?.click()",
@@ -290,8 +290,8 @@ async function run() {
   const timelineFilteringReady = await window.webContents.executeJavaScript("document.querySelectorAll('.brace-timeline-card article').length === 1");
   const timeline = await screenshot(window, "app-timeline");
 
-  await clickText(window, "Map");
-  await waitFor(window, "document.querySelector('svg[aria-label*=\"knowledge nodes\"]')");
+  await clickText(window, "Brain");
+  await waitFor(window, "document.querySelector('svg[aria-label*=\"knowledge nodes\"]') && document.body.innerText.includes('Your Brain')");
   const graphInteraction = await window.webContents.executeJavaScript(`
     (async () => {
       const source = document.querySelector('.graph-node[aria-label^="source:"]');
@@ -300,7 +300,8 @@ async function run() {
       source.dispatchEvent(new MouseEvent('click', { bubbles: true }));
       zoom.click();
       await new Promise((resolve) => setTimeout(resolve, 250));
-      const selectedSource = document.querySelector('.graph-inspector-type')?.textContent?.trim().toLowerCase() === 'source';
+      const selectedSource = document.querySelector('.graph-inspector-type')?.textContent?.trim().toLowerCase() === 'document';
+      const zoomed = document.querySelector('.graph-canvas-actions span')?.textContent?.trim() === '112%';
       const beforeKeyboard = document.querySelector('.graph-node.is-selected')?.getAttribute('aria-label');
       document.querySelector('.graph-node.is-selected')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
       await new Promise((resolve) => setTimeout(resolve, 120));
@@ -315,16 +316,23 @@ async function run() {
       }
       return {
         selectedSource,
-        zoomed: document.querySelector('.graph-zoom span')?.textContent?.trim() === '112%',
+        zoomed,
         keyboardTravel: Boolean(beforeKeyboard && afterKeyboard && beforeKeyboard !== afterKeyboard),
         presets: presetResults,
       };
     })()
   `);
+  pressKey(window, "F");
+  await wait(500);
+  graphInteraction.fullscreenWorks = await window.webContents.executeJavaScript("Boolean(document.fullscreenElement?.classList.contains('graph-stage'))");
+  if (graphInteraction.fullscreenWorks) {
+    pressKey(window, "Escape");
+    await waitFor(window, "!document.fullscreenElement");
+  }
   await window.webContents.executeJavaScript(`
     (() => {
       Array.from(document.querySelectorAll('.graph-layout button')).find((button) => button.textContent?.trim() === 'Orbit')?.click();
-      document.querySelector('button[aria-label="Reset zoom"]')?.click();
+      document.querySelector('button[aria-label="Fit graph to view"]')?.click();
     })()
   `);
   const graph = await screenshot(window, "app-graph");
@@ -430,6 +438,7 @@ async function run() {
     snapshot.stats.decisions !== 1 ||
     !graphInteraction.selectedSource ||
     !graphInteraction.zoomed ||
+    !graphInteraction.fullscreenWorks ||
     !graphInteraction.keyboardTravel ||
     !Object.values(graphInteraction.presets || {}).every(Boolean) ||
     Object.keys(graphInteraction.presets || {}).length !== 5 ||

@@ -91,6 +91,16 @@ export interface GraphNode {
   label: string;
   kind?: string;
   status?: string;
+  projectId?: string | null;
+  rootPath?: string;
+  uri?: string;
+  sourceUri?: string | null;
+  mediaType?: string;
+  entityType?: string;
+  scope?: string;
+  sourceCount?: number;
+  chunkCount?: number;
+  sectionCount?: number;
   timestamp?: string | null;
 }
 

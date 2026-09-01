@@ -6,7 +6,7 @@ This guide covers a source checkout. If you downloaded an installer, launch BRAC
 
 - Node.js 24 or newer
 - npm
-- Linux or Windows for the packaged 0.6.0 desktop
+- Linux or Windows for the packaged 0.7.0 desktop
 - A graphical desktop session for Electron
 
 Optional:

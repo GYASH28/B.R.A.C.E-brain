@@ -92,21 +92,21 @@ BRACE stops execution when its manifest checksum differs from the installed reco
 
 ## Windows shows an unknown publisher
 
-0.6.0 is not code-signed. Download only from the repository release, compare the file against `SHA256SUMS.txt`, and proceed only if they match. Native signing is on the roadmap.
+0.7.0 is not code-signed. Download only from the repository release, compare the file against `SHA256SUMS.txt`, and proceed only if they match. Native signing is on the roadmap.
 
 ## AppImage does not start
 
 Make it executable:
 
 ```bash
-chmod +x BRACE-0.6.0.AppImage
-./BRACE-0.6.0.AppImage
+chmod +x BRACE-0.7.0.AppImage
+./BRACE-0.7.0.AppImage
 ```
 
 Some distributions need FUSE 2 compatibility. AppImage supports an extraction fallback:
 
 ```bash
-./BRACE-0.6.0.AppImage --appimage-extract
+./BRACE-0.7.0.AppImage --appimage-extract
 ./squashfs-root/AppRun
 ```
 

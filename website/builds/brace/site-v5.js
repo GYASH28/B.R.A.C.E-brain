@@ -66,11 +66,11 @@
   });
 
   /* Download links / device hint --------------------------------------- */
-  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.6.0";
+  const releaseBase = "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0";
   const downloads = {
-    windows: `${releaseBase}/BRACE-Setup-0.6.0.exe`,
-    linux: `${releaseBase}/BRACE-0.6.0.AppImage`,
-    deb: `${releaseBase}/brace-brain_0.6.0_amd64.deb`,
+    windows: `${releaseBase}/BRACE-Setup-0.7.0.exe`,
+    linux: `${releaseBase}/BRACE-0.7.0.AppImage`,
+    deb: `${releaseBase}/brace-brain_0.7.0_amd64.deb`,
   };
   qa("[data-download]").forEach((link) => {
     const url = downloads[link.dataset.download];

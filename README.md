@@ -9,7 +9,7 @@
 <p align="center">
   <a href="https://b-r-a-c-e-brain.vercel.app/">Website</a> ·
   <a href="https://b-r-a-c-e-brain.vercel.app/guide/">Beginner guide</a> ·
-  <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.6.0">Download 0.6.0</a> ·
+  <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Download 0.7.0</a> ·
   <a href="docs/README.md">Documentation</a>
 </p>
 
@@ -19,7 +19,7 @@
 
 BRACE is a local-first personal AI memory layer for people who work across multiple AI tools. It turns selected project files, explicit decisions, durable memories, evidence, timelines, and relationships into one provenance-backed store. MCP-compatible clients can recall the same context without a BRACE cloud account or hosted middleman.
 
-> Release status: **0.6.0 preview**. Linux is locally smoke-tested. Windows is built and tested by the repository's native GitHub Actions runner. Packages are not yet code-signed.
+> Release status: **0.7.0 preview**. Linux is locally smoke-tested. Windows is built and tested by the repository's native GitHub Actions runner. Packages are not yet code-signed.
 
 | If you want to… | Start here |
 | --- | --- |
@@ -39,14 +39,14 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 - Project indexing with heading-aware chunks, incremental hashes, allowlisted text formats, ignored credentials/dependencies/build output, no symlink traversal, and private-path-free provenance URIs.
 - Lexical search by default. Semantic and hybrid reciprocal-rank fusion only when a real embedding model returns compatible vectors.
 - Optional loopback Ollama embeddings and an advanced HTTPS OpenAI-compatible adapter.
-- A real decision timeline and a provenance-backed knowledge graph.
-- Five deterministic views over the same graph: **Rings**, **Living**, **Orbit**, **Flow**, and chronological **Chronicle**. Changing a view never changes the underlying memory.
+- A primary, provenance-backed **Brain** workspace with real fullscreen, pan, zoom, fit, keyboard travel, a live Home preview, document inspection, and direct continuation into memory or source search.
+- Scalable Overview, Focus, and All projections with explicit clusters, bounded rendering, collision-aware layouts, and five deterministic views: **Rings**, **Living**, **Orbit**, **Flow**, and chronological **Chronicle**. Changing a view never changes the underlying memory.
 - A triage-focused **Capture** inbox, an evidence-aware **Ask BRACE** workspace, and explicit retention: a selected memory can prepare an editable local handoff draft, but no draft crosses the provider boundary until you send it and no answer becomes durable memory until you retain it.
 - Guided, permissioned setup for **Codex CLI**, **Claude Code**, and **Antigravity**, plus exact configuration for any stdio MCP client. BRACE backs up client configuration and verifies its entry before reporting it configured.
 - Session continuity through the `brace_memory_compass` prompt and explicit `brace_session_start` / `brace_session_handoff` tools.
 - A typed local Automation Studio with schedules and BRACE-event triggers, AND/OR conditions, derived permissions, dry-run previews, immutable execution traces, retries, and a global pause. No arbitrary code or shell execution.
 - Explicit time-scoped recall across memory and source evidence: Today, 7 days, 30 days, or All time.
-- A keyboard-first desktop workflow with eight clear main destinations, contextual Library and Automation tabs, task-based help, back/forward workspace history, recent commands, global search focus, recoverable Quick Capture drafts, attention badges, memory and timeline filtering, and responsive compact navigation.
+- A keyboard-first desktop workflow with nine clear main destinations, contextual Library and Automation tabs, task-based help, back/forward workspace history, recent commands, global search focus, recoverable Quick Capture drafts, attention badges, memory and timeline filtering, and responsive compact navigation.
 - Declarative, permission-scoped BRACE Skills. No arbitrary JavaScript, shell, or dynamic code execution.
 - Official MCP v2 stdio tools with structured results and read-only defaults. Writes and destructive forgetting use separate opt-in flags.
 - A hardened Electron boundary with context isolation, sandboxing, navigation and popup denial, a narrow preload bridge, CSP, and external application-data storage.
@@ -57,11 +57,11 @@ BRACE is a local-first personal AI memory layer for people who work across multi
 
 ## Install
 
-Download a package from the [BRACE 0.6.0 release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.6.0):
+Download a package from the [BRACE 0.7.0 release](https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0):
 
-- **Windows:** `BRACE-Setup-0.6.0.exe`
-- **Debian / Ubuntu:** `brace-brain_0.6.0_amd64.deb`
-- **Other Linux distributions:** `BRACE-0.6.0.AppImage`
+- **Windows:** `BRACE-Setup-0.7.0.exe`
+- **Debian / Ubuntu:** `brace-brain_0.7.0_amd64.deb`
+- **Other Linux distributions:** `BRACE-0.7.0.AppImage`
 
 Verify the artifact against `SHA256SUMS.txt` in the release before running it. The preview installers are not code-signed, so the operating system may display an unknown-publisher warning.
 
@@ -229,10 +229,10 @@ Application behavior is split across the framework-agnostic memory core, the har
 ## Honest limitations
 
 - Preview installers are unsigned. There is no automatic update channel.
-- macOS packaging is not part of 0.6.0.
+- macOS packaging is not part of 0.7.0.
 - Full-text search works without another service; semantic ranking requires the user to run or configure an embedding provider.
 - Remote HTTPS embeddings are an advanced source-level feature. The desktop settings intentionally expose loopback Ollama only.
-- Project indexing is text-oriented and does not parse PDFs, images, audio, or proprietary document formats in 0.6.0.
+- Project indexing is text-oriented and does not parse PDFs, images, audio, or proprietary document formats in 0.7.0.
 - BRACE does not encrypt the database itself. Rely on operating-system full-disk encryption and protect exported backups.
 - MCP stdio inherits the trust of the client process that launches it. Read-only is the default, not an authentication system.
 - The knowledge graph uses deterministic entity and relationship extraction, not an opaque model. It is inspectable but intentionally conservative.

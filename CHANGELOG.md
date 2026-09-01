@@ -6,8 +6,35 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 
 ### Planned
 
-- Collect structured feedback from the 0.6.0 preview.
+- Collect structured feedback from the 0.7.0 preview.
 - Add native signing and update-channel work when maintainers have signing infrastructure.
+
+## [0.7.0] - 2026-09-01
+
+### Added
+
+- Promoted the knowledge graph to a primary **Brain** workspace in navigation, a persistent header beacon, and a live interactive Home preview.
+- Added real Fullscreen API support, drag-to-pan, wheel zoom, fit-to-view, collapsible inspection, keyboard traversal, and saved Overview, Focus, and All detail levels.
+- Added explicit dense-graph clusters, aggregated relationships, query-neighborhood projection, type counts, grouped-node counts, and a 2,500-node projection stress contract.
+- Added document provenance, media/project metadata, indexed passage and section counts, project document counts, and direct continuation into the underlying memory or source search workflow.
+- Added the maintained Brain UX contract covering node language, density, performance, responsive behavior, empty/search/filter/fullscreen states, and reduced motion.
+
+### Changed
+
+- Replaced the fixed all-elements SVG renderer with a deterministic level-of-detail model that prioritizes selection, matches, neighbors, projects, degree, and recency while preserving the full graph counts.
+- Reworked all five layouts with collision relaxation and density-aware node sizing and labels.
+- Limited motion to the selected neighborhood instead of creating a perpetual animation for every relationship.
+- Renamed source nodes to user-facing document nodes and made the inspector a real workflow surface rather than a passive description panel.
+
+### Fixed
+
+- Fixed the misleading fullscreen control that previously reset zoom without entering fullscreen.
+- Fixed dense-project overlap, multi-second node entrance delays, repeated linear node lookups, unbounded SVG edge/label work, and hidden inspector behavior on narrow desktop windows.
+
+### Verified
+
+- Electron end-to-end coverage now proves real fullscreen entry/exit, zoom, five layout transitions, source selection, keyboard travel, responsive behavior, and zero renderer console errors.
+- Dense-graph tests prove bounded node and edge projections, explicit clusters, selected-node retention, search context, and type-filter behavior across 2,500 nodes and roughly 5,000 relations.
 
 ## [0.6.0] - 2026-09-01
 
@@ -148,7 +175,8 @@ All notable changes to BRACE are documented here. The format follows [Keep a Cha
 - Removed private seed data, machine-specific paths, legacy local servers, arbitrary plugin execution, and broad renderer privileges from the public candidate.
 - Added secret-pattern tests, dependency auditing, strict embedding endpoint validation, sandboxed rendering, CSP, and repository hygiene controls.
 
-[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/GYASH28/B.R.A.C.E-brain/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.5.0
 [0.4.0]: https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.4.0

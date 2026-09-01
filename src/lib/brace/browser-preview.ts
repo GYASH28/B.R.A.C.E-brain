@@ -141,9 +141,9 @@ export const browserPreviewSnapshot: BraceSnapshot = {
   ],
   graph: {
     nodes: [
-      { id: projectId, type: "project", label: "Northstar" },
-      { id: "source-architecture", type: "source", label: "Architecture Decisions" },
-      { id: "source-research", type: "source", label: "Research Notes" },
+      { id: projectId, type: "project", label: "Northstar", rootPath: "/local/Northstar", sourceCount: 2 },
+      { id: "source-architecture", type: "source", label: "Architecture Decisions", uri: `brace-project://${projectId}/Architecture%20Decisions.md`, projectId, mediaType: "text/markdown", chunkCount: 7, sectionCount: 4 },
+      { id: "source-research", type: "source", label: "Research Notes", uri: `brace-project://${projectId}/Research%20Notes.md`, projectId, mediaType: "text/markdown", chunkCount: 5, sectionCount: 3 },
       { id: "decision-canonical", type: "decision", label: "Keep files canonical", status: "accepted" },
       { id: "memory-promise", type: "memory", label: "Product promise", kind: "project" },
       { id: "memory-provenance", type: "memory", label: "Visible provenance", kind: "lesson" },

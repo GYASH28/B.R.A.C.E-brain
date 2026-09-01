@@ -217,17 +217,56 @@ function layoutChronicle(nodes: GraphNode[]) {
   return map;
 }
 
+function relaxCollisions(points: Map<string, GraphPoint>, nodes: GraphNode[]) {
+  if (nodes.length < 2) return points;
+  const minimumDistance = nodes.length <= 70 ? 46 : nodes.length <= 160 ? 30 : 19;
+  const iterations = nodes.length > 320 ? 4 : 7;
+  for (let pass = 0; pass < iterations; pass += 1) {
+    for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
+      const left = points.get(nodes[leftIndex].id);
+      if (!left) continue;
+      for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+        const right = points.get(nodes[rightIndex].id);
+        if (!right) continue;
+        let dx = right.x - left.x;
+        let dy = right.y - left.y;
+        let distance = Math.hypot(dx, dy);
+        if (distance >= minimumDistance) continue;
+        if (distance < 0.01) {
+          const angle = fraction(`${nodes[leftIndex].id}:${nodes[rightIndex].id}`) * Math.PI * 2;
+          dx = Math.cos(angle);
+          dy = Math.sin(angle);
+          distance = 1;
+        }
+        const push = (minimumDistance - distance) * 0.36;
+        const unitX = dx / distance;
+        const unitY = dy / distance;
+        left.x = clamp(left.x - unitX * push, 34, WIDTH - 34);
+        left.y = clamp(left.y - unitY * push, 34, HEIGHT - 34);
+        right.x = clamp(right.x + unitX * push, 34, WIDTH - 34);
+        right.y = clamp(right.y + unitY * push, 34, HEIGHT - 34);
+      }
+    }
+  }
+  return points;
+}
+
 export function graphPositions(
   preset: GraphPreset,
   nodes: GraphNode[],
   edges: GraphEdge[],
   selectedId: string | null,
 ) {
-  if (preset === "rings") return layoutRings(nodes, selectedId);
-  if (preset === "living") return layoutLiving(nodes);
-  if (preset === "flow") return layoutFlow(nodes);
-  if (preset === "chronicle") return layoutChronicle(nodes);
-  return layoutOrbit(nodes, edges, selectedId);
+  const points = preset === "rings"
+    ? layoutRings(nodes, selectedId)
+    : preset === "living"
+      ? layoutLiving(nodes)
+      : preset === "flow"
+        ? layoutFlow(nodes)
+        : preset === "chronicle"
+          ? layoutChronicle(nodes)
+          : layoutOrbit(nodes, edges, selectedId);
+  return relaxCollisions(points, nodes);
 }
 
 export const graphPresetDetails: Array<{

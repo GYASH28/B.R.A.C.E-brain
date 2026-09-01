@@ -1378,9 +1378,18 @@ class MemoryStore {
     `).all(limit);
     const projects = this.listProjects().slice(0, limit);
     const sources = this.db.prepare(`
-      SELECT id, project_id, title, uri, media_type, updated_at FROM sources
-      ORDER BY updated_at DESC LIMIT ?
+      SELECT s.id, s.project_id, s.title, s.uri, s.media_type, s.updated_at,
+        COUNT(c.id) AS chunk_count,
+        COUNT(DISTINCT NULLIF(c.heading, '')) AS section_count
+      FROM sources s LEFT JOIN source_chunks c ON c.source_id = s.id
+      GROUP BY s.id
+      ORDER BY s.updated_at DESC LIMIT ?
     `).all(limit);
+    const sourceCountByProject = new Map();
+    for (const source of sources) {
+      if (!source.project_id) continue;
+      sourceCountByProject.set(source.project_id, (sourceCountByProject.get(source.project_id) || 0) + 1);
+    }
     const allowed = {
       memory: memoryIds,
       entity: new Set(entities.map((item) => item.id)),
@@ -1424,11 +1433,11 @@ class MemoryStore {
     }
     return {
       nodes: [
-        ...projects.map((item) => ({ id: item.id, type: "project", label: item.name, timestamp: item.created_at })),
-        ...sources.map((item) => ({ id: item.id, type: "source", label: item.title, mediaType: item.media_type, timestamp: item.updated_at })),
-        ...memories.map((item) => ({ id: item.id, type: "memory", label: item.title, kind: item.kind, timestamp: item.updatedAt })),
+        ...projects.map((item) => ({ id: item.id, type: "project", label: item.name, rootPath: item.root_path, sourceCount: sourceCountByProject.get(item.id) || 0, timestamp: item.created_at })),
+        ...sources.map((item) => ({ id: item.id, type: "source", label: item.title, uri: item.uri, projectId: item.project_id, mediaType: item.media_type, chunkCount: item.chunk_count, sectionCount: item.section_count, timestamp: item.updated_at })),
+        ...memories.map((item) => ({ id: item.id, type: "memory", label: item.title, kind: item.kind, scope: item.scope, sourceUri: item.sourceUri, timestamp: item.updatedAt })),
         ...entities.map((item) => ({ id: item.id, type: "entity", label: item.name, entityType: item.entity_type, timestamp: item.created_at })),
-        ...decisions.map((item) => ({ id: item.id, type: "decision", label: item.title, status: item.status, timestamp: item.decided_at })),
+        ...decisions.map((item) => ({ id: item.id, type: "decision", label: item.title, projectId: item.project_id, status: item.status, timestamp: item.decided_at })),
       ],
       edges,
     };

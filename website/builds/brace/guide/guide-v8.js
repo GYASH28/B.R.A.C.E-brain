@@ -42,6 +42,19 @@
     image.decoding = "async";
   });
 
+  const featureWalkthrough = document.querySelector(".feature-walkthrough");
+  if (featureWalkthrough) {
+    featureWalkthrough.tabIndex = 0;
+    featureWalkthrough.setAttribute("role", "region");
+    featureWalkthrough.setAttribute("aria-label", "BRACE feature walkthrough. Use left and right arrow keys to browse on small screens.");
+    featureWalkthrough.addEventListener("keydown", (event) => {
+      if (!["ArrowLeft", "ArrowRight"].includes(event.key) || featureWalkthrough.scrollWidth <= featureWalkthrough.clientWidth + 2) return;
+      event.preventDefault();
+      const amount = Math.max(220, featureWalkthrough.clientWidth * .78) * (event.key === "ArrowRight" ? 1 : -1);
+      featureWalkthrough.scrollBy({left:amount, behavior:reduce ? "auto" : "smooth"});
+    });
+  }
+
   const routeLinks = Array.from(route.querySelectorAll("a[href^='#']"));
   const tocLinks = Array.from(toc?.querySelectorAll("a[href^='#']") || []);
 

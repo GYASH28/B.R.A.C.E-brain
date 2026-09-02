@@ -9,7 +9,7 @@
 
   root.dataset.bracePremium = "v8";
 
-  const sections = [
+  const getSections = () => [
     document.querySelector("#film"),
     document.querySelector("#story"),
     document.querySelector("[data-brace-live]"),
@@ -52,7 +52,7 @@
 
     let active = null;
     let nearest = Infinity;
-    sections.forEach((section) => {
+    getSections().forEach((section) => {
       const rect = section.getBoundingClientRect();
       if (rect.bottom <= 0 || rect.top >= innerHeight) return;
       const distance = Math.abs((rect.top + rect.height * .5) - innerHeight * .5);
@@ -100,8 +100,9 @@
     }, {passive:true});
   }
 
-  const pressables = document.querySelectorAll("a,button");
-  pressables.forEach((node) => {
+  const bindPressable = (node) => {
+    if (!node || node.dataset.v8PressBound === "true") return;
+    node.dataset.v8PressBound = "true";
     node.classList.add("v8-pressable");
     node.addEventListener("pointerdown", (event) => {
       const rect = node.getBoundingClientRect();
@@ -110,11 +111,14 @@
       node.classList.add("is-v8-hit");
     });
     ["pointerup","pointercancel","pointerleave"].forEach((type) => node.addEventListener(type, () => node.classList.remove("is-v8-hit")));
-  });
+  };
+  document.querySelectorAll("a,button").forEach(bindPressable);
 
   const bindArrowGroup = (nodes) => {
     if (nodes.length < 2) return;
     nodes.forEach((node, index) => {
+      if (node.dataset.v8ArrowBound === "true") return;
+      node.dataset.v8ArrowBound = "true";
       node.addEventListener("keydown", (event) => {
         if (!["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(event.key)) return;
         event.preventDefault();
@@ -131,7 +135,9 @@
     const modes = Array.from(document.querySelectorAll("[data-live-target]"));
     if (!modes.length) return false;
     bindArrowGroup(modes);
-    modes.forEach((mode) => mode.classList.add("v8-pressable"));
+    modes.forEach(bindPressable);
+    document.querySelectorAll("[data-brace-live] a,[data-brace-live] button").forEach(bindPressable);
+    schedule();
     return true;
   };
   if (!bindLivingGroup()) {

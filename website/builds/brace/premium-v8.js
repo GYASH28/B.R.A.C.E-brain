@@ -147,6 +147,32 @@
     observer.observe(document.body, {childList:true,subtree:true});
   }
 
+  /* The product rail is transformed by ScrollCraft rather than natively scrolled.
+     Browser Tab navigation therefore cannot reveal an off-screen frame by itself.
+     Synchronize keyboard focus to the same vertical timeline so focused controls
+     are always visible, including the final guide handoff. */
+  const productAct = document.querySelector("#product");
+  const productFrames = Array.from(document.querySelectorAll(".product-rail [data-proof]"));
+  const productPosition = document.querySelector("#proof-position");
+  const alignProductFocus = (ratio, title) => {
+    if (!productAct) return;
+    const travel = Math.max(1, productAct.offsetHeight - innerHeight);
+    const top = productAct.offsetTop + travel * clamp(ratio, 0, 1);
+    scrollTo({top, behavior:"auto"});
+    if (productPosition && title) productPosition.textContent = title;
+    requestAnimationFrame(() => {
+      if (Math.abs(scrollY - top) > 2) scrollTo({top, behavior:"auto"});
+      schedule();
+    });
+  };
+  productFrames.forEach((frame, index) => {
+    frame.addEventListener("focusin", () => {
+      const ratio = (index + 1) / (productFrames.length + 1);
+      alignProductFocus(ratio, frame.dataset.proofTitle || "Product view");
+    });
+  });
+  document.querySelector(".gallery-outro")?.addEventListener("focusin", () => alignProductFocus(.985, "Ready to build your own memory?"));
+
   const seen = new Set();
   document.querySelectorAll("a[href]").forEach((link) => {
     const href = link.getAttribute("href");

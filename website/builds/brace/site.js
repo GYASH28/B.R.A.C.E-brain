@@ -105,10 +105,15 @@
       context.strokeStyle = gradient; context.lineWidth = index % 9 === 0 ? 1.6 : 0.8;
       context.beginPath(); context.moveTo(x, y); context.lineTo(x - 3, y + drop.length); context.stroke();
     });
-    if (!reduce) rainFrame = requestAnimationFrame(paintRain);
+    if (!reduce && !document.hidden) rainFrame = requestAnimationFrame(paintRain);
+  };
+  const resumeRain = () => {
+    cancelAnimationFrame(rainFrame);
+    if (!document.hidden) paintRain(performance.now());
   };
   resizeRain(); paintRain();
   addEventListener("resize", resizeRain, {passive: true});
+  document.addEventListener("visibilitychange", resumeRain);
   addEventListener("pagehide", () => cancelAnimationFrame(rainFrame), {once: true});
   const proofAct = document.querySelector(".product-act");
   const proofFrames = Array.from(document.querySelectorAll("[data-proof]"));
@@ -153,4 +158,9 @@
   document.querySelector("[data-lightbox-next]")?.addEventListener("click", () => { activeProof = (activeProof + 1) % proofFrames.length; renderDialog(); });
   const platform = /Windows/i.test(navigator.userAgent) ? "windows" : /Linux/i.test(navigator.userAgent) ? "linux" : "";
   if (platform) document.querySelector(`[data-platform-card="${platform}"]`)?.classList.add("is-device");
+
+  const livingEnhancement = document.createElement("script");
+  livingEnhancement.src = "site-v7.js";
+  livingEnhancement.async = false;
+  document.head.append(livingEnhancement);
 })();

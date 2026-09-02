@@ -92,4 +92,9 @@
   }, { passive: true });
   window.addEventListener("resize", updateScrollState, { passive: true });
   updateScrollState();
+
+  const livingGuide = document.createElement("script");
+  livingGuide.src = "guide-v7.js";
+  livingGuide.async = false;
+  document.head.append(livingGuide);
 })();

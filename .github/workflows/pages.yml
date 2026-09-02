@@ -44,11 +44,12 @@ jobs:
         run: |
           mkdir -p _site/guide
           cp website/builds/brace/index.html _site/
-          # site.css is the canonical frosted-film stylesheet used by local QA.
-          # Copy it directly so GitHub Pages cannot silently fall back to stale V5 layers.
+          # site.css remains the canonical base; premium-v8 is a thin authored continuity layer.
           cp website/builds/brace/site.css _site/site.css
+          cp website/builds/brace/premium-v8.css _site/
           cp website/builds/brace/site.js _site/
           cp website/builds/brace/site-v7.js _site/
+          cp website/builds/brace/premium-v8.js _site/
           cp website/builds/brace/motion.css _site/
           cp website/builds/brace/motion.js _site/
           cp website/builds/brace/favicon.ico _site/
@@ -58,7 +59,9 @@ jobs:
           cp website/builds/brace/guide/index.html _site/guide/
           cp website/builds/brace/guide/guide.js _site/guide/
           cp website/builds/brace/guide/guide-v7.js _site/guide/
-          # Keep guide source modular, but ship one flattened guide stylesheet.
+          cp website/builds/brace/guide/guide-v8.js _site/guide/
+          cp website/builds/brace/guide/guide-v8.css _site/guide/
+          # Keep guide source modular, but ship one flattened base stylesheet.
           cat website/builds/brace/guide/guide-base.css > _site/guide/guide.css
           sed '1{/^@import /d;}' website/builds/brace/guide/guide.css >> _site/guide/guide.css
 

@@ -4,6 +4,7 @@
   --brace-line:rgba(31,91,163,.15);--brace-line-strong:rgba(31,91,163,.26);
   color:#123c70;background:radial-gradient(circle at 12% 8%,rgba(255,255,255,.9),transparent 30rem),radial-gradient(circle at 86% 38%,rgba(224,243,255,.7),transparent 36rem),linear-gradient(145deg,#cbe5ff,#86b8f4 58%,#70a8ed)
 }
+.guide-body::before{background:radial-gradient(circle at 12% 8%,rgba(255,255,255,.9),transparent 30rem),radial-gradient(circle at 86% 38%,rgba(225,244,255,.72),transparent 36rem),linear-gradient(145deg,#d7ecff,#91c1f7 58%,#78afea)!important}
 .guide-bar{top:max(12px,env(safe-area-inset-top));left:50%;width:min(1120px,calc(100% - 28px));height:66px;padding:7px 9px 7px 14px;transform:translateX(-50%);border:1px solid rgba(255,255,255,.88);border-radius:23px;background:linear-gradient(145deg,rgba(255,255,255,.86),rgba(238,248,255,.55));box-shadow:inset 0 1px #fff,0 22px 70px rgba(17,71,145,.18);-webkit-backdrop-filter:blur(28px) saturate(1.2);backdrop-filter:blur(28px) saturate(1.2)}
 .product-mark{color:#0d3a76;text-decoration:none}.product-mark img{border-radius:11px}.product-mark span small,.guide-bar>nav a{color:#4e7094}.guide-bar>nav a:hover{color:#0b418b}
 .guide-bar>.bar-action{padding:11px 16px;border:1px solid rgba(12,71,149,.22);border-radius:14px;color:#fff;background:linear-gradient(145deg,#226cc9,#104ea6);box-shadow:inset 0 1px rgba(255,255,255,.35),0 12px 28px rgba(15,73,153,.24);text-decoration:none}
@@ -44,3 +45,8 @@
 .guide-body .guide-note strong,
 .guide-body .guide-shot figcaption strong,
 .guide-body .guide-step h3{color:#123e72!important}
+.guide-body .guide-toc>strong{color:#315c88!important}
+.guide-body .guide-toc a{color:#41698f!important}
+.guide-body .guide-toc a:hover,
+.guide-body .guide-toc a[aria-current=true]{color:#0b438b!important;background:rgba(255,255,255,.68)!important}
+.guide-body .toc-status strong{color:#174c88!important}.guide-body .toc-status small{color:#53779b!important}

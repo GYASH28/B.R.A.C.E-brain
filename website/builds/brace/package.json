@@ -7,7 +7,8 @@
     "audit:a11y": "node scripts/accessibility.mjs",
     "audit:interactions": "node scripts/interactions.mjs",
     "audit:layout": "node scripts/layout.mjs",
-    "audit:focus": "node scripts/focus-layout.mjs"
+    "audit:focus": "node scripts/focus-layout.mjs",
+    "audit:visual": "node scripts/visual-smoke.mjs"
   },
   "devDependencies": {
     "animejs": "^3.2.2",

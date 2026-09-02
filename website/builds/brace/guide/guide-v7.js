@@ -24,6 +24,19 @@
     .guide-live-status{position:relative;z-index:2;min-height:56px;margin-top:10px}.guide-live-status strong{display:block;color:#17477f;font-size:.68rem}.guide-live-status p{margin:4px 0 0;color:#5a7b9e;font-size:.58rem;line-height:1.45}
     .guide-live-controls{position:relative;z-index:2;margin-top:10px;display:grid;grid-template-columns:repeat(4,1fr);gap:5px}.guide-live-controls button{min-height:38px;padding:0 5px;border:1px solid rgba(255,255,255,.88);border-radius:10px;color:#24578f;background:rgba(247,252,255,.66);font:inherit;font-size:.55rem;font-weight:780;cursor:pointer}.guide-live-controls button:hover{background:#fff}.guide-live-controls button:focus-visible{outline:2px solid #0d57ad;outline-offset:2px}
     .guide-live-coach[data-stage="install"] .guide-live-chips span:nth-child(1),.guide-live-coach[data-stage="import"] .guide-live-chips span:nth-child(1),.guide-live-coach[data-stage="recall"] .guide-live-chips span:nth-child(2),.guide-live-coach[data-stage="structure"] .guide-live-chips span:nth-child(2),.guide-live-coach[data-stage="connect"] .guide-live-chips span:nth-child(3),.guide-live-coach[data-stage="privacy"] .guide-live-chips span:nth-child(3){color:#0f4e99;background:rgba(255,255,255,.95);box-shadow:0 5px 15px rgba(24,76,145,.09)}
+    @media(min-width:861px){
+      .guide-live-coach{margin-top:15px;padding:10px;border-radius:16px}
+      .guide-live-head{align-items:flex-start}.guide-live-head strong{max-width:14ch;font-size:.52rem;line-height:1.35}.guide-live-head span{width:9px;font-size:0;gap:0}.guide-live-head span i{width:7px;height:7px}
+      .guide-live-screen{min-height:132px;margin-top:9px;padding:10px;border-radius:13px}
+      .guide-live-orb{width:38px;height:38px;right:8px;top:8px}.guide-live-orb img{width:18px;height:18px}
+      .guide-live-screen small{max-width:calc(100% - 46px);font-size:.47rem;letter-spacing:.08em}
+      .guide-live-screen h3{max-width:calc(100% - 40px);margin-top:6px!important;font-size:.77rem!important;line-height:1.14}
+      .guide-live-screen p{display:none}
+      .guide-live-chips{left:9px;right:9px;bottom:9px;gap:3px}.guide-live-chips span{padding:5px 4px;border-radius:7px;font-size:.44rem;text-align:center}
+      .guide-live-progress{margin-top:9px}
+      .guide-live-status{min-height:61px;margin-top:8px}.guide-live-status strong{font-size:.6rem}.guide-live-status p{font-size:.52rem;line-height:1.38}
+      .guide-live-controls{grid-template-columns:repeat(2,1fr);gap:4px;margin-top:8px}.guide-live-controls button{min-height:34px;font-size:.5rem;border-radius:8px}
+    }
     @media(max-width:860px){.guide-live-coach{width:min(760px,calc(100% - 32px));margin:24px auto 0;padding:16px;border-radius:22px}.guide-live-screen{min-height:154px}.guide-live-controls button{min-height:44px}.guide-live-status{min-height:48px}}
     @media(max-width:520px){.guide-live-coach{width:calc(100% - 20px);padding:12px}.guide-live-controls{grid-template-columns:repeat(2,1fr)}.guide-live-screen h3{max-width:calc(100% - 62px);font-size:.86rem!important}.guide-live-status{min-height:62px}}
     @media(prefers-reduced-motion:reduce){.guide-live-orb,.guide-live-progress i{animation:none!important;transition:none!important}}

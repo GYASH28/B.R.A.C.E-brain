@@ -69,3 +69,11 @@ jobs:
           npm run audit:layout --prefix website/builds/brace
           npm run audit:focus --prefix website/builds/brace
           npm run audit:interactions --prefix website/builds/brace
+          npm run audit:visual --prefix website/builds/brace
+      - name: Upload visual QA screenshots
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: brace-living-v7-visual-qa
+          path: website/builds/brace/lab/visual/*.png
+          if-no-files-found: error
+          retention-days: 7

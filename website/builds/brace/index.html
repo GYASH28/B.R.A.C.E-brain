@@ -13,6 +13,7 @@
   <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="motion.css">
   <link rel="stylesheet" href="site.css">
+  <link rel="stylesheet" href="premium-v8.css">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -60,7 +61,7 @@
     </section>
 
     <section id="story" class="story-section sc-section" data-sc-act="flow">
-      <div class="story-line sc-wrap" data-sc-in data-sc-stagger="65">
+      <div class="story-line sc-wrap" data-sc-in data-sc-stagger="65" data-sc-parallax="-0.025">
         <p class="overline">YOUR CONTEXT, UNDER YOUR CONTROL</p>
         <h2>Your files stay files.<br>Your memory stays local.</h2>
         <p>BRACE indexes selected sources in place, stores runtime state in your application-data directory, and keeps network access explicit.</p>
@@ -92,7 +93,7 @@
           <span data-relay-position>Source</span>
         </label>
       </section>
-      <div class="custody-strip sc-wrap" data-sc-in aria-label="BRACE privacy boundaries">
+      <div class="custody-strip sc-wrap" data-sc-in data-sc-parallax="0.012" aria-label="BRACE privacy boundaries">
         <span><i></i><strong>Sources</strong><small>Read in place</small></span>
         <span><i></i><strong>Memory</strong><small>Local SQLite</small></span>
         <span><i></i><strong>Network</strong><small>Explicit opt-in</small></span>
@@ -110,7 +111,7 @@
           </div>
         </div>
         <div class="product-rail" data-sc-pan="0.03">
-          <header class="gallery-intro">
+          <header class="gallery-intro" data-sc-parallax="-0.035">
             <p class="overline">PRODUCT REEL</p>
             <h2>Walk through<br>the real brain.</h2>
             <p>Every frame comes from the packaged Electron app using only the synthetic Northstar profile.</p>
@@ -156,7 +157,7 @@
 
     <section id="download" class="download-section sc-section" data-sc-act="flow">
       <div class="download-shell sc-wrap" data-sc-in data-sc-spotlight>
-        <div class="download-copy">
+        <div class="download-copy" data-sc-parallax="-0.03">
           <img src="assets/brace-logo.svg" width="82" height="82" alt="">
           <p class="overline">BRACE 0.7.0</p>
           <h2>Bring the context home.</h2>
@@ -206,5 +207,6 @@
   <noscript><p class="noscript">BRACE remains downloadable without JavaScript. The cinematic memory film is optional.</p></noscript>
   <script src="motion.js"></script>
   <script src="site.js"></script>
+  <script src="premium-v8.js"></script>
 </body>
 </html>

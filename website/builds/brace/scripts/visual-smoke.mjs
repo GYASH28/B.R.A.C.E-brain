@@ -39,7 +39,7 @@ try {
     await live.scrollIntoViewIfNeeded();
     await live.locator('[data-live-target="2"]').click();
     await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "2");
-    await page.locator(".brace-live-window").scrollIntoViewIfNeeded();
+    await page.locator(".brace-live-window").evaluate((node) => node.scrollIntoView({block:"center", behavior:"instant"}));
     await page.waitForTimeout(260);
   });
 
@@ -56,7 +56,7 @@ try {
     await coach.scrollIntoViewIfNeeded();
     await coach.locator("[data-coach-next]").click();
     await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:first-run");
-    await coach.scrollIntoViewIfNeeded();
+    await coach.evaluate((node) => node.scrollIntoView({block:"center", behavior:"instant"}));
     await page.waitForTimeout(220);
   });
 } finally {

@@ -17,6 +17,12 @@ try {
   await page.goto(`${base}/`, {waitUntil: "networkidle"});
   await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v9");
   await page.waitForFunction(() => document.documentElement.dataset.braceExperience === "living-v7");
+  await page.waitForFunction(() => document.documentElement.dataset.bracePremium === "v8");
+  await check("premium continuity layer mounts without replacing the ScrollCraft runtime", async () => {
+    const state = await page.evaluate(() => ({runtime: document.documentElement.dataset.braceRuntime, premium: document.documentElement.dataset.bracePremium}));
+    if (state.runtime !== "v9" || state.premium !== "v8") throw new Error(`Unexpected runtime state ${JSON.stringify(state)}`);
+    if (!await page.locator('link[href="premium-v8.css"]').count()) throw new Error("Premium continuity stylesheet is missing");
+  });
   await check("scroll film mounts with poster fallback", async () => {
     if (await page.locator("[data-sc-scrub]").count() !== 1) throw new Error("Expected one scroll film");
     if (!await page.locator(".film-poster").isVisible()) throw new Error("Film poster is not visible");
@@ -30,6 +36,12 @@ try {
     const after = await page.locator(".film-stage").getAttribute("data-sc-verify-state");
     if (!before || !after || before === after) throw new Error(`Frost state did not change: ${before} -> ${after}`);
   });
+  await check("premium navigation follows the active chapter", async () => {
+    await page.locator("#story").evaluate((node) => node.scrollIntoView({block:"center", behavior:"instant"}));
+    await page.waitForTimeout(120);
+    const current = await page.locator('.site-bar nav a[href="#story"]').getAttribute("aria-current");
+    if (current !== "true") throw new Error(`Story nav did not become current: ${current}`);
+  });
   await check("context relay explains every custody boundary", async () => {
     const relay = page.locator("[data-memory-relay]");
     await relay.scrollIntoViewIfNeeded();
@@ -41,6 +53,12 @@ try {
     await relay.locator('[data-relay-step="1"]').click();
     if (await relay.getAttribute("data-sc-verify-state") !== "relay:1") throw new Error("Relay node controls are not interactive");
   });
+  await check("relay keyboard group moves with arrow keys", async () => {
+    const first = page.locator('[data-relay-step="0"]');
+    await first.focus();
+    await page.keyboard.press("ArrowRight");
+    if (await page.evaluate(() => document.activeElement?.getAttribute("data-relay-step")) !== "1") throw new Error("ArrowRight did not move relay focus");
+  });
   await check("living preview moves through Capture Recall and Connect", async () => {
     const live = page.locator("[data-brace-live]");
     if (!await live.count()) throw new Error("Living preview is missing");
@@ -51,6 +69,14 @@ try {
     await live.locator('[data-live-target="2"]').click();
     await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "2");
     if (!String(await live.locator("[data-live-status]").textContent()).includes("CONTEXT LINKED")) throw new Error("Connect state did not render");
+  });
+  await check("living preview keyboard navigation follows its modes", async () => {
+    const live = page.locator("[data-brace-live]");
+    const first = live.locator('[data-live-target="0"]');
+    await first.focus();
+    await page.keyboard.press("ArrowRight");
+    if (await page.evaluate(() => document.activeElement?.getAttribute("data-live-target")) !== "1") throw new Error("ArrowRight did not move live preview focus");
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "1");
   });
   await check("living preview pause and reset are operable", async () => {
     const live = page.locator("[data-brace-live]");
@@ -93,11 +119,20 @@ try {
     if (!response.ok()) throw new Error(`Guide returned ${response.status()}`);
     if (!await page.locator('a[href="guide/"]').count()) throw new Error("Main page does not link to the guide");
   });
-  await check("guide companion follows steps and exposes controls", async () => {
+  await check("guide companion becomes a hero instrument and ScrollCraft journey", async () => {
     await page.goto(`${base}/guide/`, {waitUntil: "networkidle"});
     await page.waitForFunction(() => document.documentElement.dataset.braceGuideExperience === "living-v7");
+    await page.waitForFunction(() => document.documentElement.dataset.braceGuidePremium === "v8");
+    await page.waitForFunction(() => document.documentElement.dataset.braceGuideScrollcraft === "mounted");
     const coach = page.locator("[data-guide-live-coach]");
     if (!await coach.isVisible()) throw new Error("Guide companion is not visible");
+    const placement = await coach.evaluate((node) => node.parentElement?.classList.contains("guide-wrap") && node.parentElement?.parentElement?.classList.contains("guide-hero"));
+    if (!placement) throw new Error("Guide companion is not in the hero");
+    if (await page.locator('.guide-toc [data-guide-live-coach]').count()) throw new Error("Guide companion still clutters the sticky TOC");
+    if (!await page.locator('.guide-step[data-sc-act="flow"]').count()) throw new Error("Guide steps are not registered with ScrollCraft");
+  });
+  await check("guide companion follows steps and exposes controls", async () => {
+    const coach = page.locator("[data-guide-live-coach]");
     await coach.locator("[data-coach-next]").click();
     await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:first-run");
     const pause = coach.locator("[data-coach-pause]");
@@ -105,6 +140,14 @@ try {
     if (await pause.getAttribute("aria-pressed") !== "true") throw new Error("Guide pause control failed");
     await coach.locator("[data-coach-reset]").click();
     await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:install");
+  });
+  await check("guide chapters have direct next-step continuity", async () => {
+    const blocks = await page.locator(".guide-step-next").count();
+    const steps = await page.locator(".guide-step").count();
+    if (blocks !== steps - 1) throw new Error(`Expected ${steps - 1} next-step blocks, got ${blocks}`);
+    await page.locator("#recall").evaluate((node) => node.scrollIntoView({block:"center", behavior:"instant"}));
+    await page.waitForTimeout(160);
+    if (await page.locator('.guide-toc a[href="#recall"]').getAttribute("aria-current") !== "true") throw new Error("TOC did not track Recall");
   });
 } finally { await browser.close(); }
 process.stdout.write(`${JSON.stringify({interactions: results, consoleErrors: errors}, null, 2)}\n`);

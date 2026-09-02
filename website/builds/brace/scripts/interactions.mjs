@@ -16,6 +16,7 @@ async function check(name, run) {
 try {
   await page.goto(`${base}/`, {waitUntil: "networkidle"});
   await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v9");
+  await page.waitForFunction(() => document.documentElement.dataset.braceExperience === "living-v7");
   await check("scroll film mounts with poster fallback", async () => {
     if (await page.locator("[data-sc-scrub]").count() !== 1) throw new Error("Expected one scroll film");
     if (!await page.locator(".film-poster").isVisible()) throw new Error("Film poster is not visible");
@@ -39,6 +40,26 @@ try {
     if (!String(await relay.locator("[data-relay-output]").textContent()).includes("Only the context you choose")) throw new Error("Relay did not explain the handoff boundary");
     await relay.locator('[data-relay-step="1"]').click();
     if (await relay.getAttribute("data-sc-verify-state") !== "relay:1") throw new Error("Relay node controls are not interactive");
+  });
+  await check("living preview moves through Capture Recall and Connect", async () => {
+    const live = page.locator("[data-brace-live]");
+    if (!await live.count()) throw new Error("Living preview is missing");
+    await live.scrollIntoViewIfNeeded();
+    await live.locator('[data-live-target="1"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "1");
+    if (!String(await live.locator("[data-live-command]").textContent()).includes("remote embeddings")) throw new Error("Recall command did not render");
+    await live.locator('[data-live-target="2"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "2");
+    if (!String(await live.locator("[data-live-status]").textContent()).includes("CONTEXT LINKED")) throw new Error("Connect state did not render");
+  });
+  await check("living preview pause and reset are operable", async () => {
+    const live = page.locator("[data-brace-live]");
+    const pause = live.locator("[data-live-pause]");
+    await pause.click();
+    if (await pause.getAttribute("aria-pressed") !== "true") throw new Error("Pause control did not enter paused state");
+    await live.locator("[data-live-reset]").click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "0");
+    if (await pause.getAttribute("aria-pressed") !== "false") throw new Error("Reset did not restore motion state");
   });
   await check("sideways gallery has real overflow", async () => {
     const overflow = await page.locator(".product-rail").evaluate((rail) => rail.scrollWidth - window.innerWidth);
@@ -71,6 +92,19 @@ try {
     const response = await page.request.get(`${base}/guide/`);
     if (!response.ok()) throw new Error(`Guide returned ${response.status()}`);
     if (!await page.locator('a[href="guide/"]').count()) throw new Error("Main page does not link to the guide");
+  });
+  await check("guide companion follows steps and exposes controls", async () => {
+    await page.goto(`${base}/guide/`, {waitUntil: "networkidle"});
+    await page.waitForFunction(() => document.documentElement.dataset.braceGuideExperience === "living-v7");
+    const coach = page.locator("[data-guide-live-coach]");
+    if (!await coach.isVisible()) throw new Error("Guide companion is not visible");
+    await coach.locator("[data-coach-next]").click();
+    await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:first-run");
+    const pause = coach.locator("[data-coach-pause]");
+    await pause.click();
+    if (await pause.getAttribute("aria-pressed") !== "true") throw new Error("Guide pause control failed");
+    await coach.locator("[data-coach-reset]").click();
+    await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:install");
   });
 } finally { await browser.close(); }
 process.stdout.write(`${JSON.stringify({interactions: results, consoleErrors: errors}, null, 2)}\n`);

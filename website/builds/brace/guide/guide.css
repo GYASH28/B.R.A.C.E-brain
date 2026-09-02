@@ -51,3 +51,11 @@
 .guide-body .guide-toc a:hover,
 .guide-body .guide-toc a[aria-current=true]{color:#0b438b!important;background:rgba(255,255,255,.68)!important}
 .guide-body .toc-status strong{color:#174c88!important}.guide-body .toc-status small{color:#53779b!important}
+
+/* Grid items default to min-width:auto. The horizontally scrollable route has a
+   large min-content width, so without this constraint it can force the entire
+   hero grid wider than a phone even though the page itself hides no overflow. */
+html[data-brace-guide-premium="v8"] .guide-hero .guide-wrap,
+html[data-brace-guide-premium="v8"] .guide-route,
+html[data-brace-guide-premium="v8"] .guide-live-coach{min-width:0;max-width:100%}
+@media(max-width:860px){html[data-brace-guide-premium="v8"] .guide-hero .guide-wrap{width:min(100% - 22px,1180px)}}

@@ -95,7 +95,8 @@
 
     const routeLink = routeLinks.find((link) => link.hash === `#${active.id}`);
     if (routeLink && innerWidth <= 860) {
-      routeLink.scrollIntoView({behavior:reduce ? "auto" : "smooth", block:"nearest", inline:"center"});
+      const targetLeft = routeLink.offsetLeft - (route.clientWidth - routeLink.offsetWidth) * .5;
+      route.scrollTo({left:Math.max(0, targetLeft), behavior:reduce ? "auto" : "smooth"});
     }
   };
 

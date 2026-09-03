@@ -4,12 +4,13 @@ const base=process.env.BRACE_SITE_URL||"http://127.0.0.1:4517";
 const browser=await chromium.launch({executablePath:process.env.SCROLLCRAFT_CHROME||"/usr/bin/google-chrome",headless:true});
 const viewports=[[1920,1080],[1440,900],[900,900],[430,932],[390,844],[375,812]];
 const results=[];
+const focusSelector='a[href],button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),summary,[contenteditable="true"],[tabindex]:not([tabindex="-1"])';
 try{
   for(const [width,height] of viewports){
     const page=await browser.newPage({viewport:{width,height},reducedMotion:"reduce"});
     await page.goto(`${base}/`,{waitUntil:"networkidle"});
     await page.waitForFunction(()=>document.documentElement.dataset.braceExperience==="living-v9");
-    const count=await page.locator('a[href],button:not([disabled]),summary,[tabindex]:not([tabindex="-1"])').evaluateAll((nodes)=>{
+    const count=await page.locator(focusSelector).evaluateAll((nodes)=>{
       const eligible=nodes.filter((node)=>{
         const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
         if(node.closest('[inert],[aria-hidden="true"]'))return false;
@@ -25,7 +26,7 @@ try{
       await page.waitForTimeout(40);
       const state=await page.evaluate(()=>{
         const node=document.activeElement,rect=node.getBoundingClientRect(),style=getComputedStyle(node);
-        return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
+        return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
       });
       visitedIds.push(state.id);
       visitedLabels.push(state.label);

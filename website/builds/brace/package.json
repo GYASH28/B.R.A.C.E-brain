@@ -11,7 +11,6 @@
     "audit:visual": "node scripts/visual-smoke.mjs"
   },
   "devDependencies": {
-    "animejs": "^3.2.2",
     "axe-core": "^4.13.0",
     "playwright-core": "^1.55.0"
   }

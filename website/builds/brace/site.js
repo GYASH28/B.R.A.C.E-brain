@@ -193,6 +193,12 @@
   const platform = /Windows/i.test(navigator.userAgent) ? "windows" : /Linux/i.test(navigator.userAgent) ? "linux" : "";
   if (platform) document.querySelector(`[data-platform-card="${platform}"]`)?.classList.add("is-device");
 
+  const livingStyle = document.createElement("link");
+  livingStyle.rel = "stylesheet";
+  livingStyle.href = "premium-v9.css";
+  livingStyle.dataset.braceLivingStyle = "v9";
+  document.head.append(livingStyle);
+
   const livingEnhancement = document.createElement("script");
   livingEnhancement.src = "site-v7.js";
   livingEnhancement.async = false;

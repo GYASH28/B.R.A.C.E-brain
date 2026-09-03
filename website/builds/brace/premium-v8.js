@@ -149,8 +149,9 @@
 
   /* The product rail is transformed by ScrollCraft rather than natively scrolled.
      Browser Tab navigation therefore cannot reveal an off-screen frame by itself.
-     Synchronize keyboard focus to the same vertical timeline so focused controls
-     are always visible, including the final guide handoff. */
+     One immediate timeline alignment is enough: the native scroll event updates
+     ScrollCraft on its next frame. Never schedule a second corrective scroll,
+     because focus may already have advanced into the download section by then. */
   const productAct = document.querySelector("#product");
   const productFrames = Array.from(document.querySelectorAll(".product-rail [data-proof]"));
   const productPosition = document.querySelector("#proof-position");
@@ -160,10 +161,7 @@
     const top = productAct.offsetTop + travel * clamp(ratio, 0, 1);
     scrollTo({top, behavior:"auto"});
     if (productPosition && title) productPosition.textContent = title;
-    requestAnimationFrame(() => {
-      if (Math.abs(scrollY - top) > 2) scrollTo({top, behavior:"auto"});
-      schedule();
-    });
+    schedule();
   };
   productFrames.forEach((frame, index) => {
     frame.addEventListener("focusin", () => {
@@ -171,7 +169,7 @@
       alignProductFocus(ratio, frame.dataset.proofTitle || "Product view");
     });
   });
-  document.querySelector(".gallery-outro")?.addEventListener("focusin", () => alignProductFocus(.985, "Ready to build your own memory?"));
+  document.querySelector(".gallery-outro")?.addEventListener("focusin", () => alignProductFocus(.99, "Ready to build your own memory?"));
 
   const seen = new Set();
   document.querySelectorAll("a[href]").forEach((link) => {

@@ -2,6 +2,7 @@
   "use strict";
 
   document.documentElement.dataset.braceGuideRefinement = "v10";
+  document.documentElement.dataset.braceGuidePremium = "v8";
 
   document.querySelectorAll(".copy-code").forEach((button) => {
     button.addEventListener("click", async () => {

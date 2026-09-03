@@ -26,13 +26,18 @@ try{
       return eligible.length;
     });
     const issues=[],visitedIds=[],visitedLabels=[];
+    const inspect=async()=>page.evaluate(()=>{
+      const node=document.activeElement,rect=node.getBoundingClientRect(),style=getComputedStyle(node);
+      return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
+    });
     for(let index=0;index<count;index+=1){
-      await page.keyboard.press("Tab");
+      if(index===0){
+        await page.locator('[data-focus-audit-id="focus-0"]').focus();
+      }else{
+        await page.keyboard.press("Tab");
+      }
       await page.waitForTimeout(100);
-      const state=await page.evaluate(()=>{
-        const node=document.activeElement,rect=node.getBoundingClientRect(),style=getComputedStyle(node);
-        return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
-      });
+      const state=await inspect();
       visitedIds.push(state.id);
       visitedLabels.push(state.label);
       if(!state.id)issues.push(`focus escaped audited controls: ${state.label}`);

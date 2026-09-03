@@ -48,12 +48,13 @@ try {
   await check("capture accepts visitor input and advances to Understand", async () => {
     const live = page.locator("[data-brace-live]");
     await live.locator('[data-live-target="0"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "0");
+    await page.waitForTimeout(650);
     const input = live.locator("[data-live-input]");
     await input.fill("Remember that release notes must keep source receipts visible.");
     await live.locator("[data-live-capture] button[type=submit]").click();
     await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "1");
-    const memory = await live.locator("[data-live-memory-title]").textContent();
-    if (!String(memory).includes("source receipts")) throw new Error("Captured memory did not flow into indexing state");
+    await page.waitForFunction(() => String(document.querySelector("[data-live-memory-title]")?.textContent || "").includes("source receipts"));
   });
 
   await check("Connect graph is inspectable", async () => {

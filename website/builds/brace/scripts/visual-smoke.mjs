@@ -31,6 +31,9 @@ const waitGuide = async (page) => {
   await page.waitForFunction(() => document.documentElement.dataset.braceGuideScrollcraft === "mounted");
 };
 try {
+  await capture("home-hero-ultrawide", {width:1920,height:1080}, "/", async (page) => {
+    await waitHome(page); await page.evaluate(() => scrollTo(0, innerHeight * .55)); await page.waitForTimeout(320);
+  });
   await capture("home-hero-desktop", {width:1440,height:900}, "/", async (page) => {
     await waitHome(page); await page.evaluate(() => scrollTo(0, innerHeight * .55)); await page.waitForTimeout(320);
   });
@@ -51,6 +54,9 @@ try {
   });
   await capture("home-live-act-mobile", {width:390,height:844}, "/", async (page) => {
     await waitHome(page); const live=page.locator("[data-brace-live]"); await live.scrollIntoViewIfNeeded(); await live.locator('[data-live-target="4"]').click(); await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "4"); await page.locator(".brace-live-window").evaluate((node)=>node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(240);
+  });
+  await capture("home-live-recall-compact", {width:375,height:812}, "/", async (page) => {
+    await waitHome(page); const live=page.locator("[data-brace-live]"); await live.scrollIntoViewIfNeeded(); await live.locator('[data-live-target="3"]').click(); await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "3"); await page.locator(".brace-live-window").evaluate((node)=>node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(240);
   });
   await capture("guide-hero-desktop", {width:1440,height:900}, "/guide/", async (page) => {
     await waitGuide(page); const coach=page.locator("[data-guide-live-coach]"); await page.locator(".guide-hero").evaluate((node)=>node.scrollIntoView({block:"start",behavior:"instant"})); await coach.locator("[data-coach-next]").click(); await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:first-run"); await page.waitForTimeout(220);

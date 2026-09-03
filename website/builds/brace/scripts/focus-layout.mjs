@@ -11,24 +11,24 @@ try{
     await page.goto(`${base}/`,{waitUntil:"networkidle"});
     await page.waitForFunction(()=>document.documentElement.dataset.braceExperience==="living-v9");
     const count=await page.locator(focusSelector).evaluateAll((nodes)=>{
-      const suppressed=(node)=>{
+      const hardSuppressed=(node)=>{
         let current=node;
         while(current&&current!==document.documentElement){
           if(current.matches?.('[inert],[aria-hidden="true"],[hidden],dialog:not([open])'))return true;
           const style=getComputedStyle(current);
-          if(style.display==="none"||style.visibility==="hidden"||Number.parseFloat(style.opacity)<=.1)return true;
+          if(style.display==="none"||style.visibility==="hidden")return true;
           current=current.parentElement;
         }
         return false;
       };
-      const eligible=nodes.filter((node)=>!suppressed(node)&&node.tabIndex>=0);
+      const eligible=nodes.filter((node)=>!hardSuppressed(node)&&node.tabIndex>=0);
       eligible.forEach((node,index)=>{node.dataset.focusAuditId=`focus-${index}`});
       return eligible.length;
     });
     const issues=[],visitedIds=[],visitedLabels=[];
     for(let index=0;index<count;index+=1){
       await page.keyboard.press("Tab");
-      await page.waitForTimeout(80);
+      await page.waitForTimeout(100);
       const state=await page.evaluate(()=>{
         const node=document.activeElement,rect=node.getBoundingClientRect(),style=getComputedStyle(node);
         return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};

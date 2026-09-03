@@ -9,13 +9,20 @@
 
   root.dataset.bracePremium = "v8";
   root.dataset.braceRefinement = "v10";
-  if (!document.querySelector('link[href="refine-v10.css"]')) {
-    const refinement = document.createElement("link");
-    refinement.rel = "stylesheet";
-    refinement.href = "refine-v10.css";
-    document.head.append(refinement);
-  }
 
+  ["refine-v10.css", "refine-v10-hotfix.css"].forEach((href) => {
+    if (document.querySelector(`link[href="${href}"]`)) return;
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = href;
+    document.head.append(link);
+  });
+
+  const siteBar = document.querySelector(".site-bar");
+  const story = document.querySelector("#story");
+  const storyCopy = story?.querySelector(".story-line h2");
+  const relay = story?.querySelector(".memory-relay");
+  const navLinks = Array.from(document.querySelectorAll(".site-bar nav a[href^='#']"));
   const getSections = () => [
     document.querySelector("#film"),
     document.querySelector("#story"),
@@ -23,16 +30,6 @@
     document.querySelector("#product"),
     document.querySelector("#download"),
   ].filter(Boolean);
-
-  const navLinks = Array.from(document.querySelectorAll(".site-bar nav a[href^='#']"));
-  const siteBar = document.querySelector(".site-bar");
-  const story = document.querySelector("#story");
-  const storyCopy = story?.querySelector(".story-line h2");
-  const relay = story?.querySelector(".memory-relay");
-
-  let ticking = false;
-  let lastY = scrollY;
-  let velocity = 0;
 
   const sceneTone = (node) => {
     if (!node) return .12;
@@ -44,6 +41,9 @@
     return .12;
   };
 
+  let ticking = false;
+  let lastY = scrollY;
+  let velocity = 0;
   const paint = () => {
     ticking = false;
     const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
@@ -54,7 +54,6 @@
     root.style.setProperty("--brace-v8-velocity", Math.abs(velocity).toFixed(3));
     body.classList.toggle("is-v8-scroll-fast", Math.abs(velocity) > .26);
     lastY = scrollY;
-
     siteBar?.classList.toggle("is-v8-scrolled", scrollY > 32);
 
     let active = null;
@@ -62,40 +61,27 @@
     getSections().forEach((section) => {
       const rect = section.getBoundingClientRect();
       if (rect.bottom <= 0 || rect.top >= innerHeight) return;
-      const distance = Math.abs((rect.top + rect.height * .5) - innerHeight * .5);
-      if (distance < nearest) {
-        nearest = distance;
-        active = section;
-      }
+      const distance = Math.abs(rect.top + rect.height * .5 - innerHeight * .5);
+      if (distance < nearest) { nearest = distance; active = section; }
       const edge = clamp(1 - Math.abs(rect.top) / Math.max(innerHeight * .95, 1));
       section.style.setProperty("--brace-v8-edge", edge.toFixed(3));
     });
     root.style.setProperty("--brace-v8-scene-tone", sceneTone(active).toFixed(3));
-
-    navLinks.forEach((link) => {
-      const hash = link.hash;
-      const current = active?.id && hash === `#${active.id}`;
-      link.setAttribute("aria-current", current ? "true" : "false");
-    });
+    navLinks.forEach((link) => link.setAttribute("aria-current", active?.id && link.hash === `#${active.id}` ? "true" : "false"));
 
     if (story) {
       const rect = story.getBoundingClientRect();
       const p = clamp((innerHeight - rect.top) / Math.max(innerHeight + rect.height, 1));
-      const ambientShift = reduce ? 0 : (p - .5) * -52;
-      const copyShift = reduce ? 0 : (p - .5) * -20;
-      const relayShift = reduce ? 0 : (p - .5) * 26;
-      story.style.setProperty("--brace-v8-story-shift", `${ambientShift.toFixed(1)}px`);
-      storyCopy?.style.setProperty("--brace-v8-story-copy-shift", `${copyShift.toFixed(1)}px`);
-      relay?.style.setProperty("--brace-v8-relay-shift", `${relayShift.toFixed(1)}px`);
+      story.style.setProperty("--brace-v8-story-shift", `${(reduce ? 0 : (p - .5) * -52).toFixed(1)}px`);
+      storyCopy?.style.setProperty("--brace-v8-story-copy-shift", `${(reduce ? 0 : (p - .5) * -20).toFixed(1)}px`);
+      relay?.style.setProperty("--brace-v8-relay-shift", `${(reduce ? 0 : (p - .5) * 26).toFixed(1)}px`);
     }
   };
-
   const schedule = () => {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(paint);
   };
-
   addEventListener("scroll", schedule, {passive:true});
   addEventListener("resize", schedule, {passive:true});
   schedule();
@@ -148,34 +134,21 @@
     return true;
   };
   if (!bindLivingGroup()) {
-    const observer = new MutationObserver(() => {
-      if (bindLivingGroup()) observer.disconnect();
-    });
-    observer.observe(document.body, {childList:true,subtree:true});
+    const observer = new MutationObserver(() => { if (bindLivingGroup()) observer.disconnect(); });
+    observer.observe(document.body, {childList:true, subtree:true});
   }
 
-  /* The product rail is transformed by ScrollCraft rather than natively scrolled.
-     Browser Tab navigation therefore cannot reveal an off-screen frame by itself.
-     One immediate timeline alignment is enough: the native scroll event updates
-     ScrollCraft on its next frame. Never schedule a second corrective scroll,
-     because focus may already have advanced into the download section by then. */
   const productAct = document.querySelector("#product");
   const productFrames = Array.from(document.querySelectorAll(".product-rail [data-proof]"));
   const productPosition = document.querySelector("#proof-position");
   const alignProductFocus = (ratio, title) => {
     if (!productAct) return;
     const travel = Math.max(1, productAct.offsetHeight - innerHeight);
-    const top = productAct.offsetTop + travel * clamp(ratio, 0, 1);
-    scrollTo({top, behavior:"auto"});
+    scrollTo({top:productAct.offsetTop + travel * clamp(ratio), behavior:"auto"});
     if (productPosition && title) productPosition.textContent = title;
     schedule();
   };
-  productFrames.forEach((frame, index) => {
-    frame.addEventListener("focusin", () => {
-      const ratio = (index + 1) / (productFrames.length + 1);
-      alignProductFocus(ratio, frame.dataset.proofTitle || "Product view");
-    });
-  });
+  productFrames.forEach((frame, index) => frame.addEventListener("focusin", () => alignProductFocus((index + 1) / (productFrames.length + 1), frame.dataset.proofTitle || "Product view")));
   document.querySelector(".gallery-outro")?.addEventListener("focusin", () => alignProductFocus(.99, "Ready to build your own memory?"));
 
   const seen = new Set();
@@ -201,8 +174,5 @@
     image.decoding = "async";
     if (index > 0) image.loading = "lazy";
   });
-
-  document.addEventListener("visibilitychange", () => {
-    body.classList.toggle("is-v8-hidden", document.hidden);
-  });
+  document.addEventListener("visibilitychange", () => body.classList.toggle("is-v8-hidden", document.hidden));
 })();

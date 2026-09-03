@@ -44,9 +44,10 @@ jobs:
         run: |
           mkdir -p _site/guide
           cp website/builds/brace/index.html _site/
-          # site.css remains the canonical base; premium-v8 is a thin authored continuity layer.
+          # site.css remains the canonical base; premium layers only refine continuity.
           cp website/builds/brace/site.css _site/site.css
           cp website/builds/brace/premium-v8.css _site/
+          cp website/builds/brace/premium-v9.css _site/
           cp website/builds/brace/site.js _site/
           cp website/builds/brace/site-v7.js _site/
           cp website/builds/brace/premium-v8.js _site/

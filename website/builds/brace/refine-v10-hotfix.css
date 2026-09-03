@@ -1,0 +1,23 @@
+/* V10 mobile geometry hotfix: keep the primary download CTA fully visible and independently tappable. */
+@media(max-width:760px){
+  .site-bar{
+    top:max(8px,env(safe-area-inset-top))!important;
+    min-height:68px!important;
+    overflow:visible!important;
+    transform:translateX(-50%)!important;
+  }
+  html[data-brace-premium="v8"] .site-bar.is-v8-scrolled{
+    min-height:64px!important;
+    transform:translateX(-50%)!important;
+  }
+  .site-brand{min-height:48px!important;display:inline-flex!important;align-items:center!important}
+  .bar-download{
+    position:relative!important;
+    z-index:4!important;
+    min-height:48px!important;
+    padding:0 14px!important;
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+  }
+}

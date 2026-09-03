@@ -21,15 +21,18 @@ async function capture(name, viewport, route, setup) {
   process.stdout.write(`SHOT ${name} ${viewport.width}x${viewport.height}\n`);
   await page.close();
 }
+
 const waitHome = async (page) => {
   await page.waitForFunction(() => document.documentElement.dataset.braceExperience === "living-v9");
   await page.waitForFunction(() => document.documentElement.dataset.bracePremium === "v8");
 };
+
 const waitGuide = async (page) => {
   await page.waitForFunction(() => document.documentElement.dataset.braceGuideExperience === "living-v7");
   await page.waitForFunction(() => document.documentElement.dataset.braceGuidePremium === "v8");
   await page.waitForFunction(() => document.documentElement.dataset.braceGuideScrollcraft === "mounted");
 };
+
 const settleDesktopLiveState = async (page, state) => {
   const progress = [0.05, 0.3, 0.5, 0.7, 0.92][state] ?? 0.05;
   await page.evaluate((nextProgress) => {
@@ -42,6 +45,18 @@ const settleDesktopLiveState = async (page, state) => {
   await page.waitForTimeout(260);
   return page.locator("[data-brace-live]");
 };
+
+const settleMobileLiveState = async (page, state) => {
+  const live = page.locator("[data-brace-live]");
+  await live.evaluate((node) => node.scrollIntoView({block:"start", behavior:"instant"}));
+  const target = live.locator(`[data-live-target="${state}"]`);
+  await target.evaluate((node) => node.click());
+  await page.waitForFunction((expected) => document.querySelector("[data-brace-live]")?.dataset.liveState === String(expected), state);
+  await page.locator(".brace-live-window").evaluate((node) => node.scrollIntoView({block:"center", behavior:"instant"}));
+  await page.waitForTimeout(260);
+  return live;
+};
+
 try {
   await capture("home-hero-ultrawide", {width:1920,height:1080}, "/", async (page) => {
     await waitHome(page); await page.evaluate(() => scrollTo(0, innerHeight * .55)); await page.waitForTimeout(320);
@@ -62,13 +77,13 @@ try {
     await waitHome(page); await page.locator("#product").evaluate((node) => scrollTo(0,node.offsetTop+(node.offsetHeight-innerHeight)*.42)); await page.waitForTimeout(320);
   });
   await capture("home-live-connect-mobile", {width:390,height:844}, "/", async (page) => {
-    await waitHome(page); const live=page.locator("[data-brace-live]"); await live.scrollIntoViewIfNeeded(); await live.locator('[data-live-target="2"]').click(); await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "2"); await page.locator(".brace-live-window").evaluate((node)=>node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(240);
+    await waitHome(page); await settleMobileLiveState(page, 2);
   });
   await capture("home-live-act-mobile", {width:390,height:844}, "/", async (page) => {
-    await waitHome(page); const live=page.locator("[data-brace-live]"); await live.scrollIntoViewIfNeeded(); await live.locator('[data-live-target="4"]').click(); await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "4"); await page.locator(".brace-live-window").evaluate((node)=>node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(240);
+    await waitHome(page); await settleMobileLiveState(page, 4);
   });
   await capture("home-live-recall-compact", {width:375,height:812}, "/", async (page) => {
-    await waitHome(page); const live=page.locator("[data-brace-live]"); await live.scrollIntoViewIfNeeded(); await live.locator('[data-live-target="3"]').click(); await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "3"); await page.locator(".brace-live-window").evaluate((node)=>node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(240);
+    await waitHome(page); await settleMobileLiveState(page, 3);
   });
   await capture("guide-hero-desktop", {width:1440,height:900}, "/guide/", async (page) => {
     await waitGuide(page); const coach=page.locator("[data-guide-live-coach]"); await page.locator(".guide-hero").evaluate((node)=>node.scrollIntoView({block:"start",behavior:"instant"})); await coach.locator("[data-coach-next]").click(); await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:first-run"); await page.waitForTimeout(220);
@@ -77,6 +92,8 @@ try {
     await waitGuide(page); await page.locator("#recall").evaluate((node)=>node.scrollIntoView({block:"start",behavior:"instant"})); await page.waitForFunction(() => document.querySelector('.guide-toc a[href="#recall"]')?.getAttribute('aria-current')==='true'); await page.waitForTimeout(200);
   });
   await capture("guide-hero-mobile", {width:390,height:844}, "/guide/", async (page) => {
-    await waitGuide(page); const coach=page.locator("[data-guide-live-coach]"); await coach.locator("[data-coach-next]").click(); await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:first-run"); await coach.evaluate((node)=>node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(200);
+    await waitGuide(page); const coach=page.locator("[data-guide-live-coach]"); await coach.locator("[data-coach-next]").evaluate((node)=>node.click()); await page.waitForFunction(() => document.querySelector("[data-guide-live-coach]")?.dataset.scVerifyState === "guide:first-run"); await coach.evaluate((node)=>node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(200);
   });
-} finally { await browser.close(); }
+} finally {
+  await browser.close();
+}

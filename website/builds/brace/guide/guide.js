@@ -92,4 +92,15 @@
   }, { passive: true });
   window.addEventListener("resize", updateScrollState, { passive: true });
   updateScrollState();
+
+  const livingGuide = document.createElement("script");
+  livingGuide.src = "guide-v7.js";
+  livingGuide.async = false;
+  livingGuide.addEventListener("load", () => {
+    const premiumGuide = document.createElement("script");
+    premiumGuide.src = "guide-v8.js";
+    premiumGuide.async = false;
+    document.head.append(premiumGuide);
+  }, {once:true});
+  document.head.append(livingGuide);
 })();

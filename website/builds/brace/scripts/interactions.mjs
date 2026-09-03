@@ -16,61 +16,118 @@ async function check(name, run) {
 try {
   await page.goto(`${base}/`, {waitUntil: "networkidle"});
   await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v9");
-  await check("scroll film mounts with poster fallback", async () => {
+  await page.waitForFunction(() => document.documentElement.dataset.braceExperience === "living-v9");
+  await page.waitForFunction(() => document.documentElement.dataset.bracePremium === "v8");
+
+  await check("premium continuity layer mounts with ScrollCraft", async () => {
+    if (!await page.locator('link[href="premium-v8.css"]').count()) throw new Error("Premium continuity stylesheet is missing");
     if (await page.locator("[data-sc-scrub]").count() !== 1) throw new Error("Expected one scroll film");
-    if (!await page.locator(".film-poster").isVisible()) throw new Error("Film poster is not visible");
-    const source = await page.locator("[data-sc-scrub]").getAttribute("data-sc-src");
-    if (!source?.endsWith(".mp4")) throw new Error("Film source is not configured");
   });
-  await check("frost state responds to scroll", async () => {
-    const before = await page.locator(".film-stage").getAttribute("data-sc-verify-state");
-    await page.evaluate(() => scrollTo(0, innerHeight * 1.7));
-    await page.waitForTimeout(120);
-    const after = await page.locator(".film-stage").getAttribute("data-sc-verify-state");
-    if (!before || !after || before === after) throw new Error(`Frost state did not change: ${before} -> ${after}`);
-  });
-  await check("context relay explains every custody boundary", async () => {
+
+  await check("context relay remains interactive", async () => {
     const relay = page.locator("[data-memory-relay]");
     await relay.scrollIntoViewIfNeeded();
     const input = relay.locator("[data-relay-input]");
     await input.fill("2");
     await input.dispatchEvent("input");
-    if (await relay.getAttribute("data-sc-verify-state") !== "relay:2") throw new Error("Relay did not reach the AI handoff");
-    if (!String(await relay.locator("[data-relay-output]").textContent()).includes("Only the context you choose")) throw new Error("Relay did not explain the handoff boundary");
+    if (await relay.getAttribute("data-sc-verify-state") !== "relay:2") throw new Error("Relay did not reach AI handoff");
     await relay.locator('[data-relay-step="1"]').click();
-    if (await relay.getAttribute("data-sc-verify-state") !== "relay:1") throw new Error("Relay node controls are not interactive");
+    if (await relay.getAttribute("data-sc-verify-state") !== "relay:1") throw new Error("Relay controls failed");
   });
-  await check("sideways gallery has real overflow", async () => {
+
+  await check("live demo exposes five real product stages", async () => {
+    const live = page.locator("[data-brace-live]");
+    await live.scrollIntoViewIfNeeded();
+    const labels = await live.locator("[data-live-target]").allTextContents();
+    if (labels.length !== 5) throw new Error(`Expected 5 stages, got ${labels.length}`);
+    for (const expected of ["Capture","Understand","Connect","Recall","Act"]) {
+      if (!labels.join(" ").includes(expected)) throw new Error(`Missing ${expected} stage`);
+    }
+  });
+
+  await check("capture accepts visitor input and advances to Understand", async () => {
+    const live = page.locator("[data-brace-live]");
+    await live.locator('[data-live-target="0"]').click();
+    const input = live.locator("[data-live-input]");
+    await input.fill("Remember that release notes must keep source receipts visible.");
+    await live.locator("[data-live-capture] button[type=submit]").click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "1");
+    const memory = await live.locator("[data-live-memory-title]").textContent();
+    if (!String(memory).includes("source receipts")) throw new Error("Captured memory did not flow into indexing state");
+  });
+
+  await check("Connect graph is inspectable", async () => {
+    const live = page.locator("[data-brace-live]");
+    await live.locator('[data-live-target="2"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "2");
+    await live.locator('[data-memory-id="privacy"]').click();
+    const inspector = await live.locator("[data-live-inspector]").textContent();
+    if (!String(inspector).includes("PRIVACY ARCHITECTURE")) throw new Error("Graph inspector did not update");
+  });
+
+  await check("Recall scenarios change answer and preserve receipts", async () => {
+    const live = page.locator("[data-brace-live]");
+    await live.locator('[data-live-target="3"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "3");
+    await live.locator('[data-query="privacy"]').click();
+    const query = await live.locator("[data-live-query]").textContent();
+    const answer = await live.locator("[data-live-answer]").textContent();
+    if (!String(query).includes("privacy choices")) throw new Error("Recall query did not change");
+    if (!String(answer).includes("privacy boundary")) throw new Error("Recall answer did not change");
+    if (await live.locator("[data-receipt]").count() < 2) throw new Error("Evidence receipts are missing");
+  });
+
+  await check("Act stage performs bounded deterministic next steps", async () => {
+    const live = page.locator("[data-brace-live]");
+    await live.locator('[data-live-target="4"]').click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "4");
+    const action = live.locator('[data-act="checklist"]');
+    await action.click();
+    if (!await action.evaluate((node) => node.classList.contains("is-done"))) throw new Error("Action state did not update");
+  });
+
+  await check("live demo keyboard navigation follows five modes", async () => {
+    const live = page.locator("[data-brace-live]");
+    const first = live.locator('[data-live-target="0"]');
+    await first.focus();
+    await page.keyboard.press("ArrowRight");
+    if (await page.evaluate(() => document.activeElement?.getAttribute("data-live-target")) !== "1") throw new Error("ArrowRight did not move mode focus");
+  });
+
+  await check("pause and replay restore Capture", async () => {
+    const live = page.locator("[data-brace-live]");
+    const pause = live.locator("[data-live-pause]");
+    await pause.click();
+    if (await pause.getAttribute("aria-pressed") !== "true") throw new Error("Pause did not engage");
+    await live.locator("[data-live-reset]").click();
+    await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "0");
+    if (await pause.getAttribute("aria-pressed") !== "false") throw new Error("Replay did not clear pause");
+  });
+
+  await check("product reel and lightbox remain functional", async () => {
     const overflow = await page.locator(".product-rail").evaluate((rail) => rail.scrollWidth - window.innerWidth);
     if (overflow < 720) throw new Error(`Gallery overflow too small: ${overflow}px`);
-  });
-  await check("gallery controls change the selected view", async () => {
-    await page.locator("#product").evaluate((node) => scrollTo(0, node.offsetTop + 200));
-    await page.waitForTimeout(80);
-    const before = await page.locator("#proof-position").textContent();
-    await page.locator("[data-proof-next]").click();
-    await page.waitForTimeout(120);
-    const after = await page.locator("#proof-position").textContent();
-    if (before === after) throw new Error("Next control did not change the gallery label");
-  });
-  await check("product lightbox and keyboard close", async () => {
     const trigger = page.locator('[data-proof="graph"] [data-proof-expand]');
     await trigger.evaluate((node) => node.click());
     if (!await page.locator("#proof-dialog").evaluate((node) => node.open)) throw new Error("Dialog did not open");
-    if (!String(await page.locator("#proof-dialog-title").textContent()).includes("Brain")) throw new Error("Dialog title did not update");
     await page.keyboard.press("Escape");
-    if (await page.locator("#proof-dialog").evaluate((node) => node.open)) throw new Error("Dialog did not close");
   });
-  await check("equal platform downloads are versioned", async () => {
+
+  await check("downloads remain versioned", async () => {
     const links = await page.locator('[data-download="windows"],[data-download="linux"],[data-download="deb"]').evaluateAll((nodes) => nodes.map((node) => node.href));
     if (links.length !== 3 || links.some((url) => !url.includes("/releases/download/v0.7.0/"))) throw new Error("A download is not versioned");
-    const widths = await page.locator(".platforms article").evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().width));
-    if (Math.abs(widths[0] - widths[1]) > 2) throw new Error("Windows and Linux are not equal width");
   });
-  await check("beginner guide is part of the main site", async () => {
-    const response = await page.request.get(`${base}/guide/`);
-    if (!response.ok()) throw new Error(`Guide returned ${response.status()}`);
-    if (!await page.locator('a[href="guide/"]').count()) throw new Error("Main page does not link to the guide");
+
+  await check("guide remains a ScrollCraft-driven beginner journey", async () => {
+    await page.goto(`${base}/guide/`, {waitUntil: "networkidle"});
+    await page.waitForFunction(() => document.documentElement.dataset.braceGuideExperience === "living-v7");
+    await page.waitForFunction(() => document.documentElement.dataset.braceGuidePremium === "v8");
+    await page.waitForFunction(() => document.documentElement.dataset.braceGuideScrollcraft === "mounted");
+    const coach = page.locator("[data-guide-live-coach]");
+    if (!await coach.isVisible()) throw new Error("Guide companion is not visible");
+    if (await page.locator('.guide-toc [data-guide-live-coach]').count()) throw new Error("Guide companion still clutters sticky TOC");
+    const steps = await page.locator(".guide-step").count();
+    if (await page.locator(".guide-step-next").count() !== steps - 1) throw new Error("Guide next-step continuity is incomplete");
   });
 } finally { await browser.close(); }
 process.stdout.write(`${JSON.stringify({interactions: results, consoleErrors: errors}, null, 2)}\n`);

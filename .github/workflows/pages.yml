@@ -42,43 +42,30 @@ jobs:
       - name: Stage optimized public site
         shell: bash
         run: |
-          mkdir -p _site
+          mkdir -p _site/guide
           cp website/builds/brace/index.html _site/
-          # V5 remains modular in source, but production receives one flattened
-          # stylesheet with no chained import requests.
-          cat website/builds/brace/site-base.css \
-              website/builds/brace/experience-v5.css \
-              website/builds/brace/experience-v5-focus.css \
-              website/builds/brace/experience-v5-focus-guards.css > _site/site.css
+          # site.css remains the canonical base; premium layers only refine continuity.
+          cp website/builds/brace/site.css _site/site.css
+          cp website/builds/brace/premium-v8.css _site/
+          cp website/builds/brace/premium-v9.css _site/
           cp website/builds/brace/site.js _site/
-          cp website/builds/brace/site-v5.js _site/
+          cp website/builds/brace/site-v7.js _site/
+          cp website/builds/brace/premium-v8.js _site/
           cp website/builds/brace/motion.css _site/
           cp website/builds/brace/motion.js _site/
           cp website/builds/brace/favicon.ico _site/
           cp -R website/builds/brace/assets _site/
           cp -R website/builds/brace/vendor _site/
-          cp -R website/builds/brace/guide _site/
-          # Guide HTML already loads ../site.css. Keep only its semantic base and
-          # V5 editorial/geometry layers in the deployed local stylesheet.
-          cat website/builds/brace/guide/guide-base.css \
-              website/builds/brace/guide/guide-v5.css \
-              website/builds/brace/guide/guide-v5-guards.css > _site/guide/guide.css
-          rm -f _site/guide/guide-base.css \
-                _site/guide/guide-v3.css \
-                _site/guide/guide-fixes.css \
-                _site/guide/guide-v4.css \
-                _site/guide/guide-v4-layout.css \
-                _site/guide/guide-v5.css \
-                _site/guide/guide-v5-guards.css \
-                _site/guide/site-base.css \
-                _site/guide/liquid-glass.css \
-                _site/guide/responsive-fixes.css \
-                _site/guide/experience-v3.css \
-                _site/guide/experience-v4.css \
-                _site/guide/experience-v4-layout.css \
-                _site/guide/experience-v5.css \
-                _site/guide/experience-v5-focus.css \
-                _site/guide/experience-v5-focus-guards.css
+
+          cp website/builds/brace/guide/index.html _site/guide/
+          cp website/builds/brace/guide/guide.js _site/guide/
+          cp website/builds/brace/guide/guide-v7.js _site/guide/
+          cp website/builds/brace/guide/guide-v8.js _site/guide/
+          cp website/builds/brace/guide/guide-v8.css _site/guide/
+          # Keep guide source modular, but ship one flattened base stylesheet.
+          cat website/builds/brace/guide/guide-base.css > _site/guide/guide.css
+          sed '1{/^@import /d;}' website/builds/brace/guide/guide.css >> _site/guide/guide.css
+
           cp -R website/builds/brace/how-to _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

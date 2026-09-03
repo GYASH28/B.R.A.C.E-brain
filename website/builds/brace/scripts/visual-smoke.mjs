@@ -30,6 +30,18 @@ const waitGuide = async (page) => {
   await page.waitForFunction(() => document.documentElement.dataset.braceGuidePremium === "v8");
   await page.waitForFunction(() => document.documentElement.dataset.braceGuideScrollcraft === "mounted");
 };
+const settleDesktopLiveState = async (page, state) => {
+  const progress = [0.05, 0.3, 0.5, 0.7, 0.92][state] ?? 0.05;
+  await page.evaluate((nextProgress) => {
+    const node = document.querySelector("[data-brace-live]");
+    if (!node) throw new Error("Live demo is missing");
+    const travel = Math.max(1, node.offsetHeight - innerHeight);
+    scrollTo({top: node.offsetTop + travel * nextProgress, behavior: "instant"});
+  }, progress);
+  await page.waitForFunction((expected) => document.querySelector("[data-brace-live]")?.dataset.liveState === String(expected), state);
+  await page.waitForTimeout(260);
+  return page.locator("[data-brace-live]");
+};
 try {
   await capture("home-hero-ultrawide", {width:1920,height:1080}, "/", async (page) => {
     await waitHome(page); await page.evaluate(() => scrollTo(0, innerHeight * .55)); await page.waitForTimeout(320);
@@ -41,10 +53,10 @@ try {
     await waitHome(page); await page.locator("#story").evaluate((node) => node.scrollIntoView({block:"center",behavior:"instant"})); await page.waitForTimeout(260);
   });
   await capture("home-live-understand-desktop", {width:1440,height:900}, "/", async (page) => {
-    await waitHome(page); const live=page.locator("[data-brace-live]"); await live.locator('[data-live-target="1"]').click(); await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "1"); await page.waitForTimeout(360);
+    await waitHome(page); await settleDesktopLiveState(page, 1);
   });
   await capture("home-live-recall-desktop", {width:1440,height:900}, "/", async (page) => {
-    await waitHome(page); const live=page.locator("[data-brace-live]"); await live.locator('[data-live-target="3"]').click(); await page.waitForFunction(() => document.querySelector("[data-brace-live]")?.dataset.liveState === "3"); await live.locator('[data-query="privacy"]').click(); await page.waitForTimeout(300);
+    await waitHome(page); const live=await settleDesktopLiveState(page, 3); await live.locator('[data-query="privacy"]').click(); await page.waitForTimeout(300);
   });
   await capture("home-product-desktop", {width:1440,height:900}, "/", async (page) => {
     await waitHome(page); await page.locator("#product").evaluate((node) => scrollTo(0,node.offsetTop+(node.offsetHeight-innerHeight)*.42)); await page.waitForTimeout(320);

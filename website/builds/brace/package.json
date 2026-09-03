@@ -8,6 +8,7 @@
     "audit:interactions": "node scripts/interactions.mjs",
     "audit:layout": "node scripts/layout.mjs",
     "audit:focus": "node scripts/focus-layout.mjs",
+    "audit:performance": "node scripts/performance.mjs",
     "audit:visual": "node scripts/visual-smoke.mjs"
   },
   "devDependencies": {

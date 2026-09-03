@@ -1,0 +1,128 @@
+/* BRACE Beginner Guide — Refinement V10
+   Larger instructional type, stronger contrast, calmer cards, clearer hierarchy,
+   and a less cramped reading experience on desktop and mobile. */
+
+:root{
+  --guide-r10-ink:#0a3268;
+  --guide-r10-body:#274f79;
+  --guide-r10-muted:#42678b;
+  --guide-r10-line:rgba(20,73,143,.15);
+  --guide-r10-card:rgba(252,254,255,.93);
+}
+
+html{scroll-padding-top:96px;text-rendering:optimizeLegibility;-webkit-font-smoothing:antialiased}
+.guide-body{font-size:16px;line-height:1.7;color:var(--guide-r10-body)}
+.guide-wrap{width:min(1220px,calc(100% - clamp(28px,6vw,84px)))!important}
+
+.guide-bar{
+  border-color:#fff!important;
+  background:linear-gradient(145deg,rgba(253,254,255,.94),rgba(236,247,255,.82))!important;
+  box-shadow:inset 0 1px #fff,0 12px 38px rgba(16,62,128,.13)!important;
+  -webkit-backdrop-filter:blur(18px) saturate(1.05)!important;
+  backdrop-filter:blur(18px) saturate(1.05)!important;
+}
+.product-mark{color:#08376f!important}.product-mark span small{color:#3c648a!important;font-size:.66rem!important}
+.guide-bar>nav{gap:8px!important}.guide-bar>nav a{padding:9px 12px;border-radius:11px;color:#2e5986!important;font-size:.78rem!important;font-weight:720!important;text-decoration:none}
+.guide-bar>nav a:hover{background:#fff;color:#0b4388!important}.guide-bar>.bar-action{min-height:44px;display:inline-flex;align-items:center;font-size:.8rem!important}
+
+.guide-hero{padding-top:clamp(150px,18vh,190px)!important;padding-bottom:clamp(76px,9vh,104px)!important}
+.surface-kicker{font-size:.75rem!important;letter-spacing:.15em!important}
+.guide-hero h1{max-width:13ch!important;color:var(--guide-r10-ink)!important;font-size:clamp(3.2rem,6.8vw,6rem)!important;line-height:.98!important;letter-spacing:-.05em!important}
+.guide-lede{max-width:60ch!important;margin-top:26px!important;color:var(--guide-r10-body)!important;font-size:clamp(1.05rem,1.35vw,1.22rem)!important;line-height:1.75!important}
+.guide-route{
+  margin-top:clamp(42px,6vh,64px)!important;
+  border:1px solid #fff!important;border-radius:18px!important;overflow:hidden;
+  background:rgba(250,253,255,.9)!important;box-shadow:inset 0 1px #fff,0 16px 44px rgba(18,66,132,.1)!important;
+}
+.guide-route a{min-height:60px!important;padding:0 13px!important;color:#315b85!important;font-size:.76rem!important;font-weight:700!important}
+.guide-route span{color:#1456a6!important;font-size:.65rem!important;font-weight:800!important}
+
+.guide-layout{grid-template-columns:240px minmax(0,1fr)!important;gap:clamp(48px,7vw,96px)!important;padding-top:76px!important}
+.guide-toc{
+  top:92px!important;padding:18px!important;border-color:#fff!important;border-radius:18px!important;
+  background:rgba(250,253,255,.94)!important;box-shadow:inset 0 1px #fff,0 16px 44px rgba(18,66,132,.09)!important;
+  -webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;
+}
+.guide-toc>strong{padding-bottom:12px!important;color:#2d5984!important;font-size:.68rem!important;letter-spacing:.12em!important}
+.guide-toc nav{gap:3px!important}.guide-toc a{padding:9px 10px!important;color:#3b6389!important;font-size:.73rem!important;line-height:1.42!important}
+.guide-toc a:hover,.guide-toc a[aria-current=true]{color:#0a438b!important;background:#fff!important}
+.toc-status strong{color:#174b86!important;font-size:.72rem!important}.toc-status small{color:#58799a!important;font-size:.66rem!important;line-height:1.35!important}
+
+.guide-article{max-width:830px}
+.guide-step{padding-bottom:96px!important;scroll-margin-top:100px!important}.guide-step+.guide-step{padding-top:94px!important}
+.step-header{grid-template-columns:52px 1fr!important;gap:18px!important;margin-bottom:28px!important}
+.step-header>span{width:48px!important;height:48px!important;border-radius:12px!important;font-size:.72rem!important}
+.step-header p{margin-bottom:7px!important;color:#15559e!important;font-size:.68rem!important;letter-spacing:.14em!important}
+.step-header h2{max-width:20ch!important;color:var(--guide-r10-ink)!important;font-size:clamp(2.15rem,3.7vw,3.25rem)!important;line-height:1.06!important;letter-spacing:-.04em!important}
+
+.guide-body .guide-step>p,
+.guide-body .details-body p,
+.guide-body .platform-grid p,
+.guide-body .choice-list span,
+.guide-body .do-dont span,
+.guide-body .instruction-list p,
+.guide-body .feature-walkthrough p,
+.guide-body .permission-table>div,
+.guide-body .control-list dd,
+.guide-body .location-list p{
+  color:var(--guide-r10-body)!important;
+  font-size:.98rem!important;
+  line-height:1.78!important;
+}
+.guide-step>p,.details-body p,.platform-grid p{max-width:68ch!important}
+.guide-step h3{margin-top:34px!important;color:#103d73!important;font-size:1.15rem!important;line-height:1.35!important}
+.guide-step a{color:#064fa6!important;text-underline-offset:.22em;text-decoration-thickness:1.5px}
+.guide-step code,.location-list code,.permission-table code{color:#0b478a!important;font-size:.9em!important}
+
+.platform-grid{gap:16px!important;margin-top:30px!important}.platform-grid>section,
+.choice-list>li,.do-dont>div,.shortcut-deck>p,.permission-table,.guide-step details,
+.feature-walkthrough>article,.instruction-list>li,.control-list>div,.location-list>p{
+  border-color:#fff!important;background:var(--guide-r10-card)!important;
+  box-shadow:inset 0 1px #fff,0 12px 34px rgba(18,66,132,.08)!important;
+}
+.platform-grid>section{padding:24px!important;border-radius:16px!important}.platform-title h3{color:#123f74!important;font-size:.98rem!important}.platform-title span{width:38px!important;height:38px!important;border-radius:10px!important;font-size:.66rem!important}
+.platform-grid ol{color:var(--guide-r10-body)!important;font-size:.9rem!important;line-height:1.78!important}
+
+.guide-note{padding:16px 18px!important;border-radius:12px!important;color:#284f79!important;background:#f7fbff!important;font-size:.88rem!important;line-height:1.72!important}.guide-note strong{color:#103f77!important}
+pre{padding:20px 78px 20px 20px!important;border-radius:12px!important;font-size:.78rem!important;line-height:1.7!important}.copy-code{min-width:58px!important;height:34px!important;font-size:.7rem!important;border-radius:8px!important}
+summary{padding:17px 18px!important;color:#173f73!important;font-size:.92rem!important;line-height:1.45!important}.details-body{padding:0 18px 19px!important}
+
+.choice-list{gap:10px!important}.choice-list li{grid-template-columns:minmax(150px,.34fr) 1fr!important;padding:18px!important;border:1px solid #fff!important;border-radius:14px!important}.choice-list strong{color:#123f74!important;font-size:.94rem!important}
+.do-dont{gap:10px!important;border-top:0!important}.do-dont>div{grid-template-columns:minmax(140px,.3fr) 1fr!important;padding:18px!important;border:1px solid #fff!important;border-radius:14px!important}.do-dont strong{color:#14529a!important;font-size:.9rem!important}
+.instruction-list{gap:9px!important}.instruction-list li{grid-template-columns:42px 1fr!important;padding:17px!important;border-radius:14px!important}.instruction-list li>span{width:36px!important;height:36px!important;font-size:.72rem!important}.instruction-list strong{color:#123f74!important;font-size:.94rem!important}
+.shortcut-deck{gap:12px!important}.shortcut-deck p{grid-template-columns:96px 1fr!important;padding:17px!important;border-radius:14px!important}.shortcut-deck kbd{font-size:.72rem!important}.shortcut-deck strong{color:#123f74!important;font-size:.9rem!important}.shortcut-deck span{color:#3f678d!important;font-size:.82rem!important;line-height:1.62!important}
+
+.guide-shot{margin-top:38px!important}.guide-shot img{border-radius:16px!important;box-shadow:0 24px 64px rgba(13,57,119,.16)!important}.guide-shot figcaption{padding:12px 4px 0!important;color:#365f88!important;font-size:.78rem!important;line-height:1.55!important}.guide-shot figcaption strong{color:#123f72!important}
+.permission-table{border-radius:14px!important;overflow:hidden}.permission-table [role=row]{padding-block:13px!important}
+.control-list,.location-list{gap:10px!important}.control-list>div,.location-list>p{padding:17px!important;border-radius:14px!important}.control-list dt{color:#123f74!important;font-size:.92rem!important}
+.faq-list details{border-radius:14px!important}
+.guide-footer>p,.guide-footer>nav a{color:#315b84!important;font-size:.82rem!important}
+
+/* The live companion should help, not become another tiny dashboard. */
+.guide-live-coach{background:rgba(251,254,255,.96)!important;border-color:#fff!important;box-shadow:inset 0 1px #fff,0 15px 40px rgba(17,66,132,.1)!important}
+.guide-live-head strong{font-size:.64rem!important}.guide-live-head span{font-size:.62rem!important}.guide-live-screen small{font-size:.61rem!important}.guide-live-screen h3{color:#123e72!important;font-size:1rem!important;line-height:1.28!important}.guide-live-screen p{color:#3f678e!important;font-size:.76rem!important;line-height:1.56!important}.guide-live-chips span{font-size:.62rem!important}.guide-live-status strong{font-size:.78rem!important}.guide-live-status p{color:#466d92!important;font-size:.72rem!important;line-height:1.52!important}.guide-live-controls button{min-height:42px!important;font-size:.7rem!important}
+
+@media(max-width:860px){
+  html{scroll-padding-top:82px}
+  .guide-wrap{width:min(100% - 22px,760px)!important}
+  .guide-bar{width:calc(100% - 16px)!important;height:60px!important;padding-inline:10px!important;border-radius:18px!important}.product-mark img{width:32px;height:32px}.guide-bar>.bar-action{padding-inline:12px!important;font-size:.74rem!important}
+  .guide-hero{padding-top:128px!important;padding-bottom:68px!important}.guide-hero h1{font-size:clamp(2.9rem,13vw,4.8rem)!important;line-height:1!important}.guide-lede{font-size:1.02rem!important;line-height:1.7!important}
+  .guide-route{display:flex!important;overflow-x:auto!important;scroll-snap-type:x proximity;scrollbar-width:none;border-radius:16px!important}.guide-route::-webkit-scrollbar{display:none}.guide-route a{flex:0 0 126px;scroll-snap-align:start;min-height:56px!important;font-size:.72rem!important}
+  .guide-layout{display:block!important;padding-top:58px!important}.guide-toc{display:none!important}.guide-article{max-width:none!important}
+  .guide-step{padding-bottom:74px!important}.guide-step+.guide-step{padding-top:72px!important}.step-header{grid-template-columns:46px 1fr!important;gap:14px!important}.step-header>span{width:42px!important;height:42px!important}.step-header h2{font-size:clamp(2rem,9.5vw,3rem)!important;line-height:1.08!important}
+  .platform-grid{grid-template-columns:1fr!important}.choice-list li,.do-dont>div{grid-template-columns:1fr!important;gap:8px!important}.shortcut-deck{grid-template-columns:1fr!important}.shortcut-deck p{grid-template-columns:90px 1fr!important}
+  .guide-body .guide-step>p,.guide-body .details-body p,.guide-body .platform-grid p,.guide-body .choice-list span,.guide-body .do-dont span,.guide-body .instruction-list p,.guide-body .feature-walkthrough p,.guide-body .permission-table>div,.guide-body .control-list dd,.guide-body .location-list p{font-size:.96rem!important;line-height:1.75!important}
+  .guide-live-coach{width:100%!important;margin-top:22px!important;padding:14px!important;border-radius:18px!important}.guide-live-screen{min-height:164px!important}.guide-live-screen h3{font-size:.96rem!important}.guide-live-controls{grid-template-columns:repeat(2,1fr)!important}
+}
+
+@media(max-width:520px){
+  .guide-bar>.bar-action{padding-inline:10px!important}.product-mark span small{display:none}
+  .guide-hero h1{font-size:clamp(2.7rem,14vw,4.2rem)!important}
+  .guide-route a{flex-basis:118px}
+  .step-header{grid-template-columns:40px 1fr!important}.step-header>span{width:38px!important;height:38px!important}.step-header h2{font-size:clamp(1.85rem,9.5vw,2.65rem)!important}
+  pre{padding-right:18px!important;padding-top:52px!important}.copy-code{top:9px!important;left:9px!important;right:auto!important}
+}
+
+@media(prefers-contrast:more){
+  .guide-body{color:#163f70!important}.guide-route,.guide-toc,.guide-live-coach,.platform-grid>section,.choice-list>li,.do-dont>div,.shortcut-deck>p,.permission-table,.guide-step details,.feature-walkthrough>article,.instruction-list>li,.control-list>div,.location-list>p{background:#fbfdff!important}
+}

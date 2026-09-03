@@ -190,6 +190,13 @@
     renderDialog();
   });
 
+  if (reduce) {
+    proofAct?.addEventListener("focusin", (event) => {
+      const target = event.target instanceof Element ? event.target.closest("[data-proof],.gallery-outro") : null;
+      target?.scrollIntoView({behavior: "auto", block: "nearest", inline: "center"});
+    });
+  }
+
   const platform = /Windows/i.test(navigator.userAgent) ? "windows" : /Linux/i.test(navigator.userAgent) ? "linux" : "";
   if (platform) document.querySelector(`[data-platform-card="${platform}"]`)?.classList.add("is-device");
 
@@ -211,6 +218,10 @@
       });
     };
     panels.forEach((panel) => new MutationObserver(syncLiveFocus).observe(panel, {attributes:true, attributeFilter:["aria-hidden"]}));
+    live?.querySelector(".brace-live-rail")?.addEventListener("focusin", (event) => {
+      const target = event.target instanceof Element ? event.target.closest("[data-live-target]") : null;
+      target?.scrollIntoView({behavior: "auto", block: "nearest", inline: "center"});
+    });
     syncLiveFocus();
   }, {once:true});
   document.head.append(livingEnhancement);

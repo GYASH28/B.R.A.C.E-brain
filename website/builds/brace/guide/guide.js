@@ -93,14 +93,26 @@
   window.addEventListener("resize", updateScrollState, { passive: true });
   updateScrollState();
 
-  const livingGuide = document.createElement("script");
-  livingGuide.src = "guide-v7.js";
-  livingGuide.async = false;
-  livingGuide.addEventListener("load", () => {
-    const premiumGuide = document.createElement("script");
-    premiumGuide.src = "guide-v8.js";
-    premiumGuide.async = false;
-    document.head.append(premiumGuide);
-  }, {once:true});
-  document.head.append(livingGuide);
+  const mountGuideEnhancements = () => {
+    const livingGuide = document.createElement("script");
+    livingGuide.src = "guide-v7.js";
+    livingGuide.async = false;
+    livingGuide.addEventListener("load", () => {
+      const premiumGuide = document.createElement("script");
+      premiumGuide.src = "guide-v8.js";
+      premiumGuide.async = false;
+      document.head.append(premiumGuide);
+    }, {once:true});
+    document.head.append(livingGuide);
+  };
+
+  if (window.ScrollCraft) {
+    mountGuideEnhancements();
+  } else {
+    const motionRuntime = document.createElement("script");
+    motionRuntime.src = "../motion.js";
+    motionRuntime.async = false;
+    motionRuntime.addEventListener("load", mountGuideEnhancements, {once:true});
+    document.head.append(motionRuntime);
+  }
 })();

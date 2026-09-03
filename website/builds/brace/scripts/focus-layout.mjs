@@ -11,22 +11,27 @@ try{
     await page.goto(`${base}/`,{waitUntil:"networkidle"});
     await page.waitForFunction(()=>document.documentElement.dataset.braceExperience==="living-v9");
     const count=await page.locator(focusSelector).evaluateAll((nodes)=>{
-      const eligible=nodes.filter((node)=>{
-        const rect=node.getBoundingClientRect(),style=getComputedStyle(node);
-        if(node.closest('[inert],[aria-hidden="true"]'))return false;
-        if(node.tabIndex<0)return false;
-        return rect.width>0&&rect.height>0&&style.display!=="none"&&style.visibility!=="hidden"&&Number.parseFloat(style.opacity)>.1;
-      });
+      const suppressed=(node)=>{
+        let current=node;
+        while(current&&current!==document.documentElement){
+          if(current.matches?.('[inert],[aria-hidden="true"],[hidden],dialog:not([open])'))return true;
+          const style=getComputedStyle(current);
+          if(style.display==="none"||style.visibility==="hidden"||Number.parseFloat(style.opacity)<=.1)return true;
+          current=current.parentElement;
+        }
+        return false;
+      };
+      const eligible=nodes.filter((node)=>!suppressed(node)&&node.tabIndex>=0);
       eligible.forEach((node,index)=>{node.dataset.focusAuditId=`focus-${index}`});
       return eligible.length;
     });
     const issues=[],visitedIds=[],visitedLabels=[];
     for(let index=0;index<count;index+=1){
       await page.keyboard.press("Tab");
-      await page.waitForTimeout(40);
+      await page.waitForTimeout(80);
       const state=await page.evaluate(()=>{
         const node=document.activeElement,rect=node.getBoundingClientRect(),style=getComputedStyle(node);
-        return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
+        return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
       });
       visitedIds.push(state.id);
       visitedLabels.push(state.label);

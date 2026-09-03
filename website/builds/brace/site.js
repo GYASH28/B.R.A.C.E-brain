@@ -196,5 +196,16 @@
   const livingEnhancement = document.createElement("script");
   livingEnhancement.src = "site-v7.js";
   livingEnhancement.async = false;
+  livingEnhancement.addEventListener("load", () => {
+    const live = document.querySelector("[data-brace-live]");
+    const panels = Array.from(live?.querySelectorAll("[data-live-panel]") || []);
+    const syncLiveFocus = () => {
+      panels.forEach((panel) => {
+        panel.inert = panel.getAttribute("aria-hidden") === "true";
+      });
+    };
+    panels.forEach((panel) => new MutationObserver(syncLiveFocus).observe(panel, {attributes:true, attributeFilter:["aria-hidden"]}));
+    syncLiveFocus();
+  }, {once:true});
   document.head.append(livingEnhancement);
 })();

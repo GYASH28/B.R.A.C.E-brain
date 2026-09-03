@@ -2,7 +2,7 @@
 import { chromium } from "playwright-core";
 const base=process.env.BRACE_SITE_URL||"http://127.0.0.1:4517";
 const browser=await chromium.launch({executablePath:process.env.SCROLLCRAFT_CHROME||"/usr/bin/google-chrome",headless:true});
-const viewports=[[1440,900],[900,900],[430,932],[390,844]];
+const viewports=[[1920,1080],[1440,900],[900,900],[430,932],[390,844],[375,812]];
 const results=[];
 try{
   for(const [width,height] of viewports){

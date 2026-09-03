@@ -8,6 +8,13 @@
   const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 
   root.dataset.bracePremium = "v8";
+  root.dataset.braceRefinement = "v10";
+  if (!document.querySelector('link[href="refine-v10.css"]')) {
+    const refinement = document.createElement("link");
+    refinement.rel = "stylesheet";
+    refinement.href = "refine-v10.css";
+    document.head.append(refinement);
+  }
 
   const getSections = () => [
     document.querySelector("#film"),

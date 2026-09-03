@@ -51,6 +51,7 @@
       root.style.setProperty("--lens-y", "45%");
     });
   }
+
   const relay = document.querySelector("[data-memory-relay]");
   const relayInput = relay?.querySelector("[data-relay-input]");
   const relayOutput = relay?.querySelector("[data-relay-output]");
@@ -77,19 +78,26 @@
   relayInput?.addEventListener("input", (event) => setRelay(event.currentTarget.value));
   relaySteps.forEach((node) => node.addEventListener("click", () => setRelay(node.dataset.relayStep)));
   setRelay(0);
+
   const canvas = document.querySelector("[data-rain-field]");
   const context = canvas?.getContext("2d");
   const drops = Array.from({length: innerWidth < 700 ? 18 : 30}, (_, index) => ({
-    x: ((index * 73) % 97) / 97, y: ((index * 47) % 101) / 101,
-    speed: 0.00012 + (index % 7) * 0.000018, length: 18 + (index % 8) * 5, alpha: 0.08 + (index % 5) * 0.025,
+    x: ((index * 73) % 97) / 97,
+    y: ((index * 47) % 101) / 101,
+    speed: 0.00012 + (index % 7) * 0.000018,
+    length: 18 + (index % 8) * 5,
+    alpha: 0.08 + (index % 5) * 0.025,
   }));
   let rainWidth = 0, rainHeight = 0, rainFrame = 0;
   const resizeRain = () => {
     if (!canvas || !context) return;
     const density = Math.min(devicePixelRatio || 1, 1.5);
-    rainWidth = innerWidth; rainHeight = innerHeight;
-    canvas.width = Math.round(rainWidth * density); canvas.height = Math.round(rainHeight * density);
-    canvas.style.width = `${rainWidth}px`; canvas.style.height = `${rainHeight}px`;
+    rainWidth = innerWidth;
+    rainHeight = innerHeight;
+    canvas.width = Math.round(rainWidth * density);
+    canvas.height = Math.round(rainHeight * density);
+    canvas.style.width = `${rainWidth}px`;
+    canvas.style.height = `${rainHeight}px`;
     context.setTransform(density, 0, 0, density, 0, 0);
   };
   const paintRain = (time = 0) => {
@@ -97,13 +105,18 @@
     context.clearRect(0, 0, rainWidth, rainHeight);
     drops.forEach((drop, index) => {
       const travel = reduce ? drop.y : (drop.y + time * drop.speed) % 1.2 - 0.1;
-      const x = drop.x * rainWidth, y = travel * rainHeight;
+      const x = drop.x * rainWidth;
+      const y = travel * rainHeight;
       const gradient = context.createLinearGradient(x, y, x - 3, y + drop.length);
       gradient.addColorStop(0, "rgba(255,255,255,0)");
       gradient.addColorStop(0.65, `rgba(255,255,255,${drop.alpha})`);
       gradient.addColorStop(1, "rgba(217,239,255,0)");
-      context.strokeStyle = gradient; context.lineWidth = index % 9 === 0 ? 1.6 : 0.8;
-      context.beginPath(); context.moveTo(x, y); context.lineTo(x - 3, y + drop.length); context.stroke();
+      context.strokeStyle = gradient;
+      context.lineWidth = index % 9 === 0 ? 1.6 : 0.8;
+      context.beginPath();
+      context.moveTo(x, y);
+      context.lineTo(x - 3, y + drop.length);
+      context.stroke();
     });
     if (!reduce && !document.hidden) rainFrame = requestAnimationFrame(paintRain);
   };
@@ -111,10 +124,12 @@
     cancelAnimationFrame(rainFrame);
     if (!document.hidden) paintRain(performance.now());
   };
-  resizeRain(); paintRain();
+  resizeRain();
+  paintRain();
   addEventListener("resize", resizeRain, {passive: true});
   document.addEventListener("visibilitychange", resumeRain);
   addEventListener("pagehide", () => cancelAnimationFrame(rainFrame), {once: true});
+
   const proofAct = document.querySelector(".product-act");
   const proofFrames = Array.from(document.querySelectorAll("[data-proof]"));
   const proofPosition = document.querySelector("#proof-position");
@@ -133,10 +148,14 @@
   const updateGallery = () => {
     const progress = clamp(Number.parseFloat(proofAct?.style.getPropertyValue("--sc-p")) || 0, 0, 1);
     const index = clamp(Math.round(progress * (proofFrames.length + 1) - 1), 0, proofFrames.length - 1);
-    if (proofFrames[index] && index !== activeProof) { activeProof = index; proofPosition.textContent = proofFrames[index].dataset.proofTitle; }
+    if (proofFrames[index] && index !== activeProof) {
+      activeProof = index;
+      proofPosition.textContent = proofFrames[index].dataset.proofTitle;
+    }
     galleryTicking = false;
   };
   addEventListener("scroll", () => { if (!galleryTicking) { galleryTicking = true; requestAnimationFrame(updateGallery); } }, {passive: true});
+
   const dialog = document.querySelector("#proof-dialog");
   const dialogImage = document.querySelector("#proof-dialog-image");
   const dialogTitle = document.querySelector("#proof-dialog-title");
@@ -149,50 +168,33 @@
     dialogTitle.textContent = frame.dataset.proofTitle;
   };
   proofFrames.forEach((frame, index) => frame.querySelector("[data-proof-expand]")?.addEventListener("click", (event) => {
-    activeProof = index; returnFocus = event.currentTarget; renderDialog(); dialog?.showModal();
+    activeProof = index;
+    returnFocus = event.currentTarget;
+    renderDialog();
+    dialog?.showModal();
   }));
-  const closeDialog = () => { if (dialog?.open) { dialog.close(); returnFocus?.focus(); } };
+  const closeDialog = () => {
+    if (dialog?.open) {
+      dialog.close();
+      returnFocus?.focus();
+    }
+  };
   dialog?.querySelector("[data-dialog-close]")?.addEventListener("click", closeDialog);
   dialog?.addEventListener("click", (event) => { if (event.target === dialog) closeDialog(); });
-  document.querySelector("[data-lightbox-prev]")?.addEventListener("click", () => { activeProof = (activeProof - 1 + proofFrames.length) % proofFrames.length; renderDialog(); });
-  document.querySelector("[data-lightbox-next]")?.addEventListener("click", () => { activeProof = (activeProof + 1) % proofFrames.length; renderDialog(); });
+  document.querySelector("[data-lightbox-prev]")?.addEventListener("click", () => {
+    activeProof = (activeProof - 1 + proofFrames.length) % proofFrames.length;
+    renderDialog();
+  });
+  document.querySelector("[data-lightbox-next]")?.addEventListener("click", () => {
+    activeProof = (activeProof + 1) % proofFrames.length;
+    renderDialog();
+  });
+
   const platform = /Windows/i.test(navigator.userAgent) ? "windows" : /Linux/i.test(navigator.userAgent) ? "linux" : "";
   if (platform) document.querySelector(`[data-platform-card="${platform}"]`)?.classList.add("is-device");
 
   const livingEnhancement = document.createElement("script");
   livingEnhancement.src = "site-v7.js";
   livingEnhancement.async = false;
-  livingEnhancement.addEventListener("load", () => {
-    const polish = document.createElement("style");
-    polish.dataset.braceLivingPolish = "v7.1";
-    polish.textContent = `
-      @media (min-width:981px){
-        .brace-live-copy h2{font-size:clamp(2.85rem,4.55vw,5.15rem)}
-        .brace-live-story{margin-top:27px;min-height:136px;padding-top:20px}
-        .brace-live-actions{margin-top:17px}
-      }
-      @media (max-width:720px){
-        .brace-live-window{min-height:600px}
-        .brace-live-body{min-height:546px;grid-template-rows:auto minmax(0,1fr)}
-        .brace-live-rail{align-self:start;min-height:auto;padding:8px;gap:6px}
-        .brace-live-mode{min-height:50px;padding:7px 5px}
-        .brace-live-workspace{min-height:0;height:100%;padding:16px}
-        .brace-orb{top:62px;width:72px}
-        .brace-live-panels{top:160px;bottom:78px}
-        .brace-live-panel{align-content:start}
-        .brace-live-card{padding:14px}
-        .brace-live-graph{min-height:128px}
-        .brace-live-graph span{min-width:70px;padding:7px 8px;font-size:.56rem}
-        .brace-command{bottom:14px}
-      }
-      @media (max-width:390px){
-        .brace-live-window{min-height:584px}
-        .brace-live-body{min-height:530px}
-        .brace-live-panels{top:154px;bottom:76px}
-        .brace-live-graph{min-height:118px}
-      }
-    `;
-    document.head.append(polish);
-  }, {once:true});
   document.head.append(livingEnhancement);
 })();

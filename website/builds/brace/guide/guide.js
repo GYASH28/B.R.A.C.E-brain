@@ -2,12 +2,6 @@
   "use strict";
 
   document.documentElement.dataset.braceGuideRefinement = "v10";
-  if (!document.querySelector('link[href="refine-v10.css"]')) {
-    const refinement = document.createElement("link");
-    refinement.rel = "stylesheet";
-    refinement.href = "refine-v10.css";
-    document.head.append(refinement);
-  }
 
   document.querySelectorAll(".copy-code").forEach((button) => {
     button.addEventListener("click", async () => {

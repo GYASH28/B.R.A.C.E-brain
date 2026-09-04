@@ -1,0 +1,57 @@
+name: Website production hardening
+
+on:
+  push:
+    branches:
+      - production-website-2026-09
+
+permissions:
+  contents: write
+
+concurrency:
+  group: website-production-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: production-website-2026-09
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/builds/brace/package-lock.json
+      - run: npm ci --prefix website/builds/brace
+      - name: Apply production metadata and loading policy
+        run: node website/builds/brace/scripts/apply-production-metadata.mjs
+      - name: Verify production website contract
+        run: node website/builds/brace/scripts/production-contract.mjs
+      - name: Run website audits
+        run: |
+          python3 -m http.server 4517 --bind 127.0.0.1 --directory website/builds/brace > /tmp/brace-site.log 2>&1 &
+          site_pid=$!
+          trap 'kill "$site_pid"' EXIT
+          curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
+          npm run audit:a11y --prefix website/builds/brace
+          npm run audit:layout --prefix website/builds/brace
+          npm run audit:focus --prefix website/builds/brace
+          npm run audit:interactions --prefix website/builds/brace
+          npm run audit:performance --prefix website/builds/brace
+          npm run audit:visual --prefix website/builds/brace
+      - run: git diff --check
+      - name: Commit verified website hardening
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No website changes to commit."
+            exit 0
+          fi
+          git commit -m "feat(website): harden production metadata and loading [skip ci]"
+          git push origin HEAD:production-website-2026-09

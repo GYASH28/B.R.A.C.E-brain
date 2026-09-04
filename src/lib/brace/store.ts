@@ -71,6 +71,9 @@ interface BraceState {
   configureEmbeddings: (input: Record<string, unknown>) => Promise<void>;
   exportData: () => Promise<void>;
   backupData: () => Promise<void>;
+  restoreBackup: () => Promise<void>;
+  cancelPendingRestore: () => Promise<void>;
+  exportSupportBundle: () => Promise<void>;
   deleteAll: (confirmation: string) => Promise<void>;
   saveAutomation: (input: Record<string, unknown>, id?: string) => Promise<BraceAutomation | null>;
   toggleAutomation: (id: string, enabled: boolean) => Promise<void>;
@@ -329,6 +332,25 @@ export const useBrace = create<BraceState>((set, get) => {
         const api = desktop();
         if (!api?.backupBraceData) throw new Error("Backup is available in the desktop app.");
         if (await api.backupBraceData()) set({ notice: "Consistent SQLite backup created." });
+      }),
+    restoreBackup: async () =>
+      perform("Staging backup restore…", async () => {
+        const api = desktop();
+        if (!api?.stageBraceRestore) throw new Error("Backup restore is available in the desktop app.");
+        const result = await api.stageBraceRestore();
+        if (result?.pending) set({ notice: "Backup verified and staged. Restart BRACE to complete the restore." });
+      }),
+    cancelPendingRestore: async () =>
+      perform("Cancelling pending restore…", async () => {
+        const api = desktop();
+        if (!api?.cancelBracePendingRestore) throw new Error("Restore controls are available in the desktop app.");
+        if (await api.cancelBracePendingRestore()) set({ notice: "Pending restore cancelled." });
+      }),
+    exportSupportBundle: async () =>
+      perform("Exporting diagnostics…", async () => {
+        const api = desktop();
+        if (!api?.exportBraceSupportBundle) throw new Error("Diagnostics export is available in the desktop app.");
+        if (await api.exportBraceSupportBundle()) set({ notice: "Privacy-safe diagnostics bundle saved." });
       }),
     deleteAll: async (confirmation) =>
       perform("Deleting local BRACE data…", async () => {

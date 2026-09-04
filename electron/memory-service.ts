@@ -9,19 +9,21 @@ import skillModule from "../core/skill-runtime";
 import demoModule from "../core/demo-profile";
 import dataPathModule from "../core/data-paths";
 import automationModule from "../core/automation-engine";
+import recoveryModule from "../core/database-recovery";
 import {
   BraceConnectorService,
   type ConnectorAccess,
   type ConnectorId,
 } from "./connector-service";
 
-const { MemoryStore, redactSecrets } = memoryModule as any;
+const { MemoryStore, redactSecrets, SCHEMA_VERSION } = memoryModule as any;
 const { indexProject } = projectModule as any;
 const { createOllamaEmbeddingAdapter } = embeddingModule as any;
 const { installSkill, runSkillAction } = skillModule as any;
 const { initializeDemoProfile } = demoModule as any;
 const { defaultDataRoot } = dataPathModule as any;
 const { AutomationEngine } = automationModule as any;
+const { applyPendingRestore, cancelPendingRestore, pendingPaths, stageRestore, verifyDatabaseFile } = recoveryModule as any;
 
 interface ServiceOptions {
   userDataPath: string;
@@ -40,6 +42,7 @@ export class BraceMemoryService {
   readonly store: any;
   readonly connectors: BraceConnectorService;
   readonly automations: any;
+  readonly lastRestore: any;
   private readonly appPath: string;
   private readonly getWindow: () => BrowserWindow | null;
   private readonly executablePath: string;
@@ -55,6 +58,9 @@ export class BraceMemoryService {
     this.demoDirectory = path.join(this.dataDirectory, "demo-workspace");
     this.profileWorkspacePath = path.join(this.dataDirectory, "agent-workspace");
     fs.mkdirSync(this.profileWorkspacePath, { recursive: true });
+    this.lastRestore = applyPendingRestore(this.dataDirectory, this.databasePath, {
+      maximumSchemaVersion: SCHEMA_VERSION,
+    });
     this.store = new MemoryStore(this.databasePath);
     this.connectors = new BraceConnectorService({
       userDataPath: options.userDataPath,
@@ -497,6 +503,84 @@ export class BraceMemoryService {
     return { path: selected.filePath };
   }
 
+  diagnostics() {
+    const backupDirectory = path.join(this.dataDirectory, "backups");
+    let backups: Array<{ name: string; bytes: number; modifiedAt: string }> = [];
+    try {
+      backups = fs.readdirSync(backupDirectory)
+        .filter((name) => name.endsWith(".sqlite3"))
+        .map((name) => {
+          const filePath = path.join(backupDirectory, name);
+          const stat = fs.statSync(filePath);
+          return { name, bytes: stat.size, modifiedAt: stat.mtime.toISOString() };
+        })
+        .sort((left, right) => right.modifiedAt.localeCompare(left.modifiedAt))
+        .slice(0, 20);
+    } catch {}
+    const pending = pendingPaths(this.dataDirectory);
+    return {
+      generatedAt: new Date().toISOString(),
+      runtime: { platform: process.platform, arch: process.arch, node: process.versions.node, electron: process.versions.electron || null },
+      storage: {
+        schemaVersion: this.store.stats().schemaVersion,
+        databaseBytes: fs.existsSync(this.databasePath) ? fs.statSync(this.databasePath).size : 0,
+        integrity: this.store.quickCheck(),
+        pendingRestore: fs.existsSync(pending.staged) && fs.existsSync(pending.manifest),
+        lastRestore: this.lastRestore || null,
+        backups,
+      },
+      retrieval: { enabled: Boolean(this.embeddingAdapter()), config: this.store.getSetting("embedding.ollama", { enabled: false }) },
+      automation: { paused: Boolean(this.store.getSetting("automation.paused", false)), schedulerError: this.store.getSetting("automation.scheduler.error", null) },
+      stats: this.store.stats(),
+    };
+  }
+
+  async stageBackupRestore() {
+    const window = this.getWindow();
+    if (!window) throw new Error("The BRACE window is unavailable.");
+    const selected = await dialog.showOpenDialog(window, {
+      title: "Choose a BRACE SQLite backup to restore",
+      properties: ["openFile"],
+      filters: [{ name: "SQLite backup", extensions: ["sqlite3", "sqlite", "db"] }],
+    });
+    if (selected.canceled || !selected.filePaths[0]) return null;
+    const candidate = verifyDatabaseFile(selected.filePaths[0], { maximumSchemaVersion: SCHEMA_VERSION });
+    const approval = await dialog.showMessageBox(window, {
+      type: "warning",
+      title: "Stage this BRACE backup for restore?",
+      message: `Restore schema ${candidate.schemaVersion} (${Math.ceil(candidate.bytes / 1024)} KB) on the next BRACE launch?`,
+      detail: "BRACE will first create a consistent safety backup of your current database. The selected backup is copied into the BRACE data directory and verified again before the next launch swaps it in. Imported project files are not changed.",
+      buttons: ["Cancel", "Stage restore"],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (approval.response !== 1) return null;
+    const backupDirectory = path.join(this.dataDirectory, "backups");
+    fs.mkdirSync(backupDirectory, { recursive: true });
+    const safetyPath = path.join(backupDirectory, `brace-before-restore-request-${new Date().toISOString().replace(/[:.]/g, "-")}.sqlite3`);
+    const safety = await this.store.backup(safetyPath);
+    verifyDatabaseFile(safety.path, { maximumSchemaVersion: SCHEMA_VERSION });
+    const staged = stageRestore(this.dataDirectory, candidate.path, { maximumSchemaVersion: SCHEMA_VERSION });
+    return { pending: true, safetyBackup: safety.path, ...staged };
+  }
+
+  cancelPendingRestore() {
+    return cancelPendingRestore(this.dataDirectory);
+  }
+
+  async exportSupportBundle() {
+    const window = this.getWindow();
+    if (!window) throw new Error("The BRACE window is unavailable.");
+    const selected = await dialog.showSaveDialog(window, {
+      title: "Save BRACE diagnostics bundle",
+      defaultPath: `brace-diagnostics-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+    if (selected.canceled || !selected.filePath) return null;
+    const bundle = this.diagnostics();
+    fs.writeFileSync(selected.filePath, `${JSON.stringify(bundle, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
+    return { path: selected.filePath };
+  }
   async createBackup() {
     const window = this.getWindow();
     if (!window) throw new Error("The BRACE window is unavailable.");
@@ -628,4 +712,8 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
   ipcMain.handle("brace:set-automations-paused", (_event, paused: boolean) =>
     service.setAutomationsPaused(Boolean(paused)),
   );
+  ipcMain.handle("brace:get-diagnostics", () => service.diagnostics());
+  ipcMain.handle("brace:stage-restore", () => service.stageBackupRestore());
+  ipcMain.handle("brace:cancel-pending-restore", () => service.cancelPendingRestore());
+  ipcMain.handle("brace:export-support-bundle", () => service.exportSupportBundle());
 }

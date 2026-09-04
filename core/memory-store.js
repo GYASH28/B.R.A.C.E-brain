@@ -2003,6 +2003,16 @@ class MemoryStore {
     this.db.exec("PRAGMA wal_checkpoint(TRUNCATE)");
   }
 
+  quickCheck() {
+    const rows = this.db.prepare("PRAGMA quick_check").all();
+    const messages = rows.map((row) => String(row.quick_check || Object.values(row)[0] || ""));
+    return {
+      ok: messages.length === 1 && messages[0].toLowerCase() === "ok",
+      messages,
+      schemaVersion: Number(this.db.prepare("PRAGMA user_version").get().user_version || 0),
+    };
+  }
+
   stats() {
     const count = (table, where = "") => Number(
       this.db.prepare(`SELECT count(*) AS count FROM ${table} ${where}`).get().count,

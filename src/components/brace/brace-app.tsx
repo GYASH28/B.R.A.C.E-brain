@@ -565,7 +565,7 @@ function LoadingScreen() {
         <span>LOCAL MEMORY STARTUP</span>
         <h1>Bringing your context<br />into focus.</h1>
         <div className="brace-opening-track" aria-hidden="true"><i /></div>
-        <p>Opening the encrypted local index. No network request is required.</p>
+        <p>Opening your local SQLite index. No network request is required.</p>
       </div>
       <div className="brace-opening-steps" aria-hidden="true"><span><i />App shell</span><span><i />Local database</span><span><i />Memory graph</span></div>
     </div>
@@ -612,11 +612,11 @@ function Onboarding() {
               Stop re-explaining your work to every AI.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-white/52">
-              Choose one project folder. BRACE makes its useful context searchable and ready for the AI tools you connect.
+              Choose a project folder or note vault. BRACE makes supported text searchable in place and ready for the AI tools you connect.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <button type="button" onClick={() => void addProject()} className="brace-primary h-11 px-5">
-                <FolderInput className="h-4 w-4" /> Choose a project folder
+                <FolderInput className="h-4 w-4" /> Choose a folder or vault
               </button>
               <button type="button" onClick={() => void initializeDemo()} className="brace-secondary h-11 px-5">
                 <Sparkles className="h-4 w-4" /> Try an example workspace
@@ -638,7 +638,7 @@ function Onboarding() {
             <div className="brace-onboarding-window relative overflow-hidden rounded-3xl p-3">
               <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 pb-3 pt-1 text-[10px] text-white/30"><span className="h-2 w-2 rounded-full bg-sky-300" /><span className="h-2 w-2 rounded-full bg-violet-300" /><span className="h-2 w-2 rounded-full bg-emerald-300" /><span className="ml-2">How BRACE works</span></div>
               <div className="space-y-2 p-3">
-                <OnboardingStep number="01" icon={FolderInput} title="Choose a folder" text="Pick one project. BRACE reads supported files without moving or editing them." />
+                <OnboardingStep number="01" icon={FolderInput} title="Choose a folder or vault" text="Pick a project, Markdown/plain-text folder, or Obsidian-style vault. BRACE reads supported files without moving or editing them." />
                 <OnboardingStep number="02" icon={Search} title="Find what matters" text="Search decisions, lessons, and original source passages in one place." />
                 <OnboardingStep number="03" icon={MessageSquareText} title="Continue with AI" text="Send only the context you choose to a compatible AI client." />
               </div>
@@ -755,6 +755,7 @@ function CommandPalette({ onClose, onQuickCapture, onShortcuts }: { onClose: () 
       run: () => { setView(item.view); onClose(); },
     })),
     { id: "capture", label: "Capture a memory", detail: "Save durable context from anywhere", category: "Action", icon: Plus, key: "Ctrl N", run: onQuickCapture },
+    { id: "import-sources", label: "Import folder or note vault", detail: "Index Markdown, text, and project files in place", category: "Action", icon: FolderInput, key: "", run: () => { setView("projects"); onClose(); void useBrace.getState().addProject(); } },
     { id: "shortcuts", label: "Help & shortcuts", detail: "Common tasks and keyboard controls", category: "Help", icon: Keyboard, key: "?", run: onShortcuts },
   ], [onClose, onQuickCapture, onShortcuts, setView]);
   const filtered = useMemo(() => {
@@ -1680,11 +1681,11 @@ function ProjectsView() {
   const { snapshot, addProject, reindexProject } = useBrace();
   if (!snapshot) return null;
   return (
-    <Page eyebrow="Your source folders" title="Projects" description="Choose the folders BRACE can search. Your original files stay in place and are never edited." actions={<button type="button" onClick={() => void addProject()} className="brace-primary h-10 px-4"><FolderInput className="h-4 w-4" />Add project folder</button>}>
+    <Page eyebrow="Your source folders" title="Projects & note vaults" description="Import a code project, Markdown/plain-text folder, or Obsidian-style note vault. BRACE indexes supported text in place; your original files are never edited." actions={<button type="button" onClick={() => void addProject()} className="brace-primary h-10 px-4"><FolderInput className="h-4 w-4" />Add folder or vault</button>}>
       <div className="grid gap-4 lg:grid-cols-2">
         {snapshot.projects.map((project) => <ProjectCard key={project.id} project={project} onReindex={() => void reindexProject(project.id)} />)}
       </div>
-      {!snapshot.projects.length && <div className="brace-card py-16 text-center"><FolderInput className="mx-auto h-6 w-6 text-white/20" /><p className="mt-3 text-sm text-white/35">Import a specific project folder to begin.</p></div>}
+      {!snapshot.projects.length && <div className="brace-card py-16 text-center"><FolderInput className="mx-auto h-6 w-6 text-white/20" /><p className="mt-3 text-sm text-white/35">Import a project folder or note vault to begin. Markdown headings, #tags, and [[wiki links]] are understood automatically.</p></div>}
       <div className="mt-5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-xs leading-5 text-white/35"><ShieldCheck className="mr-2 inline h-4 w-4 text-emerald-300/70" />Ignored by default: credentials, environment files, databases, logs, dependencies, build output, caches, and symlink targets.</div>
     </Page>
   );
@@ -2075,16 +2076,18 @@ function ConnectionsView() {
 
 function ConnectorClientCard({ connector, selected, access, onSelect, onInstall }: { connector: BraceConnector; selected: boolean; access: "read-only" | "remember"; onSelect: () => void; onInstall: () => void }) {
   const Icon = connector.id === "codex" ? Code2 : connector.id === "claude" ? Sparkles : connector.id === "antigravity" ? Network : GitBranch;
+  const health = connector.health || (connector.configured ? "ready" : connector.detected ? "needs-setup" : connector.id === "generic" ? "manual" : "client-missing");
+  const healthLabel = ({ ready: "Ready", "needs-setup": "Needs setup", "client-missing": "Client not found", "config-error": "Config needs attention", manual: "Manual config" } as Record<string, string>)[health] || "Unknown";
   return (
     <article className={`connector-client ${selected ? "is-selected" : ""}`}>
       <button type="button" className="connector-client-main" onClick={onSelect} aria-pressed={selected}>
         <span><Icon className="h-5 w-5" /></span>
         <span><strong>{connector.name}</strong><small>{connector.version || connector.description}</small></span>
-        <i className={connector.configured ? "is-online" : connector.detected ? "is-detected" : ""} />
+        <i className={health === "ready" ? "is-online" : health === "needs-setup" ? "is-detected" : ""} />
       </button>
       <div className="connector-client-foot">
-        <span>{connector.configured ? "Configured" : connector.detected ? "Detected" : connector.id === "generic" ? "Manual config" : "Not installed"}</span>
-        {connector.supportsInstall && <button type="button" disabled={!connector.detected} onClick={onInstall}>{connector.configured ? `Reconnect ${access === "remember" ? "with retention" : "read-only"}` : "Connect"}<ArrowRight className="h-3.5 w-3.5" /></button>}
+        <span title={connector.healthDetail}>{healthLabel}</span>
+        {connector.supportsInstall && <button type="button" disabled={!connector.detected || health === "config-error"} onClick={onInstall}>{connector.configured ? `Reconnect ${access === "remember" ? "with retention" : "read-only"}` : "Connect"}<ArrowRight className="h-3.5 w-3.5" /></button>}
         {!connector.supportsInstall && <button type="button" onClick={onSelect}>Show JSON<ArrowRight className="h-3.5 w-3.5" /></button>}
       </div>
     </article>

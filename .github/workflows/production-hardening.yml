@@ -32,7 +32,19 @@ jobs:
         run: |
           npm install --save-exact next@16.3.4
           npm install --save-dev --save-exact eslint-config-next@16.3.4
-      - run: npm audit --audit-level=high
+      - name: Audit dependencies
+        run: |
+          for attempt in 1 2 3; do
+            if npm audit --audit-level=high; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "npm audit failed after 3 attempts."
+              exit 1
+            fi
+            echo "npm audit attempt $attempt failed; retrying after a short delay..."
+            sleep 10
+          done
       - run: npm run license:audit
       - run: npm run verify
       - run: npm run test:stress

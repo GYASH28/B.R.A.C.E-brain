@@ -35,12 +35,15 @@ async function run() {
           model: config.model,
         })
       : null;
-    parentPort?.postMessage({ type: "progress", phase: "started" });
+    parentPort?.postMessage({ type: "progress", phase: "starting", completed: 0, total: null });
     const result = await indexProject(store, {
       rootPath: input.rootPath,
       projectId: input.projectId,
       name: input.name,
       embedder,
+      onProgress: (progress: { phase?: string; completed?: number; total?: number | null }) => {
+        parentPort?.postMessage({ type: "progress", ...progress });
+      },
     });
     parentPort?.postMessage({ type: "result", result });
   } finally {

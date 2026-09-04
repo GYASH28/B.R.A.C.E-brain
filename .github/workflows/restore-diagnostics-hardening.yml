@@ -1,0 +1,46 @@
+name: Restore and diagnostics hardening
+
+on:
+  push:
+    branches:
+      - production-restore-diagnostics-2026-09
+
+permissions:
+  contents: write
+
+concurrency:
+  group: restore-diagnostics-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: production-restore-diagnostics-2026-09
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Apply restore and diagnostics integration
+        run: node scripts/patch-restore-diagnostics.mjs
+      - run: node --test tests/database-recovery.test.js tests/memory-store.test.js tests/electron-boundary.test.js
+      - run: npm run verify
+      - name: Electron E2E
+        run: xvfb-run -a npm run electron:e2e
+      - run: git diff --check
+      - name: Commit verified restore/diagnostics changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No restore/diagnostics changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: add staged restore and local diagnostics [skip ci]"
+          git push origin HEAD:production-restore-diagnostics-2026-09

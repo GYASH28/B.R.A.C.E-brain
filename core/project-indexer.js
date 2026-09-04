@@ -3,7 +3,7 @@
 const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
-const { sha256 } = require("./memory-store");
+const { redactSecrets, sha256 } = require("./memory-store");
 
 const TEXT_EXTENSIONS = new Set([
   ".c", ".cc", ".cpp", ".cs", ".css", ".csv", ".go", ".h", ".hpp",
@@ -36,37 +36,89 @@ function isIndexableFile(name) {
   return TEXT_EXTENSIONS.has(path.extname(name).toLowerCase()) && !SENSITIVE_FILE.test(name);
 }
 
+function globExpression(pattern) {
+  const normalized = String(pattern || "").trim().replaceAll("\\", "/").replace(/^\.\//, "");
+  if (!normalized || normalized.startsWith("#") || normalized.startsWith("!")) return null;
+  const directoryOnly = normalized.endsWith("/");
+  const raw = directoryOnly ? normalized.slice(0, -1) : normalized;
+  let output = "";
+  for (let index = 0; index < raw.length; index += 1) {
+    const character = raw[index];
+    if (character === "*" && raw[index + 1] === "*") {
+      output += ".*";
+      index += 1;
+    } else if (character === "*") {
+      output += "[^/]*";
+    } else if (character === "?") {
+      output += "[^/]";
+    } else {
+      output += character.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+  }
+  return new RegExp(`^(?:${output})${directoryOnly ? "(?:/.*)?" : ""}$`);
+}
+
+function loadBraceIgnore(root) {
+  const filePath = path.join(root, ".braceignore");
+  if (!fs.existsSync(filePath)) return [];
+  try {
+    return fs.readFileSync(filePath, "utf8").split(/\r?\n/).map(globExpression).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function ignoredByBrace(relativePath, rules) {
+  const normalized = String(relativePath || "").split(path.sep).join("/");
+  return rules.some((rule) => rule.test(normalized));
+}
+
 function listProjectFiles(rootPath, options = {}) {
   const root = assertProjectRoot(rootPath);
   const maximumFiles = Math.min(100_000, Math.max(1, Number(options.maxFiles) || 20_000));
   const maximumBytes = Math.min(20_000_000, Math.max(1_024, Number(options.maxFileBytes) || 2_000_000));
   const results = [];
+  const errors = [];
+  const ignoreRules = loadBraceIgnore(root);
   const queue = [root];
-  while (queue.length) {
+  let queueIndex = 0;
+  while (queueIndex < queue.length) {
     if (options.signal?.aborted) throw new Error("Project indexing was cancelled.");
-    const directory = queue.shift();
-    const entries = fs.readdirSync(directory, { withFileTypes: true })
-      .sort((left, right) => left.name.localeCompare(right.name));
+    const directory = queue[queueIndex++];
+    let entries;
+    try {
+      entries = fs.readdirSync(directory, { withFileTypes: true })
+        .sort((left, right) => left.name.localeCompare(right.name));
+    } catch (error) {
+      errors.push({ path: path.relative(root, directory).split(path.sep).join("/"), error: String(error?.message || error) });
+      continue;
+    }
     for (const entry of entries) {
-      if (results.length >= maximumFiles) return { root, files: results, truncated: true };
+      if (results.length >= maximumFiles) return { root, files: results, truncated: true, errors };
       const absolutePath = path.join(directory, entry.name);
+      const relativePath = path.relative(root, absolutePath).split(path.sep).join("/");
+      if (ignoredByBrace(relativePath, ignoreRules)) continue;
       if (entry.isSymbolicLink()) continue;
       if (entry.isDirectory()) {
         if (!IGNORED_DIRECTORIES.has(entry.name)) queue.push(absolutePath);
         continue;
       }
       if (!entry.isFile() || !isIndexableFile(entry.name)) continue;
-      const stat = fs.statSync(absolutePath);
+      let stat;
+      try { stat = fs.statSync(absolutePath); } catch (error) {
+        errors.push({ path: relativePath, error: String(error?.message || error) });
+        continue;
+      }
       if (stat.size > maximumBytes) continue;
       results.push({
         absolutePath,
-        relativePath: path.relative(root, absolutePath).split(path.sep).join("/"),
+        relativePath,
         size: stat.size,
         mtimeMs: stat.mtimeMs,
       });
     }
   }
-  return { root, files: results, truncated: false };
+  return { root, files: results, truncated: false, errors };
 }
 
 function chunkText(text, options = {}) {
@@ -144,23 +196,49 @@ async function indexProject(store, input) {
   let unchanged = 0;
   let skippedBinary = 0;
   let embedded = 0;
+  let redactedFiles = 0;
+  let fileErrors = scan.errors?.length || 0;
   for (const file of scan.files) {
     if (input.signal?.aborted) throw new Error("Project indexing was cancelled.");
-    const raw = fs.readFileSync(file.absolutePath);
+    let raw;
+    try { raw = fs.readFileSync(file.absolutePath); } catch {
+      fileErrors += 1;
+      continue;
+    }
     if (raw.includes(0)) {
       skippedBinary += 1;
       continue;
     }
-    const content = raw.toString("utf8");
+    const originalContent = raw.toString("utf8");
+    const redaction = redactSecrets(originalContent);
+    const content = redaction.value;
+    if (redaction.redacted) redactedFiles += 1;
     const hash = sha256(raw);
     const uri = sourceUri(project.id, file.relativePath);
     seenUris.push(uri);
     const previous = store.getSourceByUri(uri);
-    if (previous?.content_hash === hash && Number(previous.mtime_ms) === Number(file.mtimeMs)) {
+    if (
+      previous?.content_hash === hash &&
+      Number(previous.mtime_ms) === Number(file.mtimeMs) &&
+      store.listSourceChunks(previous.id).length > 0
+    ) {
       unchanged += 1;
       continue;
     }
-    const source = store.upsertSource({
+    const preparedChunks = chunkText(content, input);
+    let vectors = null;
+    if (input.embedder && preparedChunks.length) {
+      vectors = await input.embedder.embed(preparedChunks.map((chunk) => chunk.content), { signal: input.signal });
+      if (!Array.isArray(vectors) || vectors.length !== preparedChunks.length) {
+        throw new Error("The embedding adapter returned an unexpected vector count.");
+      }
+    }
+    const persistedChunks = preparedChunks.map((chunk, index) => ({
+      ...chunk,
+      ...(vectors ? { embeddingModel: input.embedder.model, embedding: vectors[index] } : {}),
+    }));
+    let source = previous;
+    if (!source) source = store.upsertSource({
       projectId: project.id,
       uri,
       title: path.basename(file.relativePath),
@@ -169,21 +247,21 @@ async function indexProject(store, input) {
         : "text/plain",
       contentHash: hash,
       mtimeMs: file.mtimeMs,
-      metadata: { relativePath: file.relativePath, size: file.size },
+      metadata: { relativePath: file.relativePath, size: file.size, redacted: redaction.redacted },
     });
-    const chunks = store.replaceSourceChunks(source.id, chunkText(content, input));
-    if (input.embedder && chunks.length) {
-      const vectors = await input.embedder.embed(chunks.map((chunk) => chunk.content), {
-        signal: input.signal,
-      });
-      if (!Array.isArray(vectors) || vectors.length !== chunks.length) {
-        throw new Error("The embedding adapter returned an unexpected vector count.");
-      }
-      chunks.forEach((chunk, index) => {
-        store.upsertSourceChunkEmbedding(chunk.id, input.embedder.model, vectors[index]);
-        embedded += 1;
+    const chunks = store.replaceSourceChunks(source.id, persistedChunks);
+    if (previous) {
+      source = store.upsertSource({
+        projectId: project.id,
+        uri,
+        title: path.basename(file.relativePath),
+        mediaType: path.extname(file.relativePath).toLowerCase() === ".md" ? "text/markdown" : "text/plain",
+        contentHash: hash,
+        mtimeMs: file.mtimeMs,
+        metadata: { relativePath: file.relativePath, size: file.size, redacted: redaction.redacted },
       });
     }
+    if (vectors) embedded += chunks.length;
     for (const item of extractEntities(content)) {
       const entity = store.upsertEntity(item);
       store.relate({
@@ -211,7 +289,7 @@ async function indexProject(store, input) {
     title: `Indexed ${project.name}`,
     summary: `${indexed} changed, ${unchanged} unchanged, ${removed} removed.`,
     projectId: project.id,
-    metadata: { indexed, unchanged, removed, skippedBinary, embedded, truncated: scan.truncated },
+    metadata: { indexed, unchanged, removed, skippedBinary, embedded, redactedFiles, fileErrors, truncated: scan.truncated },
   });
   return {
     projectId: project.id,
@@ -222,6 +300,8 @@ async function indexProject(store, input) {
     removed,
     skippedBinary,
     embedded,
+    redactedFiles,
+    fileErrors,
     truncated: scan.truncated,
     completedAt,
   };
@@ -237,5 +317,7 @@ module.exports = {
   indexProject,
   isIndexableFile,
   listProjectFiles,
+  loadBraceIgnore,
+  ignoredByBrace,
   sourceUri,
 };

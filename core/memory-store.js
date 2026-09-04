@@ -141,6 +141,32 @@ function ensureParent(filePath) {
   fs.mkdirSync(path.dirname(path.resolve(filePath)), { recursive: true });
 }
 
+function sqliteStringLiteral(value) {
+  return `'${String(value).replaceAll("'", "''")}'`;
+}
+
+function verifyDatabaseFile(filePath) {
+  const resolved = path.resolve(filePath);
+  if (!fs.existsSync(resolved) || !fs.statSync(resolved).isFile()) {
+    throw new Error("BRACE recovery database is missing.");
+  }
+  const verification = new DatabaseSync(resolved, { readOnly: true });
+  try {
+    const rows = verification.prepare("PRAGMA quick_check").all();
+    const messages = rows.map((row) => String(row.quick_check || Object.values(row)[0] || ""));
+    if (messages.length !== 1 || messages[0].toLowerCase() !== "ok") {
+      throw new Error(`SQLite quick_check failed: ${messages.join("; ") || "unknown result"}`);
+    }
+    return {
+      path: resolved,
+      bytes: fs.statSync(resolved).size,
+      schemaVersion: Number(verification.prepare("PRAGMA user_version").get().user_version || 0),
+    };
+  } finally {
+    verification.close();
+  }
+}
+
 function validateVector(vector) {
   if (!Array.isArray(vector) || vector.length < 2 || vector.length > 4096) {
     throw new Error("Embedding vectors must contain between 2 and 4096 numbers.");
@@ -233,7 +259,43 @@ class MemoryStore {
     });
     this.db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
     if (databasePath !== ":memory:") this.db.exec("PRAGMA journal_mode = WAL;");
+    const currentVersion = Number(this.db.prepare("PRAGMA user_version").get().user_version || 0);
+    this.migrationBackup = currentVersion > 0 && currentVersion < SCHEMA_VERSION
+      ? this.createPreMigrationBackup(currentVersion)
+      : null;
     this.migrate();
+  }
+
+  createPreMigrationBackup(currentVersion) {
+    if (this.databasePath === ":memory:") return null;
+    const backupDirectory = path.join(path.dirname(path.resolve(this.databasePath)), "backups");
+    fs.mkdirSync(backupDirectory, { recursive: true });
+    const timestamp = nowIso().replace(/[:.]/g, "-");
+    const target = path.join(
+      backupDirectory,
+      `brace-pre-migration-v${currentVersion}-to-v${SCHEMA_VERSION}-${timestamp}.sqlite3`,
+    );
+    this.db.exec(`VACUUM INTO ${sqliteStringLiteral(target)}`);
+    try { fs.chmodSync(target, 0o600); } catch {}
+    const verified = verifyDatabaseFile(target);
+    if (verified.schemaVersion !== currentVersion) {
+      throw new Error("Pre-migration backup schema version does not match the source database.");
+    }
+    const previous = fs.readdirSync(backupDirectory)
+      .filter((name) => /^brace-pre-migration-.*\.sqlite3$/.test(name))
+      .map((name) => ({ name, path: path.join(backupDirectory, name) }))
+      .map((item) => ({ ...item, mtimeMs: fs.statSync(item.path).mtimeMs }))
+      .sort((left, right) => right.mtimeMs - left.mtimeMs);
+    for (const stale of previous.slice(5)) {
+      try { fs.rmSync(stale.path, { force: true }); } catch {}
+    }
+    return { ...verified, createdAt: nowIso(), from: currentVersion, to: SCHEMA_VERSION };
+  }
+
+  quickCheck() {
+    const rows = this.db.prepare("PRAGMA quick_check").all();
+    const messages = rows.map((row) => String(row.quick_check || Object.values(row)[0] || ""));
+    return { ok: messages.length === 1 && messages[0].toLowerCase() === "ok", messages };
   }
 
   migrate() {
@@ -700,6 +762,8 @@ class MemoryStore {
         heading: normalizeText(chunk.heading).slice(0, 400),
         content,
         contentHash: sha256(normalizeForHash(content)),
+        embeddingModel: chunk.embeddingModel ? normalizeText(chunk.embeddingModel).slice(0, 180) : null,
+        embedding: chunk.embedding ? validateVector(chunk.embedding) : null,
       };
     }).filter(Boolean);
     const timestamp = nowIso();
@@ -707,8 +771,9 @@ class MemoryStore {
       this.db.prepare("DELETE FROM source_chunks WHERE source_id = ?").run(sourceId);
       const insert = this.db.prepare(`
         INSERT INTO source_chunks(
-          id, source_id, ordinal, heading, content, content_hash, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          id, source_id, ordinal, heading, content, content_hash,
+          embedding_model, embedding_json, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       for (const chunk of prepared) {
         insert.run(
@@ -718,6 +783,8 @@ class MemoryStore {
           chunk.heading,
           chunk.content,
           chunk.contentHash,
+          chunk.embeddingModel,
+          chunk.embedding ? JSON.stringify(chunk.embedding) : null,
           timestamp,
           timestamp,
         );
@@ -2037,4 +2104,5 @@ module.exports = {
   redactSecrets,
   sha256,
   tokenJaccard,
+  verifyDatabaseFile,
 };

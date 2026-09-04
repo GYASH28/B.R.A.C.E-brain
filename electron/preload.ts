@@ -33,6 +33,10 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("brace:set-embedding-config", input),
   exportBraceData: () => ipcRenderer.invoke("brace:export"),
   backupBraceData: () => ipcRenderer.invoke("brace:backup"),
+  getBraceDiagnostics: () => ipcRenderer.invoke("brace:get-diagnostics"),
+  stageBraceRestore: () => ipcRenderer.invoke("brace:stage-restore"),
+  cancelBracePendingRestore: () => ipcRenderer.invoke("brace:cancel-pending-restore"),
+  exportBraceSupportBundle: () => ipcRenderer.invoke("brace:export-support-bundle"),
   deleteAllBraceData: (confirmation: string) =>
     ipcRenderer.invoke("brace:delete-all", confirmation),
   listBraceConnectors: () => ipcRenderer.invoke("brace:list-connectors"),

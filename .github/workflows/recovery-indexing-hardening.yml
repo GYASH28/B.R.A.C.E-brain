@@ -29,7 +29,7 @@ jobs:
       - name: Apply migration recovery hardening
         run: node scripts/patch-recovery-hardening.mjs
       - name: Apply project indexing hardening
-        run: node scripts/patch-indexing-hardening.mjs
+        run: node scripts/patch-indexing-hardening-v2.mjs
       - run: node --test tests/memory-store-recovery.test.js tests/project-indexer-hardening.test.js tests/project-indexer.test.js tests/memory-store.test.js
       - run: npm run verify
       - run: npm run test:stress

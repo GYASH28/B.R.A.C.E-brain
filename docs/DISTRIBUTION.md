@@ -37,7 +37,8 @@ Every candidate should pass:
 
 | Gate | Linux | Windows |
 | --- | --- | --- |
-| `npm ci` and dependency audit | Required | Required |
+| `npm ci` and moderate-or-higher dependency audit | Required | Required |
+| Dependency/license policy | Required | Required |
 | ESLint and TypeScript | Required | Required |
 | Core test suite | Required | Required |
 | Static Next.js export | Required | Required |
@@ -46,9 +47,11 @@ Every candidate should pass:
 | Executable MCP stdio smoke | Required under Xvfb | Required natively |
 | Native package build | AppImage and Debian | NSIS |
 | Package content inspection | Required | Required |
-| Website accessibility audit | Required | Covered in Linux job |
+| Website accessibility/layout/focus/interaction/performance/visual audit | Required | Covered in Linux job |
 
 The tagged-release workflow runs native jobs and attaches their output to a prerelease. A package built for another platform is not described as runtime-tested until its native job passes.
+
+Dependency audit calls may retry transient registry/service failures, but the severity threshold is not weakened: a real moderate, high, or critical advisory still fails the release gate.
 
 ## Linux smoke test
 
@@ -60,7 +63,7 @@ npm run electron:smoke -- "dist/installer/BRACE-0.7.0.AppImage"
 
 The smoke harness starts the application with a unique token, waits for both renderer and shell readiness in the local log, checks that the process exits, and removes the temporary profile.
 
-The full source E2E uses a temporary profile, initializes only the synthetic Northstar demo, exercises task help, command capture, protected forgetting, Search, contextual Library/Timeline/Map/Review navigation, Capture, Ask BRACE, Automations/Skills, AI connections, Settings, and persistence, captures real product screenshots, and fails on renderer console errors or leaked workspace paths.
+The full source E2E uses a temporary profile, initializes only the synthetic Northstar demo, exercises task help, command capture, protected forgetting, Search, contextual Library/Timeline/Map/Review navigation, Capture, preview-first Ask BRACE, Automations/Skills, AI connections, Settings, and persistence, captures real product screenshots, and fails on renderer console errors or leaked workspace paths.
 
 ## Package inspection
 
@@ -87,13 +90,21 @@ The AppImage is suitable for distributions with the required FUSE compatibility 
 
 0.7.0 does not claim code-signing, notarization, or reproducible byte-for-byte builds. GitHub Actions records the source ref and native runner logs. Future releases should add signing and artifact attestations before introducing automatic updates.
 
+Unsigned packages must remain clearly marked preview/prerelease; passing CI does not make an unsigned executable equivalent to a signed stable distribution.
+
+## Repository protection requirement
+
+Before treating BRACE as stable, protect `main` with a GitHub branch ruleset or branch protection policy that requires the production CI checks before merge, blocks force pushes/deletion, and prevents routine direct pushes. Protect release tags from being moved after publication as well. The code repository cannot enforce these administrator-level settings from inside a workflow.
+
 ## Release procedure
 
-1. Update `CHANGELOG.md` and release notes.
-2. Run the full local quality gate and privacy scan.
-3. Commit and push `main`.
-4. Wait for Linux and Windows CI to pass.
-5. Tag the package version (for example `v0.7.0`) and push the tag.
-6. Wait for native release jobs.
-7. Verify attached hashes and inspect the GitHub prerelease page.
-8. Keep the release marked prerelease until community testing and code signing mature.
+1. Update `CHANGELOG.md`, release notes, security/privacy disclosures, and version-specific documentation.
+2. Open a release-candidate pull request into protected `main`; do not push the candidate directly to `main`.
+3. Require the current Linux and Windows quality jobs, website audit job, dependency/license gate, and security analysis to pass on the final candidate. Resolve review conversations and re-run checks after any code-affecting change.
+4. Merge only the exact reviewed and verified candidate commit. Confirm the resulting `main` CI is green.
+5. Tag that verified `main` commit (for example `v0.7.0`) and push the immutable release tag.
+6. Wait for the native Linux and Windows release jobs to build, verify, and smoke-test their respective packages.
+7. Verify `SHA256SUMS.txt`, inspect the CycloneDX SBOM, and confirm each attached artifact matches the expected version and platform.
+8. Run the released Windows installer smoke workflow against the published tag to verify checksum, install, launch, MCP entry point, and uninstall behavior.
+9. Inspect the GitHub release page and keep the release marked prerelease while packages remain unsigned.
+10. Only remove the prerelease/preview qualification after the project has appropriate code-signing/provenance and the repository protection requirements are active.

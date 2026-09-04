@@ -27,7 +27,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Apply restore and diagnostics integration
-        run: node scripts/patch-restore-diagnostics.mjs
+        run: |
+          node scripts/patch-restore-diagnostics.mjs
+          node scripts/patch-restore-diagnostics-v2.mjs
       - run: node --test tests/database-recovery.test.js tests/memory-store.test.js tests/electron-boundary.test.js
       - run: npm run verify
       - name: Electron E2E

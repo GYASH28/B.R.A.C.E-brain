@@ -1,0 +1,67 @@
+name: Production hardening branch
+
+on:
+  push:
+    branches:
+      - production-hardening-2026-09
+
+permissions:
+  contents: write
+
+concurrency:
+  group: production-hardening-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  harden:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: production-hardening-2026-09
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Apply source hardening
+        run: node scripts/apply-production-hardening.mjs
+      - name: Upgrade patched Next.js toolchain
+        run: |
+          npm install --save-exact next@16.3.4
+          npm install --save-dev --save-exact eslint-config-next@16.3.4
+      - run: npm audit --audit-level=high
+      - run: npm run license:audit
+      - run: npm run verify
+      - run: npm run test:stress
+      - name: Electron E2E
+        run: xvfb-run -a npm run electron:e2e
+      - name: Electron MCP smoke
+        run: xvfb-run -a npm run electron:mcp-smoke
+      - name: Website audit
+        run: |
+          npm ci --prefix website/builds/brace
+          python3 -m http.server 4517 --bind 127.0.0.1 --directory website/builds/brace > /tmp/brace-site.log 2>&1 &
+          site_pid=$!
+          trap 'kill "$site_pid"' EXIT
+          curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
+          npm run audit:a11y --prefix website/builds/brace
+          npm run audit:layout --prefix website/builds/brace
+          npm run audit:focus --prefix website/builds/brace
+          npm run audit:interactions --prefix website/builds/brace
+          npm run audit:performance --prefix website/builds/brace
+          npm run audit:visual --prefix website/builds/brace
+      - run: git diff --check
+      - name: Commit verified hardening
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No hardening changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: harden production boundaries [skip ci]"
+          git push origin HEAD:production-hardening-2026-09

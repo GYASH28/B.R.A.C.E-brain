@@ -14,6 +14,9 @@ import {
   type ConnectorAccess,
   type ConnectorId,
 } from "./connector-service";
+import ipcSecurityModule from "./ipc-security";
+import ipcContractsModule from "./ipc-contracts";
+
 
 const { MemoryStore, redactSecrets } = memoryModule as any;
 const { indexProject } = projectModule as any;
@@ -22,6 +25,8 @@ const { installSkill, runSkillAction } = skillModule as any;
 const { initializeDemoProfile } = demoModule as any;
 const { defaultDataRoot } = dataPathModule as any;
 const { AutomationEngine } = automationModule as any;
+const { assertTrustedIpcSender } = ipcSecurityModule as any;
+const { validateIpcArguments } = ipcContractsModule as any;
 
 interface ServiceOptions {
   userDataPath: string;
@@ -557,35 +562,47 @@ export class BraceMemoryService {
 }
 
 export function registerBraceMemoryIpc(service: BraceMemoryService) {
-  ipcMain.handle("brace:get-snapshot", () => service.snapshot());
-  ipcMain.handle("brace:initialize-demo", async () => {
+  const trustedHandle = (channel: string, listener: (event: any, ...args: any[]) => any) => {
+    ipcMain.handle(channel, (event, ...args: any[]) => {
+      const window = (service as any).getWindow();
+      assertTrustedIpcSender(event, {
+        expectedWebContentsId: window && !window.isDestroyed()
+          ? window.webContents.id
+          : undefined,
+      });
+      const validated = validateIpcArguments(channel, args);
+      return listener(event, ...validated);
+    });
+  };
+  trustedHandle("brace:get-snapshot", () => service.snapshot());
+  trustedHandle("brace:initialize-demo", async () => {
     await service.initializeDemo();
     return service.snapshot();
   });
-  ipcMain.handle("brace:search", (_event, input: any) => service.search(input));
-  ipcMain.handle("brace:list-memories", (_event, options: any) => service.store.listMemories(options || {}));
-  ipcMain.handle("brace:get-memory", (_event, id: string) => service.store.getMemory(String(id || ""), { includeEvidence: true }));
-  ipcMain.handle("brace:create-memory", (_event, input: any) => service.createMemory(input || {}));
-  ipcMain.handle("brace:update-memory", (_event, id: string, changes: any) => service.store.updateMemory(String(id || ""), changes || {}));
-  ipcMain.handle("brace:set-memory-pinned", (_event, id: string, pinned: boolean) =>
+  trustedHandle("brace:search", (_event, input: any) => service.search(input));
+  trustedHandle("brace:list-memories", (_event, options: any) => service.store.listMemories(options || {}));
+  trustedHandle("brace:get-memory", (_event, id: string) => service.store.getMemory(String(id || ""), { includeEvidence: true }));
+  trustedHandle("brace:create-memory", (_event, input: any) => service.createMemory(input || {}));
+  trustedHandle("brace:update-memory", (_event, id: string, changes: any) => service.store.updateMemory(String(id || ""), changes || {}));
+  trustedHandle("brace:set-memory-pinned", (_event, id: string, pinned: boolean) =>
     service.store.setMemoryPinned(String(id || ""), Boolean(pinned)));
-  ipcMain.handle("brace:resolve-memory-review", (_event, input: any) => service.store.resolveMemoryReview({
+  trustedHandle("brace:resolve-memory-review", (_event, input: any) => service.store.resolveMemoryReview({
     leftId: String(input?.leftId || ""),
     rightId: String(input?.rightId || ""),
     outcome: String(input?.outcome || ""),
   }));
-  ipcMain.handle("brace:forget-memory", (_event, id: string) => service.forgetMemory(String(id || "")));
-  ipcMain.handle("brace:add-evidence", (_event, id: string, input: any) => service.store.addEvidence(String(id || ""), input || {}));
-  ipcMain.handle("brace:list-timeline", (_event, options: any) => service.store.listTimeline(options || {}));
-  ipcMain.handle("brace:create-decision", (_event, input: any) => service.createDecision(input || {}));
-  ipcMain.handle("brace:get-graph", (_event, options: any) => service.store.graph(options || {}));
-  ipcMain.handle("brace:add-project", () => service.addProject());
-  ipcMain.handle("brace:reindex-project", (_event, projectId: string) => service.reindexProject(String(projectId || "")));
-  ipcMain.handle("brace:install-skill", () => service.installSkillFromDialog());
-  ipcMain.handle("brace:set-skill-enabled", (_event, name: string, enabled: boolean) => service.store.setSkillEnabled(String(name || ""), Boolean(enabled)));
-  ipcMain.handle("brace:remove-skill", (_event, name: string) => service.store.removeSkill(String(name || "")));
-  ipcMain.handle("brace:run-skill", (_event, name: string, action: string, input: any) => service.runSkill(String(name || ""), String(action || ""), input || {}));
-  ipcMain.handle("brace:set-embedding-config", (_event, input: any) => {
+  trustedHandle("brace:forget-memory", (_event, id: string) => service.forgetMemory(String(id || "")));
+  trustedHandle("brace:add-evidence", (_event, id: string, input: any) => service.store.addEvidence(String(id || ""), input || {}));
+  trustedHandle("brace:list-timeline", (_event, options: any) => service.store.listTimeline(options || {}));
+  trustedHandle("brace:create-decision", (_event, input: any) => service.createDecision(input || {}));
+  trustedHandle("brace:get-graph", (_event, options: any) => service.store.graph(options || {}));
+  trustedHandle("brace:add-project", () => service.addProject());
+  trustedHandle("brace:reindex-project", (_event, projectId: string) => service.reindexProject(String(projectId || "")));
+  trustedHandle("brace:install-skill", () => service.installSkillFromDialog());
+  trustedHandle("brace:set-skill-enabled", (_event, name: string, enabled: boolean) => service.store.setSkillEnabled(String(name || ""), Boolean(enabled)));
+  trustedHandle("brace:remove-skill", (_event, name: string) => service.store.removeSkill(String(name || "")));
+  trustedHandle("brace:run-skill", (_event, name: string, action: string, input: any) => service.runSkill(String(name || ""), String(action || ""), input || {}));
+  trustedHandle("brace:set-embedding-config", (_event, input: any) => {
     const adapter = input?.enabled
       ? createOllamaEmbeddingAdapter({ endpoint: input.endpoint, model: input.model })
       : null;
@@ -598,34 +615,34 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
     service.store.setSetting("embedding.ollama", config);
     return config;
   });
-  ipcMain.handle("brace:export", () => service.exportData());
-  ipcMain.handle("brace:backup", () => service.createBackup());
-  ipcMain.handle("brace:delete-all", (_event, confirmation: string) => service.deleteAll(String(confirmation || "")));
-  ipcMain.handle("brace:list-connectors", () => service.connectors.list());
-  ipcMain.handle("brace:install-connector", (_event, id: ConnectorId, access: ConnectorAccess) =>
+  trustedHandle("brace:export", () => service.exportData());
+  trustedHandle("brace:backup", () => service.createBackup());
+  trustedHandle("brace:delete-all", (_event, confirmation: string) => service.deleteAll(String(confirmation || "")));
+  trustedHandle("brace:list-connectors", () => service.connectors.list());
+  trustedHandle("brace:install-connector", (_event, id: ConnectorId, access: ConnectorAccess) =>
     service.connectors.install(id, access),
   );
-  ipcMain.handle("brace:run-assistant", (_event, input: any) => service.runAssistant(input));
-  ipcMain.handle("brace:clear-assistant-history", () => service.clearAssistantHistory());
-  ipcMain.handle("brace:copy-text", (_event, value: unknown) => service.copyText(value));
-  ipcMain.handle("brace:get-automations", () => service.automationSnapshot());
-  ipcMain.handle("brace:create-automation", (_event, input: any) => service.createAutomation(input));
-  ipcMain.handle("brace:update-automation", (_event, id: string, input: any) =>
+  trustedHandle("brace:run-assistant", (_event, input: any) => service.runAssistant(input));
+  trustedHandle("brace:clear-assistant-history", () => service.clearAssistantHistory());
+  trustedHandle("brace:copy-text", (_event, value: unknown) => service.copyText(value));
+  trustedHandle("brace:get-automations", () => service.automationSnapshot());
+  trustedHandle("brace:create-automation", (_event, input: any) => service.createAutomation(input));
+  trustedHandle("brace:update-automation", (_event, id: string, input: any) =>
     service.updateAutomation(String(id || ""), input),
   );
-  ipcMain.handle("brace:set-automation-enabled", (_event, id: string, enabled: boolean) =>
+  trustedHandle("brace:set-automation-enabled", (_event, id: string, enabled: boolean) =>
     service.setAutomationEnabled(String(id || ""), Boolean(enabled)),
   );
-  ipcMain.handle("brace:run-automation", (_event, id: string, input: any) =>
+  trustedHandle("brace:run-automation", (_event, id: string, input: any) =>
     service.runAutomation(String(id || ""), input || {}),
   );
-  ipcMain.handle("brace:retry-automation-run", (_event, runId: string, dryRun: boolean) =>
+  trustedHandle("brace:retry-automation-run", (_event, runId: string, dryRun: boolean) =>
     service.retryAutomationRun(String(runId || ""), Boolean(dryRun)),
   );
-  ipcMain.handle("brace:delete-automation", (_event, id: string) =>
+  trustedHandle("brace:delete-automation", (_event, id: string) =>
     service.deleteAutomation(String(id || "")),
   );
-  ipcMain.handle("brace:set-automations-paused", (_event, paused: boolean) =>
+  trustedHandle("brace:set-automations-paused", (_event, paused: boolean) =>
     service.setAutomationsPaused(Boolean(paused)),
   );
 }

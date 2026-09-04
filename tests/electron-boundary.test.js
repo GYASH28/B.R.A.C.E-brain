@@ -69,3 +69,20 @@ test("desktop storage is external and startup contains no machine path fallback"
   assert.match(service, /brace:set-memory-pinned/);
   assert.match(service, /Boolean\(pinned\)/);
 });
+
+test("privileged IPC registrations validate sender and payload", () => {
+  const service = read("electron/memory-service.ts");
+  const security = read("electron/ipc-security.js");
+  const contracts = read("electron/ipc-contracts.js");
+
+  assert.match(service, /assertTrustedIpcSender/);
+  assert.match(service, /validateIpcArguments/);
+  assert.match(service, /const trustedHandle/);
+  assert.doesNotMatch(service, /ipcMain\.handle\("brace:/);
+  assert.match(security, /senderFrame/);
+  assert.match(security, /sender\.mainFrame/);
+  assert.match(security, /brain:/);
+  assert.match(contracts, /zod/);
+  assert.match(contracts, /brace:delete-all/);
+  assert.match(contracts, /brace:run-assistant/);
+});

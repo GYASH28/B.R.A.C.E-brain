@@ -26,8 +26,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Apply source hardening
-        run: node scripts/apply-production-hardening-v2.mjs
+      - name: Wire production security boundaries
+        run: node scripts/patch-production-security.mjs
       - name: Upgrade patched Next.js toolchain
         run: |
           npm install --save-exact next@16.3.4

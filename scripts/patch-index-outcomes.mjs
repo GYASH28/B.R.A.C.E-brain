@@ -19,15 +19,22 @@ if (!source.includes('from "./index-outcome"')) {
 }
 if (!source.includes("summarizeIndexOutcome(result)")) {
   replaceRequired(
-    '          set({ notice: "Project indexed. Original files were not changed." });\n',
-    '          set({ notice: summarizeIndexOutcome(result) });\n',
+    '          set({ notice: "Project indexed. Original files were not changed." });',
+    '          set({ notice: summarizeIndexOutcome(result) });',
     "project import notice",
   );
 }
 if (!source.includes("summarizeIndexOutcome(result, { refresh: true })")) {
+  if (!source.includes("result = await api.reindexBraceProject(id)")) {
+    replaceRequired(
+      '        try { await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }',
+      '        let result;\n        try { result = await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }',
+      "project reindex result",
+    );
+  }
   replaceRequired(
-    '        try { await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }\n        await refresh();\n        set({ notice: "Project index is current." });\n',
-    '        let result;\n        try { result = await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }\n        await refresh();\n        set({ notice: summarizeIndexOutcome(result, { refresh: true }) });\n',
+    '        set({ notice: "Project index is current." });',
+    '        set({ notice: summarizeIndexOutcome(result, { refresh: true }) });',
     "project reindex notice",
   );
 }

@@ -73,7 +73,14 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=moderate
+      - name: Dependency audit (moderate or higher)
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if npm audit --audit-level=moderate; then exit 0; fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep 10
+          done
       - run: npm run verify
       - run: npm run test:stress
       - name: Electron E2E (Linux)

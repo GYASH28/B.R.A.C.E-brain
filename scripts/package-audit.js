@@ -8,11 +8,16 @@ const path = require("node:path");
 const asar = require("@electron/asar");
 
 const root = path.resolve(__dirname, "..");
+const packageCandidates = [
+  path.join(root, "dist", "installer", "linux-unpacked", "resources", "app.asar"),
+  path.join(root, "dist", "installer", "win-unpacked", "resources", "app.asar"),
+  path.join(root, "dist", "installer", "mac", "BRACE.app", "Contents", "Resources", "app.asar"),
+];
 const requested = process.argv[2]
   ? path.resolve(process.argv[2])
-  : path.join(root, "dist", "installer", "linux-unpacked", "resources", "app.asar");
-if (!fs.existsSync(requested) || !fs.statSync(requested).isFile()) {
-  throw new Error(`app.asar not found: ${requested}`);
+  : packageCandidates.find((candidate) => fs.existsSync(candidate));
+if (!requested || !fs.existsSync(requested) || !fs.statSync(requested).isFile()) {
+  throw new Error(`app.asar not found. Checked: ${packageCandidates.join(", ")}`);
 }
 
 const temporaryRoot = fs.mkdtempSync(path.join(os.tmpdir(), "brace-package-audit-"));
@@ -68,7 +73,7 @@ try {
     }
   }
   process.stdout.write(`${JSON.stringify({
-    archive: path.basename(requested),
+    archive: path.relative(root, requested).split(path.sep).join("/"),
     files: files.length,
     requiredPayloads: required.length,
     violations,

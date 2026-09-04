@@ -1,0 +1,42 @@
+name: Indexing task progress hardening
+
+on:
+  push:
+    branches:
+      - production-task-center-2026-09
+
+permissions:
+  contents: write
+
+concurrency:
+  group: index-task-center-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: production-task-center-2026-09
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: node scripts/patch-index-task-center.mjs
+      - run: node --test tests/project-index-progress.test.js tests/project-index-worker.test.js tests/project-indexer.test.js
+      - run: npm run verify
+      - name: Electron E2E
+        run: xvfb-run -a npm run electron:e2e
+      - run: git diff --check
+      - name: Commit verified task progress
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "feat: add cancellable project indexing progress [skip ci]"
+          git push origin HEAD:production-task-center-2026-09

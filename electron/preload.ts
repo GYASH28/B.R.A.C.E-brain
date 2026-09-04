@@ -22,6 +22,13 @@ contextBridge.exposeInMainWorld("electron", {
   addBraceProject: () => ipcRenderer.invoke("brace:add-project"),
   reindexBraceProject: (projectId: string) =>
     ipcRenderer.invoke("brace:reindex-project", projectId),
+  cancelBraceProjectIndex: (taskId: string) =>
+    ipcRenderer.invoke("brace:cancel-project-index", taskId),
+  onBraceProjectIndexProgress: (listener: (progress: unknown) => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, progress: unknown) => listener(progress);
+    ipcRenderer.on("brace:project-index-progress", handler);
+    return () => ipcRenderer.removeListener("brace:project-index-progress", handler);
+  },
   installBraceSkill: () => ipcRenderer.invoke("brace:install-skill"),
   setBraceSkillEnabled: (name: string, enabled: boolean) =>
     ipcRenderer.invoke("brace:set-skill-enabled", name, enabled),

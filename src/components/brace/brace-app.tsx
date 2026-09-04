@@ -197,6 +197,8 @@ export function BraceApp() {
     selectedMemory,
     loading,
     operation,
+    indexTask,
+    cancelIndexing,
     error,
     notice,
     bootstrap,
@@ -434,9 +436,17 @@ export function BraceApp() {
       {quickCaptureOpen && <QuickCapture onClose={() => setQuickCaptureOpen(false)} />}
       {shortcutsOpen && <ShortcutsOverlay onClose={() => setShortcutsOpen(false)} onQuickCapture={() => { setShortcutsOpen(false); setQuickCaptureOpen(true); }} />}
       {operation && (
-        <div className="fixed bottom-5 right-5 z-[80] flex items-center gap-3 rounded-xl border border-white/10 bg-[#171b20]/95 px-4 py-3 text-xs text-white/75 shadow-2xl backdrop-blur" role="status">
-          <LoaderCircle className="h-4 w-4 animate-spin text-[#7dd3fc]" />
-          {operation}
+        <div className="fixed bottom-5 right-5 z-[80] w-[min(360px,calc(100vw-2.5rem))] rounded-xl border border-white/10 bg-[#171b20]/95 px-4 py-3 text-xs text-white/75 shadow-2xl backdrop-blur" role="status">
+          <div className="flex items-center gap-3">
+            <LoaderCircle className="h-4 w-4 shrink-0 animate-spin text-[#7dd3fc]" />
+            <span className="min-w-0 flex-1 truncate">{operation}</span>
+            {indexTask && <button type="button" onClick={() => void cancelIndexing()} className="rounded-lg border border-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/60 hover:bg-white/5 hover:text-white" aria-label="Cancel indexing">Cancel</button>}
+          </div>
+          {indexTask?.total && indexTask.total > 0 && (
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/8" aria-hidden="true">
+              <div className="h-full rounded-full bg-[#7dd3fc] transition-[width] duration-200" style={{ width: `${Math.min(100, Math.round((indexTask.completed / indexTask.total) * 100))}%` }} />
+            </div>
+          )}
         </div>
       )}
     </div>

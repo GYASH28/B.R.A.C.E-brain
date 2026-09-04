@@ -323,6 +323,14 @@ export interface BraceDiagnostics {
   automation: { paused: boolean; schedulerError: unknown };
   stats: BraceSnapshot["stats"];
 }
+export interface ProjectIndexProgress {
+  taskId: string;
+  projectId: string | null;
+  phase: string;
+  completed: number;
+  total: number | null;
+}
+
 export interface BraceElectronApi {
   getBraceSnapshot: () => Promise<BraceSnapshot>;
   initializeBraceDemo: () => Promise<BraceSnapshot>;
@@ -341,6 +349,8 @@ export interface BraceElectronApi {
   createBraceDecision: (input: Record<string, unknown>) => Promise<unknown>;
   addBraceProject: () => Promise<unknown>;
   reindexBraceProject: (projectId: string) => Promise<unknown>;
+  cancelBraceProjectIndex: (taskId: string) => Promise<boolean>;
+  onBraceProjectIndexProgress: (listener: (progress: ProjectIndexProgress) => void) => () => void;
   installBraceSkill: () => Promise<unknown>;
   setBraceSkillEnabled: (name: string, enabled: boolean) => Promise<unknown>;
   removeBraceSkill: (name: string) => Promise<unknown>;

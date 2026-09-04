@@ -9,6 +9,7 @@ import type {
   BraceSnapshot,
   ConnectorAccess,
   ConnectorId,
+  ProjectIndexProgress,
   SearchResponse,
 } from "./types";
 
@@ -41,6 +42,7 @@ interface BraceState {
   operation: string | null;
   error: string | null;
   notice: string | null;
+  indexTask: ProjectIndexProgress | null;
   setView: (view: BraceView) => void;
   navigateHistory: (direction: -1 | 1) => void;
   setSearchQuery: (query: string) => void;
@@ -66,6 +68,7 @@ interface BraceState {
   createDecision: (input: Record<string, unknown>) => Promise<void>;
   addProject: () => Promise<void>;
   reindexProject: (id: string) => Promise<void>;
+  cancelIndexing: () => Promise<void>;
   toggleSkill: (name: string, enabled: boolean) => Promise<void>;
   installSkill: () => Promise<void>;
   configureEmbeddings: (input: Record<string, unknown>) => Promise<void>;
@@ -87,6 +90,8 @@ function desktop() {
   return typeof window !== "undefined" ? window.electron : undefined;
 }
 
+let detachIndexProgress: (() => void) | null = null;
+
 function message(error: unknown) {
   return error instanceof Error ? error.message : "BRACE could not complete that operation.";
 }
@@ -97,7 +102,9 @@ export const useBrace = create<BraceState>((set, get) => {
     try {
       await task();
     } catch (error) {
-      set({ error: message(error) });
+      const detail = message(error);
+      if (/cancelled/i.test(detail)) set({ notice: detail, error: null });
+      else set({ error: detail });
     } finally {
       set({ operation: null });
     }
@@ -130,6 +137,7 @@ export const useBrace = create<BraceState>((set, get) => {
     operation: null,
     error: null,
     notice: null,
+    indexTask: null,
     setView: (view) => set((state) => {
       if (state.view === view) return state;
       const history = [...state.viewHistory.slice(0, state.viewHistoryIndex + 1), view].slice(-30);
@@ -150,6 +158,14 @@ export const useBrace = create<BraceState>((set, get) => {
     bootstrap: async () => {
       set({ loading: true, error: null });
       try {
+        const api = desktop();
+        if (!detachIndexProgress && api?.onBraceProjectIndexProgress) {
+          detachIndexProgress = api.onBraceProjectIndexProgress((progress) => {
+            const total = progress.total;
+            const suffix = total && total > 0 ? ` ${Math.min(progress.completed, total)}/${total}` : "";
+            set({ indexTask: progress, operation: `Indexing project · ${progress.phase}${suffix}` });
+          });
+        }
         await refresh();
         const allowed: BraceView[] = ["home", "inbox", "assistant", "search", "memories", "review", "timeline", "graph", "projects", "skills", "automations", "connections", "settings"];
         let saved: BraceView | null = null;
@@ -282,7 +298,8 @@ export const useBrace = create<BraceState>((set, get) => {
       perform("Indexing project…", async () => {
         const api = desktop();
         if (!api?.addBraceProject) throw new Error("Project import is available in the desktop app.");
-        const result = await api.addBraceProject();
+        let result;
+        try { result = await api.addBraceProject(); } finally { set({ indexTask: null }); }
         if (result) {
           await refresh();
           set({ notice: "Project indexed. Original files were not changed." });
@@ -292,10 +309,17 @@ export const useBrace = create<BraceState>((set, get) => {
       perform("Refreshing project index…", async () => {
         const api = desktop();
         if (!api?.reindexBraceProject) throw new Error("Project indexing is available in the desktop app.");
-        await api.reindexBraceProject(id);
+        try { await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }
         await refresh();
         set({ notice: "Project index is current." });
       }),
+    cancelIndexing: async () => {
+      const task = get().indexTask;
+      const api = desktop();
+      if (!task || !api?.cancelBraceProjectIndex) return;
+      await api.cancelBraceProjectIndex(task.taskId);
+      set({ indexTask: null, operation: null, notice: "Project indexing cancelled." });
+    },
     toggleSkill: async (name, enabled) =>
       perform(`${enabled ? "Enabling" : "Disabling"} skill…`, async () => {
         const api = desktop();

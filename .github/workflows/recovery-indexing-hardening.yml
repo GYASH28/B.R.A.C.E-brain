@@ -1,0 +1,47 @@
+name: Recovery and indexing hardening
+
+on:
+  push:
+    branches:
+      - production-recovery-indexing-2026-09
+
+permissions:
+  contents: write
+
+concurrency:
+  group: recovery-indexing-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: production-recovery-indexing-2026-09
+          fetch-depth: 0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Apply migration recovery hardening
+        run: node scripts/patch-recovery-hardening.mjs
+      - name: Apply project indexing hardening
+        run: node scripts/patch-indexing-hardening.mjs
+      - run: node --test tests/memory-store-recovery.test.js tests/project-indexer-hardening.test.js tests/project-indexer.test.js tests/memory-store.test.js
+      - run: npm run verify
+      - run: npm run test:stress
+      - run: git diff --check
+      - name: Commit verified recovery/index changes
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No recovery/index changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: harden recovery and project indexing [skip ci]"
+          git push origin HEAD:production-recovery-indexing-2026-09

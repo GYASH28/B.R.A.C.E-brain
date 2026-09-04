@@ -43,6 +43,7 @@ export class BraceMemoryService {
   private readonly getWindow: () => BrowserWindow | null;
   private readonly executablePath: string;
   private automationTimer: ReturnType<typeof setInterval> | null = null;
+  private activeProjectIndexes = new Map<string, { worker: Worker; cancel: () => void }>();
 
   constructor(options: ServiceOptions) {
     this.appPath = options.appPath;
@@ -74,6 +75,8 @@ export class BraceMemoryService {
   }
 
   close() {
+    for (const task of this.activeProjectIndexes.values()) void task.worker.terminate();
+    this.activeProjectIndexes.clear();
     if (this.automationTimer) clearInterval(this.automationTimer);
     this.automationTimer = null;
     this.store.close();
@@ -332,12 +335,20 @@ export class BraceMemoryService {
     });
   }
 
+  cancelProjectIndex(taskId: string) {
+    const task = this.activeProjectIndexes.get(String(taskId || ""));
+    if (!task) return false;
+    task.cancel();
+    return true;
+  }
+
   async runProjectIndexWorker(input: { rootPath: string; projectId?: string; name?: string }) {
     const embeddingConfig = this.store.getSetting("embedding.ollama", null);
     const workerPath = path.join(__dirname, "project-index-worker.js");
     if (!fs.existsSync(workerPath)) {
       throw new Error("The BRACE project indexing worker is missing. Reinstall BRACE.");
     }
+    const taskId = randomUUID();
     return await new Promise<any>((resolve, reject) => {
       const worker = new Worker(workerPath, {
         workerData: {
@@ -360,15 +371,24 @@ export class BraceMemoryService {
         if (settled) return;
         settled = true;
         clearTimeout(timeout);
+        this.activeProjectIndexes.delete(taskId);
         callback();
       };
+      const cancel = () => finish(() => {
+        void worker.terminate();
+        reject(new Error("Project indexing was cancelled."));
+      });
+      this.activeProjectIndexes.set(taskId, { worker, cancel });
       worker.on("message", (message: any) => {
         if (message?.type === "progress") {
           const window = this.getWindow();
           if (window && !window.isDestroyed()) {
             window.webContents.send("brace:project-index-progress", {
+              taskId,
               projectId: input.projectId || null,
               phase: String(message.phase || "working"),
+              completed: Number.isFinite(Number(message.completed)) ? Number(message.completed) : 0,
+              total: Number.isFinite(Number(message.total)) ? Number(message.total) : null,
             });
           }
           return;
@@ -626,6 +646,7 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
   ipcMain.handle("brace:get-graph", (_event, options: any) => service.store.graph(options || {}));
   ipcMain.handle("brace:add-project", () => service.addProject());
   ipcMain.handle("brace:reindex-project", (_event, projectId: string) => service.reindexProject(String(projectId || "")));
+  ipcMain.handle("brace:cancel-project-index", (_event, taskId: string) => service.cancelProjectIndex(String(taskId || "")));
   ipcMain.handle("brace:install-skill", () => service.installSkillFromDialog());
   ipcMain.handle("brace:set-skill-enabled", (_event, name: string, enabled: boolean) => service.store.setSkillEnabled(String(name || ""), Boolean(enabled)));
   ipcMain.handle("brace:remove-skill", (_event, name: string) => service.store.removeSkill(String(name || "")));

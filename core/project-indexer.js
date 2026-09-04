@@ -133,7 +133,10 @@ function sourceUri(projectId, relativePath) {
 }
 
 async function indexProject(store, input) {
+  const onProgress = typeof input.onProgress === "function" ? input.onProgress : () => {};
+  onProgress({ phase: "scanning", completed: 0, total: null });
   const scan = listProjectFiles(input.rootPath, input);
+  onProgress({ phase: "indexing", completed: 0, total: scan.files.length });
   const project = store.upsertProject({
     id: input.projectId,
     name: input.name || path.basename(scan.root),
@@ -144,8 +147,12 @@ async function indexProject(store, input) {
   let unchanged = 0;
   let skippedBinary = 0;
   let embedded = 0;
-  for (const file of scan.files) {
+  for (let fileIndex = 0; fileIndex < scan.files.length; fileIndex += 1) {
+    const file = scan.files[fileIndex];
     if (input.signal?.aborted) throw new Error("Project indexing was cancelled.");
+    if (fileIndex === 0 || fileIndex % 10 === 0) {
+      onProgress({ phase: "indexing", completed: fileIndex, total: scan.files.length });
+    }
     const raw = fs.readFileSync(file.absolutePath);
     if (raw.includes(0)) {
       skippedBinary += 1;
@@ -197,6 +204,7 @@ async function indexProject(store, input) {
     }
     indexed += 1;
   }
+  onProgress({ phase: "indexing", completed: scan.files.length, total: scan.files.length });
   const removed = store.removeMissingSources(project.id, seenUris);
   const completedAt = new Date().toISOString();
   store.upsertProject({

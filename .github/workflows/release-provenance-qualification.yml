@@ -17,7 +17,8 @@ jobs:
         with:
           node-version: 24
       - name: Parse release workflow YAML
-        run: ruby -e 'require "yaml"; YAML.load_file(".github/workflows/release.yml", aliases: true); puts "release workflow YAML parsed"'
+        run: |
+          ruby -e 'require "yaml"; YAML.load_file(".github/workflows/release.yml", aliases: true); puts "release workflow YAML parsed"'
       - name: Verify provenance contract
         run: node --test tests/release-provenance.test.js
       - run: git diff --check

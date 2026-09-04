@@ -6,8 +6,8 @@ BRACE is in preview. Security fixes are applied to the latest tagged release and
 
 | Version | Supported |
 | --- | --- |
-| 0.1.x | Yes |
-| Older prototypes | No |
+| 0.7.x | Yes |
+| Older preview/prototype lines | No |
 
 ## Report a vulnerability
 
@@ -25,12 +25,13 @@ Do not include a real `brace.sqlite3`, SQLite journal, export, backup, imported 
 ## Security model
 
 - The desktop has no BRACE cloud account or inbound network service.
-- Electron renderer code is sandboxed and isolated behind a narrow IPC allowlist.
+- Electron renderer code is sandboxed and context-isolated. Every privileged BRACE IPC call is restricted to the expected main frame and exact app origin, then validated against a bounded runtime request schema before the handler runs.
 - MCP uses local stdio. The client process launching it is part of the trust boundary.
 - MCP is read-only unless `BRACE_MCP_WRITE=1`; destructive forgetting additionally requires `BRACE_MCP_DESTRUCTIVE=1`.
-- Project indexing uses a format allowlist, blocks credential-like and generated paths, enforces size limits, and does not traverse symlinks.
+- Project indexing uses a format allowlist, `.braceignore`, credential/path exclusions, best-effort secret redaction, size limits, bounded progress, cancellation, and does not traverse symlinks.
 - SQLite queries are parameterized. Public project metadata and exports omit absolute project roots.
-- HTTP embedding endpoints are accepted only on loopback. Non-loopback endpoints require HTTPS.
+- HTTP embedding endpoints are accepted only on loopback. Non-loopback endpoints require HTTPS; provider redirects are rejected and response size is bounded before parsing.
+- Ask BRACE prepares a short-lived exact context capsule before provider send. The user-visible preview and provider-bound context are the same capsule, sensitive prompt patterns are redacted before provider transmission, and a capsule is consumed once.
 - BRACE Skills are declarative, permission-scoped, installed disabled, and integrity-checked. They cannot execute arbitrary shell or JavaScript.
 
 ## Important limitations

@@ -33,7 +33,7 @@ jobs:
       - name: Apply current-tree security boundaries
         run: node scripts/patch-production-security.mjs
       - name: Security boundary fixtures
-        run: node --test tests/ipc-security.test.js tests/embedding-adapters.test.js tests/electron-boundary.test.js tests/website-security-headers.test.js tests/assistant-context-cache.test.js tests/assistant-provider-boundary.test.js tests/database-recovery.test.js tests/project-indexer-hardening.test.js tests/dependency-audit.test.js
+        run: node --test tests/ipc-security.test.js tests/embedding-adapters.test.js tests/electron-boundary.test.js tests/website-security-headers.test.js tests/assistant-context-cache.test.js tests/assistant-provider-boundary.test.js tests/database-recovery.test.js tests/project-indexer-hardening.test.js tests/dependency-audit-helper.test.js
       - name: Dependency audit (moderate or higher)
         run: node scripts/dependency-audit.js
       - run: npm run license:audit

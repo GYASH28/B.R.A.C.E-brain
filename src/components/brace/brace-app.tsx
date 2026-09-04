@@ -68,6 +68,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useBrace, type BraceView } from "@/lib/brace/store";
+import { explainRetrieval } from "@/lib/brace/retrieval-explain";
 import type {
   BraceConnector,
   BraceAutomation,
@@ -1007,6 +1008,12 @@ function EmptyRows({ text }: { text: string }) {
   return <div className="px-5 py-10 text-center text-xs text-white/30">{text}</div>;
 }
 
+function RetrievalWhy({ retrieval, mode }: { retrieval?: { lexicalRank: number | null; semanticRank: number | null; semanticSimilarity: number | null } | null; mode?: "lexical" | "semantic" | "hybrid" }) {
+  if (!retrieval) return null;
+  const explanation = explainRetrieval(retrieval, mode);
+  return <div className="mt-2 flex min-w-0 items-center gap-2 text-[9px] text-sky-100/42" title={explanation.detail}><span className="rounded border border-sky-300/10 bg-sky-300/[0.04] px-1.5 py-0.5 font-semibold uppercase tracking-[0.08em] text-sky-100/50">Why this result</span><span className="truncate">{explanation.label}</span></div>;
+}
+
 function MemoryRow({ memory, onClick }: { memory: BraceMemory; onClick: () => void }) {
   return (
     <button type="button" onClick={onClick} className="group flex w-full items-start gap-4 px-5 py-4 text-left hover:bg-white/[0.025]">
@@ -1014,6 +1021,7 @@ function MemoryRow({ memory, onClick }: { memory: BraceMemory; onClick: () => vo
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[13px] font-medium text-white/88">{memory.title}</span>
         <span className="mt-1 block line-clamp-1 text-xs text-white/35">{memory.summary}</span>
+        <RetrievalWhy retrieval={memory.retrieval} />
         <span className="mt-2 flex items-center gap-1.5 text-[10px] text-white/25"><FileText className="h-3 w-3" />{shortUri(memory.sourceUri)}</span>
       </span>
       {memory.pinned ? <Pin className="mt-3 h-3.5 w-3.5 rotate-45 text-[#b7f36b]" aria-label="Pinned memory" /> : <ChevronRight className="mt-3 h-4 w-4 text-white/12 group-hover:text-white/40" />}
@@ -1242,7 +1250,7 @@ function SearchView() {
             <div className="divide-y divide-white/[0.055]">
               {searchResult.sources.map((source) => (
                 <article key={source.id} className="px-5 py-4">
-                  <div className="flex items-start gap-3"><FileSearch className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" /><div className="min-w-0"><h3 className="truncate text-[13px] font-medium">{source.heading || source.title}</h3><p className="mt-1.5 line-clamp-3 text-xs leading-5 text-white/40">{source.content}</p><div className="mt-3 flex items-center gap-2 font-mono text-[9px] text-sky-200/45"><span className="truncate">{shortUri(source.uri)}</span><span>·</span><span>{searchResult.mode}</span></div></div></div>
+                  <div className="flex items-start gap-3"><FileSearch className="mt-0.5 h-4 w-4 shrink-0 text-sky-300" /><div className="min-w-0"><h3 className="truncate text-[13px] font-medium">{source.heading || source.title}</h3><p className="mt-1.5 line-clamp-3 text-xs leading-5 text-white/40">{source.content}</p><RetrievalWhy retrieval={source.retrieval} mode={searchResult.mode} /><div className="mt-3 flex items-center gap-2 font-mono text-[9px] text-sky-200/45"><span className="truncate">{shortUri(source.uri)}</span><span>·</span><span>{searchResult.mode}</span></div></div></div>
                 </article>
               ))}
               {!searchResult.sources.length && <EmptyRows text="No indexed source chunk matched this query." />}

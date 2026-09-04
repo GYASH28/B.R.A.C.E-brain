@@ -28,8 +28,10 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - name: Apply connector and ingestion UX patch
-        run: node scripts/patch-next-ingestion-connectors.mjs
+      - name: Apply connector and ingestion patch
+        run: |
+          node scripts/patch-next-ingestion-connectors.mjs
+          node scripts/patch-next-ingestion-ux.mjs
       - name: Targeted ingestion and connector tests
         run: node --test tests/connector-health.test.js tests/project-indexer-hardening.test.js tests/project-index-progress.test.js tests/index-outcome.test.js
       - run: npm run typecheck
@@ -38,7 +40,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add electron/connector-service.ts src/lib/brace/types.ts src/components/brace/brace-app.tsx
+          git add electron/connector-service.ts electron/memory-service.ts src/lib/brace/types.ts src/components/brace/brace-app.tsx
           if ! git diff --cached --quiet; then
             git commit -m "feat: harden connector health and note-vault ingestion [skip ci]"
             git push origin HEAD:production-next-ingestion-connectors-2026-09

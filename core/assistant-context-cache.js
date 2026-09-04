@@ -30,10 +30,13 @@ class AssistantContextCache {
     const prompt = String(input?.prompt || "");
     if (!client || !prompt) throw new Error("Assistant context requires a client and prompt.");
     const id = randomUUID();
+    const providerPrompt = String(input?.providerPrompt ?? prompt);
     const entry = {
       id,
       client,
       prompt,
+      providerPrompt,
+      promptRedacted: providerPrompt !== prompt,
       mode: input.mode || "lexical",
       embeddingModel: input.embeddingModel || null,
       warning: input.warning || null,
@@ -52,6 +55,7 @@ class AssistantContextCache {
       id: entry.id,
       client: entry.client,
       prompt: entry.prompt,
+      promptRedacted: entry.promptRedacted,
       mode: entry.mode,
       embeddingModel: entry.embeddingModel,
       warning: entry.warning,

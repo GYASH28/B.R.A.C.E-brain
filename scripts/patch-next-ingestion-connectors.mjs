@@ -22,7 +22,7 @@ patchFile("electron/connector-service.ts", [
   ],
   [
     'const execFileAsync = promisify(execFile);',
-    'const execFileAsync = promisify(execFile);\nconst { connectorHealth, inspectJsonConfig } = connectorHealthModule as any;',
+    'const execFileAsync = promisify(execFile);\nconst { connectorHealth, inspectJsonConfig, loadJsonConfigForWrite } = connectorHealthModule as any;',
     "connector health helpers",
   ],
   [
@@ -57,8 +57,8 @@ patchFile("electron/connector-service.ts", [
   ],
   [
     '  private installAntigravity(access: ConnectorAccess) {\n    const filePath = this.antigravityConfigPath();\n    const config = readJson(filePath, {});\n    const next = {',
-    '  private installAntigravity(access: ConnectorAccess) {\n    const filePath = this.antigravityConfigPath();\n    const state = inspectJsonConfig(filePath);\n    if (!state.valid) {\n      throw new Error("Antigravity configuration changed or became unreadable during setup. BRACE did not modify it.");\n    }\n    const config = state.value || {};\n    const next = {',
-    "Antigravity write-time validation",
+    '  private installAntigravity(access: ConnectorAccess) {\n    const filePath = this.antigravityConfigPath();\n    const config = loadJsonConfigForWrite(filePath);\n    const next = {',
+    "Antigravity fail-closed write",
   ],
   [
     '    if (!new Set<ConnectorAccess>(["read-only", "remember"]).has(access)) {\n      throw new Error("Choose read-only or remember access.");\n    }\n    const window = this.options.getWindow();',

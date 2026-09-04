@@ -49,6 +49,12 @@ async function build() {
   });
   await esbuild.build({
     ...shared,
+    entryPoints: [path.join(root, "electron", "project-index-worker.ts")],
+    outfile: path.join(outputDirectory, "project-index-worker.js"),
+    format: "cjs",
+  });
+  await esbuild.build({
+    ...shared,
     entryPoints: [path.join(root, "electron", "preload.ts")],
     outfile: path.join(outputDirectory, "preload.js"),
     format: "cjs",

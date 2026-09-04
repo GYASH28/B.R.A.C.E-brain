@@ -4,8 +4,10 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { promisify } from "node:util";
+import connectorHealthModule from "../core/connector-health";
 
 const execFileAsync = promisify(execFile);
+const { connectorHealth, inspectJsonConfig, loadJsonConfigForWrite } = connectorHealthModule as any;
 
 export type ConnectorId = "codex" | "claude" | "antigravity" | "generic";
 export type ConnectorAccess = "read-only" | "remember";
@@ -105,13 +107,7 @@ function findExecutable(names: string[]) {
   return null;
 }
 
-function readJson(filePath: string, fallback: any) {
-  try {
-    return JSON.parse(fs.readFileSync(filePath, "utf8"));
-  } catch {
-    return fallback;
-  }
-}
+// JSON connector files are inspected explicitly so malformed configuration is never treated as empty.
 
 function safeTimestamp() {
   return new Date().toISOString().replace(/[:.]/g, "-");
@@ -225,8 +221,10 @@ export class BraceConnectorService {
 
   private claudeConfigured() {
     const filePath = this.clientConfigPath("claude");
-    if (!filePath || !fs.existsSync(filePath)) return false;
-    const config = readJson(filePath, {});
+    if (!filePath) return false;
+    const state = inspectJsonConfig(filePath);
+    if (!state.valid || !state.exists) return false;
+    const config = state.value || {};
     const pools = [config?.mcpServers, config?.user?.mcpServers];
     if (pools.some((pool) => Boolean(pool?.brace))) return true;
     return Object.values(config?.projects || {}).some((project: any) =>
@@ -235,8 +233,9 @@ export class BraceConnectorService {
   }
 
   private antigravityConfigured() {
-    const config = readJson(this.antigravityConfigPath(), {});
-    return Boolean(config?.mcpServers?.brace);
+    const state = inspectJsonConfig(this.antigravityConfigPath());
+    if (!state.valid || !state.exists) return false;
+    return Boolean(state.value?.mcpServers?.brace);
   }
 
   private isConfigured(id: ConnectorId) {
@@ -251,15 +250,22 @@ export class BraceConnectorService {
       (Object.keys(CLIENTS) as ConnectorId[]).map(async (id) => {
         const client = CLIENTS[id];
         const executablePath = findExecutable(client.commandNames);
-        const configured = this.isConfigured(id);
+        const detected = id === "generic" || Boolean(executablePath);
+        const configState = id === "claude" || id === "antigravity"
+          ? inspectJsonConfig(this.clientConfigPath(id))
+          : null;
+        const configured = configState?.valid === false ? false : this.isConfigured(id);
+        const health = connectorHealth({ id, detected, configured, configState });
         return {
           id,
           name: client.name,
           description: client.description,
-          detected: id === "generic" || Boolean(executablePath),
+          detected,
           executablePath,
           version: await this.version(executablePath),
           configured,
+          health: health.status,
+          healthDetail: health.detail,
           configPath: this.clientConfigPath(id),
           supportsInstall: id !== "generic",
           instruction: connectionInstruction(),
@@ -374,7 +380,7 @@ export class BraceConnectorService {
 
   private installAntigravity(access: ConnectorAccess) {
     const filePath = this.antigravityConfigPath();
-    const config = readJson(filePath, {});
+    const config = loadJsonConfigForWrite(filePath);
     const next = {
       ...config,
       mcpServers: {
@@ -398,6 +404,12 @@ export class BraceConnectorService {
     }
     if (!new Set<ConnectorAccess>(["read-only", "remember"]).has(access)) {
       throw new Error("Choose read-only or remember access.");
+    }
+    const configState = id === "claude" || id === "antigravity"
+      ? inspectJsonConfig(this.clientConfigPath(id))
+      : null;
+    if (configState?.valid === false) {
+      throw new Error(CLIENTS[id].name + " configuration needs attention. BRACE will not overwrite a malformed or unreadable configuration; repair or restore that client config first.");
     }
     const window = this.options.getWindow();
     if (!window) throw new Error("The BRACE window is unavailable.");

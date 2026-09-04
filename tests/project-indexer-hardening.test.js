@@ -29,6 +29,17 @@ test(".braceignore excludes project-local paths before indexing", (context) => {
   assert.deepEqual(listProjectFiles(projectRoot).files.map((item) => item.relativePath), ["public.md"]);
 });
 
+test("Obsidian vault metadata and trash are ignored while notes remain indexable", (context) => {
+  const { projectRoot } = fixture(context);
+  fs.mkdirSync(path.join(projectRoot, ".obsidian", "plugins", "fixture"), { recursive: true });
+  fs.mkdirSync(path.join(projectRoot, ".trash"), { recursive: true });
+  fs.writeFileSync(path.join(projectRoot, "Daily note.md"), "# Daily note\n\n[[Project Atlas]] #planning");
+  fs.writeFileSync(path.join(projectRoot, ".obsidian", "workspace.json"), JSON.stringify({ privateLayout: true }));
+  fs.writeFileSync(path.join(projectRoot, ".obsidian", "plugins", "fixture", "manifest.json"), JSON.stringify({ id: "fixture" }));
+  fs.writeFileSync(path.join(projectRoot, ".trash", "deleted.md"), "deleted note");
+  assert.deepEqual(listProjectFiles(projectRoot).files.map((item) => item.relativePath), ["Daily note.md"]);
+});
+
 test("ordinary text files have recognizable secrets redacted before persistence", async (context) => {
   const { projectRoot, store } = fixture(context);
   fs.writeFileSync(path.join(projectRoot, "notes.md"), "# Notes\n\nProvider token password=fixture-secret-12345 must never persist.");

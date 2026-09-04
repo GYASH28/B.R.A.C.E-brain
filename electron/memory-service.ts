@@ -449,7 +449,7 @@ export class BraceMemoryService {
     const window = this.getWindow();
     if (!window) throw new Error("The BRACE window is unavailable.");
     const selected = await dialog.showOpenDialog(window, {
-      title: "Import a project into BRACE",
+      title: "Import a project folder or note vault into BRACE",
       properties: ["openDirectory"],
     });
     if (selected.canceled || !selected.filePaths[0]) return null;

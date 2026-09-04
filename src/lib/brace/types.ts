@@ -292,6 +292,8 @@ export interface BraceConnector {
   executablePath: string | null;
   version: string | null;
   configured: boolean;
+  health: "ready" | "needs-setup" | "client-missing" | "config-error" | "manual";
+  healthDetail: string;
   configPath: string | null;
   supportsInstall: boolean;
   instruction: string;

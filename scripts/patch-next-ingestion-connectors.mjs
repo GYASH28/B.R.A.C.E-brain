@@ -77,14 +77,9 @@ patchFile("src/components/brace/brace-app.tsx", [
     "connector card health labels",
   ],
   [
-    '<i className={connector.configured ? "is-online" : connector.detected ? "is-detected" : ""} />',
-    '<i className={health === "ready" ? "is-online" : health === "needs-setup" ? "is-detected" : ""} />',
-    "connector card indicator",
-  ],
-  [
-    '<span>{connector.configured ? "Configured" : connector.detected ? "Detected" : connector.id === "generic" ? "Manual config" : "Not installed"}</span>',
-    '<span title={connector.healthDetail}>{healthLabel}</span>',
-    "connector card status",
+    '<span><strong>{connector.name}</strong><small>{connector.version || connector.description}</small></span>\n        <i className={connector.configured ? "is-online" : connector.detected ? "is-detected" : ""} />\n      </button>\n      <div className="connector-client-foot">\n        <span>{connector.configured ? "Configured" : connector.detected ? "Detected" : connector.id === "generic" ? "Manual config" : "Not installed"}</span>',
+    '<span><strong>{connector.name}</strong><small>{connector.version || connector.description}</small></span>\n        <i className={health === "ready" ? "is-online" : health === "needs-setup" ? "is-detected" : ""} />\n      </button>\n      <div className="connector-client-foot">\n        <span title={connector.healthDetail}>{healthLabel}</span>',
+    "connector card health display",
   ],
   [
     '<button type="button" disabled={!connector.detected} onClick={onInstall}>',

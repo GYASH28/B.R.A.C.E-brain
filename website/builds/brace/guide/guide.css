@@ -60,3 +60,19 @@ html[data-brace-guide-premium="v8"] .guide-hero .guide-wrap,
 html[data-brace-guide-premium="v8"] .guide-route,
 html[data-brace-guide-premium="v8"] .guide-live-coach{min-width:0;max-width:100%}
 @media(max-width:860px){html[data-brace-guide-premium="v8"] .guide-hero .guide-wrap{width:min(100% - 22px,1180px)}}
+
+/* The living guide companion is progressively inserted after the initial HTML.
+   Reserve its phone-sized footprint from first paint so enhancement never pushes
+   the route or reading content downward. The companion is then anchored inside
+   that reserved hero space instead of participating in normal flow. */
+@media(max-width:620px){
+  .guide-body .guide-hero{position:relative;padding-bottom:600px!important}
+  .guide-body .guide-hero .guide-live-coach{
+    position:absolute!important;
+    left:50%!important;
+    bottom:68px!important;
+    width:min(calc(100% - 22px),1180px)!important;
+    margin:0!important;
+    transform:translateX(-50%)!important
+  }
+}

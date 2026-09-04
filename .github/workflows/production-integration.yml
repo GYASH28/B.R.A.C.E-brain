@@ -45,6 +45,8 @@ jobs:
         run: npm run electron:mcp-smoke
       - name: Construct unpacked desktop package
         run: npm run electron:pack
+      - name: Audit packaged desktop payload
+        run: npm run package:audit
       - run: git diff --check
 
   dependency-audit:
@@ -64,7 +66,6 @@ jobs:
             sleep 10
           done
       - run: npm run license:audit
-      - run: npm run package:audit
 
   website:
     runs-on: ubuntu-latest

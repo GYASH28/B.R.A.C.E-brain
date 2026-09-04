@@ -69,6 +69,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -86,6 +89,17 @@ jobs:
           release_version="${GITHUB_REF_NAME#v}"
           npm sbom --sbom-format cyclonedx --sbom-type application | node scripts/normalize-sbom.js > "release-files/brace-${release_version}.cdx.json"
           find release-files -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's#  release-files/#  #' > release-files/SHA256SUMS.txt
+      - name: Attest release provenance
+        id: provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-checksums: release-files/SHA256SUMS.txt
+      - name: Add signed provenance bundle
+        shell: bash
+        run: |
+          release_version="${GITHUB_REF_NAME#v}"
+          cp "${{ steps.provenance.outputs.bundle-path }}" "release-files/brace-${release_version}.provenance.json"
+          sha256sum "release-files/brace-${release_version}.provenance.json" >> release-files/SHA256SUMS.txt
       - name: Create GitHub prerelease
         shell: bash
         env:

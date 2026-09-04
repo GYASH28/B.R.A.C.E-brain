@@ -2,8 +2,8 @@ import { clipboard, dialog, ipcMain, type BrowserWindow } from "electron";
 import { randomUUID } from "node:crypto";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { Worker } from "node:worker_threads";
 import memoryModule from "../core/memory-store";
-import projectModule from "../core/project-indexer";
 import embeddingModule from "../core/embedding-adapters";
 import skillModule from "../core/skill-runtime";
 import demoModule from "../core/demo-profile";
@@ -16,7 +16,6 @@ import {
 } from "./connector-service";
 
 const { MemoryStore, redactSecrets } = memoryModule as any;
-const { indexProject } = projectModule as any;
 const { createOllamaEmbeddingAdapter } = embeddingModule as any;
 const { installSkill, runSkillAction } = skillModule as any;
 const { initializeDemoProfile } = demoModule as any;
@@ -333,6 +332,56 @@ export class BraceMemoryService {
     });
   }
 
+  async runProjectIndexWorker(input: { rootPath: string; projectId?: string; name?: string }) {
+    const embeddingConfig = this.store.getSetting("embedding.ollama", null);
+    const workerPath = path.join(__dirname, "project-index-worker.js");
+    if (!fs.existsSync(workerPath)) {
+      throw new Error("The BRACE project indexing worker is missing. Reinstall BRACE.");
+    }
+    return await new Promise<any>((resolve, reject) => {
+      const worker = new Worker(workerPath, {
+        workerData: {
+          databasePath: this.databasePath,
+          rootPath: input.rootPath,
+          projectId: input.projectId,
+          name: input.name,
+          embeddingConfig,
+        },
+      });
+      let settled = false;
+      const timeout = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        void worker.terminate();
+        reject(new Error("Project indexing exceeded the 30 minute safety limit."));
+      }, 30 * 60 * 1_000);
+      timeout.unref?.();
+      const finish = (callback: () => void) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        callback();
+      };
+      worker.on("message", (message: any) => {
+        if (message?.type === "progress") {
+          const window = this.getWindow();
+          if (window && !window.isDestroyed()) {
+            window.webContents.send("brace:project-index-progress", {
+              projectId: input.projectId || null,
+              phase: String(message.phase || "working"),
+            });
+          }
+          return;
+        }
+        if (message?.type === "result") finish(() => resolve(message.result));
+        if (message?.type === "error") finish(() => reject(new Error(String(message.error || "Project indexing failed."))));
+      });
+      worker.once("error", (error) => finish(() => reject(error)));
+      worker.once("exit", (code) => {
+        if (!settled && code !== 0) finish(() => reject(new Error(`Project indexing worker exited with code ${code}.`)));
+      });
+    });
+  }
   async addProject() {
     const window = this.getWindow();
     if (!window) throw new Error("The BRACE window is unavailable.");
@@ -341,20 +390,16 @@ export class BraceMemoryService {
       properties: ["openDirectory"],
     });
     if (selected.canceled || !selected.filePaths[0]) return null;
-    return indexProject(this.store, {
-      rootPath: selected.filePaths[0],
-      embedder: this.embeddingAdapter(),
-    });
+    return this.runProjectIndexWorker({ rootPath: selected.filePaths[0] });
   }
 
   async reindexProject(projectId: string, options: { suppressAutomation?: boolean } = {}) {
     const project = this.store.listProjects().find((item: any) => item.id === projectId);
     if (!project) throw new Error("Project not found.");
-    const result = await indexProject(this.store, {
+    const result = await this.runProjectIndexWorker({
       rootPath: project.root_path,
       projectId: project.id,
       name: project.name,
-      embedder: this.embeddingAdapter(),
     });
     if (!options.suppressAutomation) {
       await this.automations.dispatch("project.indexed", {

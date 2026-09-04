@@ -10,7 +10,7 @@ permissions:
 
 concurrency:
   group: production-hardening-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   harden:
@@ -27,7 +27,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Apply source hardening
-        run: node scripts/apply-production-hardening.mjs
+        run: node scripts/apply-production-hardening-v2.mjs
       - name: Upgrade patched Next.js toolchain
         run: |
           npm install --save-exact next@16.3.4

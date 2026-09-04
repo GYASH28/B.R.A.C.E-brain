@@ -1,0 +1,1 @@
+Trigger production hardening workflow after workflow definition exists.

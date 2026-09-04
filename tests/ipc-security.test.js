@@ -1,12 +1,14 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const test = require("node:test");
 const {
   assertTrustedIpcSender,
   isTrustedIpcSender,
 } = require("../electron/ipc-security");
-const { validateIpcArguments } = require("../electron/ipc-contracts");
+const { schemas, validateIpcArguments } = require("../electron/ipc-contracts");
 
 function eventFor(url, options = {}) {
   const frame = { url };
@@ -36,6 +38,19 @@ test("development IPC remains exact loopback only", () => {
   assert.equal(isTrustedIpcSender(eventFor("http://127.0.0.1:3001/"), { development: true }), false);
 });
 
+test("every privileged IPC handler has exactly one runtime contract", () => {
+  const service = fs.readFileSync(path.resolve(__dirname, "../electron/memory-service.ts"), "utf8");
+  const registered = [...service.matchAll(/trustedHandle\("(brace:[^"]+)"/g)].map((match) => match[1]);
+  const registeredSet = new Set(registered);
+  const schemaChannels = [...schemas.keys()];
+  assert.equal(registered.length, registeredSet.size, "privileged IPC channels must not be registered twice");
+  assert.deepEqual(
+    [...registeredSet].sort(),
+    schemaChannels.sort(),
+    "runtime IPC schema coverage must exactly match privileged handler registration",
+  );
+});
+
 test("IPC schemas reject malformed and oversized privileged calls", () => {
   assert.deepEqual(validateIpcArguments("brace:get-snapshot", []), []);
   assert.throws(() => validateIpcArguments("brace:get-snapshot", ["unexpected"]), /Invalid BRACE IPC request/);
@@ -56,7 +71,10 @@ test("IPC schemas reject malformed and oversized privileged calls", () => {
     [{ client: "claude", prompt: "Summarize", contextId: "ctx-1" }],
   );
   assert.deepEqual(validateIpcArguments("brace:cancel-project-index", ["task-1"]), ["task-1"]);
+  assert.deepEqual(validateIpcArguments("brace:get-diagnostics", []), []);
   assert.deepEqual(validateIpcArguments("brace:stage-restore", []), []);
+  assert.deepEqual(validateIpcArguments("brace:cancel-pending-restore", []), []);
+  assert.deepEqual(validateIpcArguments("brace:export-support-bundle", []), []);
   assert.throws(
     () => validateIpcArguments("brace:set-embedding-config", [{
       enabled: true,

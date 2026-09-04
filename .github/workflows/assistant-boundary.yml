@@ -31,6 +31,7 @@ jobs:
           node scripts/patch-assistant-boundary.mjs
           node scripts/patch-assistant-boundary-v2.mjs
           node scripts/patch-assistant-disclosure.mjs
+          node scripts/patch-assistant-e2e.mjs
       - name: Provider-boundary fixtures
         run: node --test tests/assistant-context-cache.test.js tests/assistant-provider-boundary.test.js tests/electron-boundary.test.js tests/memory-store.test.js
       - run: npm run verify

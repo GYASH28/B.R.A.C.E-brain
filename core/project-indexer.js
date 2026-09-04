@@ -14,7 +14,7 @@ const TEXT_EXTENSIONS = new Set([
 ]);
 const IGNORED_DIRECTORIES = new Set([
   ".git", ".hg", ".svn", ".next", ".turbo", ".cache", ".idea",
-  ".vscode", ".venv", "__pycache__", "build", "coverage", "dist",
+  ".obsidian", ".trash", ".vscode", ".venv", "__pycache__", "build", "coverage", "dist",
   "node_modules", "out", "target", "vendor", "venv", "_BRACE_DATA",
 ]);
 const SENSITIVE_FILE = /^(?:\.env(?:\..*)?|credentials?(?:\..*)?|secrets?(?:\..*)?|tokens?(?:\..*)?|id_(?:rsa|dsa|ecdsa|ed25519)(?:\.pub)?)$|\.(?:key|pem|p12|pfx|sqlite3?|db|log)$/i;

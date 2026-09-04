@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 import connectorHealthModule from "../core/connector-health";
 
 const execFileAsync = promisify(execFile);
-const { connectorHealth, inspectJsonConfig } = connectorHealthModule as any;
+const { connectorHealth, inspectJsonConfig, loadJsonConfigForWrite } = connectorHealthModule as any;
 
 export type ConnectorId = "codex" | "claude" | "antigravity" | "generic";
 export type ConnectorAccess = "read-only" | "remember";
@@ -380,11 +380,7 @@ export class BraceConnectorService {
 
   private installAntigravity(access: ConnectorAccess) {
     const filePath = this.antigravityConfigPath();
-    const state = inspectJsonConfig(filePath);
-    if (!state.valid) {
-      throw new Error("Antigravity configuration changed or became unreadable during setup. BRACE did not modify it.");
-    }
-    const config = state.value || {};
+    const config = loadJsonConfigForWrite(filePath);
     const next = {
       ...config,
       mcpServers: {

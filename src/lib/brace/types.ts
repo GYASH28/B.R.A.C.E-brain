@@ -253,6 +253,20 @@ export interface BraceSnapshot {
   environment?: "desktop" | "browser-preview";
 }
 
+export interface AssistantContextPreview {
+  id: string;
+  client: "codex" | "claude";
+  prompt: string;
+  promptRedacted: boolean;
+  mode: "lexical" | "semantic" | "hybrid";
+  embeddingModel: string | null;
+  warning: string | null;
+  preparedAt: string;
+  expiresAt: string;
+  memories: Array<{ title: string; kind: string; summary: string; sourceUri: string | null }>;
+  sources: Array<{ title: string; uri: string; excerpt: string }>;
+}
+
 export interface AssistantTurn {
   id: string;
   client: "codex" | "claude";
@@ -358,9 +372,11 @@ export interface BraceElectronApi {
     id: ConnectorId,
     access: ConnectorAccess,
   ) => Promise<{ connected: boolean; cancelled: boolean }>;
+  prepareBraceAssistantContext: (input: { client: "codex" | "claude"; prompt: string }) => Promise<AssistantContextPreview>;
   runBraceAssistant: (input: {
     client: "codex" | "claude";
     prompt: string;
+    contextId: string;
   }) => Promise<{ cancelled: boolean; turn?: AssistantTurn }>;
   clearBraceAssistantHistory: () => Promise<boolean>;
   copyBraceText: (value: string) => Promise<boolean>;

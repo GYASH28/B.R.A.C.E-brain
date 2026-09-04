@@ -9,6 +9,7 @@ import skillModule from "../core/skill-runtime";
 import demoModule from "../core/demo-profile";
 import dataPathModule from "../core/data-paths";
 import automationModule from "../core/automation-engine";
+import assistantContextModule from "../core/assistant-context-cache";
 import recoveryModule from "../core/database-recovery";
 import {
   BraceConnectorService,
@@ -22,6 +23,7 @@ const { installSkill, runSkillAction } = skillModule as any;
 const { initializeDemoProfile } = demoModule as any;
 const { defaultDataRoot } = dataPathModule as any;
 const { AutomationEngine } = automationModule as any;
+const { AssistantContextCache } = assistantContextModule as any;
 const { applyPendingRestore, cancelPendingRestore, pendingPaths, stageRestore, verifyDatabaseFile } = recoveryModule as any;
 
 interface ServiceOptions {
@@ -45,6 +47,7 @@ export class BraceMemoryService {
   private readonly appPath: string;
   private readonly getWindow: () => BrowserWindow | null;
   private readonly executablePath: string;
+  private readonly assistantContexts: any;
   private automationTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor(options: ServiceOptions) {
@@ -57,6 +60,7 @@ export class BraceMemoryService {
     this.demoDirectory = path.join(this.dataDirectory, "demo-workspace");
     this.profileWorkspacePath = path.join(this.dataDirectory, "agent-workspace");
     fs.mkdirSync(this.profileWorkspacePath, { recursive: true });
+    this.assistantContexts = new AssistantContextCache({ ttlMs: 5 * 60_000, maximum: 12 });
     this.lastRestore = applyPendingRestore(this.dataDirectory, this.databasePath, {
       maximumSchemaVersion: SCHEMA_VERSION,
     });
@@ -182,7 +186,7 @@ export class BraceMemoryService {
     }));
   }
 
-  async runAssistant(input: any) {
+  async prepareAssistantContext(input: any) {
     const client = String(input?.client || "codex");
     if (client !== "codex" && client !== "claude") {
       throw new Error("The embedded workspace currently supports detected Codex CLI or Claude Code clients.");
@@ -202,15 +206,41 @@ export class BraceMemoryService {
       uri: source.uri,
       excerpt: String(source.content || "").slice(0, 1_000),
     }));
+    const providerPrompt = redactSecrets(prompt).value;
+    return this.assistantContexts.prepare({
+      client,
+      prompt,
+      providerPrompt,
+      mode: context.mode,
+      embeddingModel: context.embeddingModel,
+      warning: context.warning,
+      memories,
+      sources,
+    });
+  }
+
+  async runAssistant(input: any) {
+    const client = String(input?.client || "codex");
+    if (client !== "codex" && client !== "claude") {
+      throw new Error("The embedded workspace currently supports detected Codex CLI or Claude Code clients.");
+    }
+    const prompt = String(input?.prompt || "").trim();
+    if (!prompt) throw new Error("Ask BRACE a specific question.");
+    if (prompt.length > 12_000) throw new Error("Keep one AI workspace turn under 12,000 characters.");
+    const contextId = String(input?.contextId || "");
+    const prepared = this.assistantContexts.get(contextId, { client, prompt });
+    const memories = prepared.memories;
+    const sources = prepared.sources;
     const window = this.getWindow();
     if (!window) throw new Error("The BRACE window is unavailable.");
     const clientLabel = client === "codex" ? "Codex CLI" : "Claude Code";
     const approval = await dialog.showMessageBox(window, {
       type: "question",
-      title: `Send this turn to ${clientLabel}?`,
-      message: `BRACE found ${memories.length} memories and ${sources.length} source excerpts for this question.`,
+      title: `Send this exact capsule to ${clientLabel}?`,
+      message: `BRACE will send the ${memories.length} memories and ${sources.length} source excerpts you just previewed.`,
       detail: [
-        "The prompt and listed context will be sent through the selected client's configured model provider.",
+        "The prompt and exact previewed context will be sent through the selected client's configured model provider.",
+        "The capsule is short-lived and consumed once. Changing the question or client requires a new preview.",
         "The client runs in BRACE's isolated read-only agent workspace and cannot edit imported projects from this surface.",
         "The prompt and final answer are saved in local AI Workspace history. They are not automatically promoted to durable memory.",
       ].join("\n\n"),
@@ -219,14 +249,15 @@ export class BraceMemoryService {
       cancelId: 0,
     });
     if (approval.response !== 1) return { cancelled: true };
+    const capsule = this.assistantContexts.consume(contextId, { client, prompt });
     const agentPrompt = [
       "You are operating inside the BRACE local-first AI Workspace.",
       "Answer the user's question using the supplied BRACE context when relevant.",
       "Keep durable memory and indexed source evidence separate. Cite brace-project URIs exactly when supplied.",
       "Do not claim to have inspected or changed files outside this supplied context. This turn is read-only.",
-      `\nUSER QUESTION\n${prompt}`,
-      `\nDURABLE MEMORY\n${memories.length ? JSON.stringify(memories, null, 2) : "No matching durable memory."}`,
-      `\nSOURCE EVIDENCE\n${sources.length ? JSON.stringify(sources, null, 2) : "No matching indexed source evidence."}`,
+      `\nUSER QUESTION\n${capsule.providerPrompt}`,
+      `\nDURABLE MEMORY\n${capsule.memories.length ? JSON.stringify(capsule.memories, null, 2) : "No matching durable memory."}`,
+      `\nSOURCE EVIDENCE\n${capsule.sources.length ? JSON.stringify(capsule.sources, null, 2) : "No matching indexed source evidence."}`,
     ].join("\n");
     const result = await this.connectors.runAssistant(
       client,
@@ -240,10 +271,10 @@ export class BraceMemoryService {
       response: redactSecrets(result.response).value,
       createdAt: new Date().toISOString(),
       context: {
-        mode: context.mode,
-        embeddingModel: context.embeddingModel,
-        memoryCount: memories.length,
-        sourceCount: sources.length,
+        mode: capsule.mode,
+        embeddingModel: capsule.embeddingModel,
+        memoryCount: capsule.memories.length,
+        sourceCount: capsule.sources.length,
       },
     };
     const history = [...this.assistantHistory(), turn].slice(-40);
@@ -265,6 +296,7 @@ export class BraceMemoryService {
     });
     if (approval.response !== 1) return false;
     this.store.setSetting("assistant.conversations", []);
+    this.assistantContexts.clear();
     return true;
   }
 
@@ -734,6 +766,7 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
   ipcMain.handle("brace:install-connector", (_event, id: ConnectorId, access: ConnectorAccess) =>
     service.connectors.install(id, access),
   );
+  ipcMain.handle("brace:prepare-assistant-context", (_event, input: any) => service.prepareAssistantContext(input));
   ipcMain.handle("brace:run-assistant", (_event, input: any) => service.runAssistant(input));
   ipcMain.handle("brace:clear-assistant-history", () => service.clearAssistantHistory());
   ipcMain.handle("brace:copy-text", (_event, value: unknown) => service.copyText(value));

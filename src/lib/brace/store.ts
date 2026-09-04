@@ -5,6 +5,7 @@ import { browserPreviewSnapshot, searchBrowserPreview } from "./browser-preview"
 import type {
   BraceConnector,
   BraceAutomation,
+  AssistantContextPreview,
   BraceMemory,
   BraceSnapshot,
   ConnectorAccess,
@@ -35,6 +36,7 @@ interface BraceState {
   connectors: BraceConnector[];
   selectedMemory: BraceMemory | null;
   assistantDraft: string;
+  assistantPreview: AssistantContextPreview | null;
   searchQuery: string;
   searchResult: SearchResponse | null;
   loading: boolean;
@@ -51,6 +53,7 @@ interface BraceState {
   refresh: () => Promise<void>;
   refreshConnectors: () => Promise<void>;
   installConnector: (id: ConnectorId, access: ConnectorAccess) => Promise<void>;
+  prepareAssistant: (client: "codex" | "claude", prompt: string) => Promise<void>;
   runAssistant: (client: "codex" | "claude", prompt: string) => Promise<void>;
   clearAssistantHistory: () => Promise<void>;
   initializeDemo: () => Promise<void>;
@@ -124,6 +127,7 @@ export const useBrace = create<BraceState>((set, get) => {
     connectors: [],
     selectedMemory: null,
     assistantDraft: "",
+    assistantPreview: null,
     searchQuery: "",
     searchResult: null,
     loading: true,
@@ -145,7 +149,7 @@ export const useBrace = create<BraceState>((set, get) => {
     }),
     setSearchQuery: (searchQuery) => set({ searchQuery }),
     setSelectedMemory: (selectedMemory) => set({ selectedMemory }),
-    setAssistantDraft: (assistantDraft) => set({ assistantDraft }),
+    setAssistantDraft: (assistantDraft) => set((state) => ({ assistantDraft, assistantPreview: state.assistantPreview?.prompt === assistantDraft ? state.assistantPreview : null })),
     clearMessage: () => set({ error: null, notice: null }),
     bootstrap: async () => {
       set({ loading: true, error: null });
@@ -183,16 +187,29 @@ export const useBrace = create<BraceState>((set, get) => {
           notice: `${connectors.find((connector) => connector.id === id)?.name || "AI client"} is configured for BRACE. Run a turn to verify the live connection.`,
         });
       }),
+    prepareAssistant: async (client, prompt) =>
+      perform("Preparing exact context…", async () => {
+        const api = desktop();
+        if (!api?.prepareBraceAssistantContext) {
+          throw new Error("Context preview is available in the desktop app.");
+        }
+        const assistantPreview = await api.prepareBraceAssistantContext({ client, prompt });
+        set({ assistantPreview, notice: "Context capsule prepared locally. Review it before sending." });
+      }),
     runAssistant: async (client, prompt) =>
       perform("Recalling context and asking AI…", async () => {
         const api = desktop();
         if (!api?.runBraceAssistant) {
           throw new Error("Ask BRACE is available in the desktop app.");
         }
-        const result = await api.runBraceAssistant({ client, prompt });
+        const preview = get().assistantPreview;
+        if (!preview || preview.client !== client || preview.prompt !== prompt) {
+          throw new Error("Preview the exact context capsule for this question and client before sending.");
+        }
+        const result = await api.runBraceAssistant({ client, prompt, contextId: preview.id });
         if (result.cancelled) return;
         await refresh();
-        set({ notice: "Answer received. Nothing was added to durable memory automatically." });
+        set({ assistantPreview: null, notice: "Answer received. Nothing was added to durable memory automatically." });
       }),
     clearAssistantHistory: async () =>
       perform("Clearing Ask BRACE history…", async () => {

@@ -33,7 +33,7 @@ jobs:
           node scripts/patch-next-ingestion-connectors.mjs
           node scripts/patch-next-ingestion-ux.mjs
       - name: Targeted ingestion and connector tests
-        run: node --test tests/connector-health.test.js tests/project-indexer-hardening.test.js tests/project-index-progress.test.js tests/index-outcome.test.js
+        run: node --test tests/connector-health.test.js tests/project-indexer-hardening.test.js tests/project-index-progress.test.js tests/index-outcome.test.js tests/ui-trust-ingestion-contract.test.js
       - run: npm run typecheck
       - run: git diff --check
       - name: Commit exact tested tree

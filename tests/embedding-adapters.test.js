@@ -66,3 +66,36 @@ test("OpenAI-compatible embeddings preserve provider ordering", async (context) 
   });
   assert.deepEqual(await adapter.embed(["alpha", "beta"]), [[1, 0], [0, 1]]);
 });
+
+test("embedding requests reject provider redirects", async (context) => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(302, { Location: "/redirected" });
+    response.end();
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  context.after(() => server.close());
+  const address = server.address();
+  const adapter = createOllamaEmbeddingAdapter({
+    endpoint: `http://127.0.0.1:${address.port}`,
+    model: "synthetic-embed",
+  });
+  await assert.rejects(() => adapter.embed(["alpha"]), /redirect/i);
+});
+
+test("embedding requests reject oversized responses before parsing", async (context) => {
+  const server = http.createServer((_request, response) => {
+    response.writeHead(200, {
+      "Content-Type": "application/json",
+      "Content-Length": "5000001",
+    });
+    response.end("{}");
+  });
+  await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+  context.after(() => server.close());
+  const address = server.address();
+  const adapter = createOllamaEmbeddingAdapter({
+    endpoint: `http://127.0.0.1:${address.port}`,
+    model: "synthetic-embed",
+  });
+  await assert.rejects(() => adapter.embed(["alpha"]), /5 MB safety limit/);
+});

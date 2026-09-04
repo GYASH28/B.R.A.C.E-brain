@@ -21,14 +21,25 @@ async function fetchJson(url, init, timeoutMs, externalSignal) {
   externalSignal?.addEventListener("abort", cancel, { once: true });
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(url, { ...init, signal: controller.signal });
+    const response = await fetch(url, { ...init, redirect: "error", signal: controller.signal });
+    const declaredBytes = Number(response.headers.get("content-length") || 0);
+    if (declaredBytes > 5_000_000) {
+      throw new Error("Embedding provider response exceeded the 5 MB safety limit.");
+    }
     const body = await response.text();
+    if (Buffer.byteLength(body, "utf8") > 5_000_000) {
+      throw new Error("Embedding provider response exceeded the 5 MB safety limit.");
+    }
     if (!response.ok) {
       throw new Error(`Embedding provider returned HTTP ${response.status}: ${body.slice(0, 300)}`);
     }
     return JSON.parse(body);
   } catch (error) {
     if (error?.name === "AbortError") throw new Error("Embedding request timed out or was cancelled.");
+    const errorText = String(error?.cause?.message || error?.message || "");
+    if (/redirect/i.test(errorText)) {
+      throw new Error("Embedding provider redirects are not allowed.");
+    }
     throw error;
   } finally {
     clearTimeout(timeout);

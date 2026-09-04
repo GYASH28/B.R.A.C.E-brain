@@ -1,0 +1,90 @@
+name: Production integration qualification
+
+on:
+  push:
+    branches:
+      - production-integration-2026-09
+  pull_request:
+    branches:
+      - production-integration-2026-09
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-integration-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+      - run: npm run test:stress
+      - name: Electron E2E (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run electron:e2e
+      - name: Electron E2E (Windows)
+        if: runner.os == 'Windows'
+        run: npm run electron:e2e
+      - name: Electron MCP smoke (Linux)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a npm run electron:mcp-smoke
+      - name: Electron MCP smoke (Windows)
+        if: runner.os == 'Windows'
+        run: npm run electron:mcp-smoke
+      - name: Construct unpacked desktop package
+        run: npm run electron:pack
+      - run: git diff --check
+
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Dependency security audit
+        run: |
+          for attempt in 1 2 3; do
+            if npm audit --audit-level=high; then exit 0; fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep 10
+          done
+      - run: npm run license:audit
+      - run: npm run package:audit
+
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/builds/brace/package-lock.json
+      - run: npm ci --prefix website/builds/brace
+      - name: Serve website
+        shell: bash
+        run: |
+          python3 -m http.server 4517 --bind 127.0.0.1 --directory website/builds/brace > /tmp/brace-site.log 2>&1 &
+          echo $! > /tmp/brace-site.pid
+          curl --fail --silent --show-error --retry 20 --retry-connrefused --retry-delay 1 http://127.0.0.1:4517/ > /dev/null
+      - run: npm run audit:a11y --prefix website/builds/brace
+      - run: npm run audit:layout --prefix website/builds/brace
+      - run: npm run audit:focus --prefix website/builds/brace
+      - run: npm run audit:interactions --prefix website/builds/brace
+      - run: npm run audit:performance --prefix website/builds/brace
+      - run: npm run audit:visual --prefix website/builds/brace

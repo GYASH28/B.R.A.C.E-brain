@@ -24,6 +24,11 @@ patch("electron/memory-service.ts", [
 
 patch("src/components/brace/brace-app.tsx", [
   [
+    '<p>Opening the encrypted local index. No network request is required.</p>',
+    '<p>Opening your local SQLite index. No network request is required.</p>',
+    "accurate startup privacy copy",
+  ],
+  [
     '              Choose one project folder. BRACE makes its useful context searchable and ready for the AI tools you connect.',
     '              Choose a project folder or note vault. BRACE makes supported text searchable in place and ready for the AI tools you connect.',
     "onboarding import description",
@@ -40,4 +45,4 @@ patch("src/components/brace/brace-app.tsx", [
   ],
 ]);
 
-console.log("Applied BRACE first-class note-vault ingestion UX.");
+console.log("Applied BRACE first-class note-vault ingestion UX and accurate local-storage copy.");

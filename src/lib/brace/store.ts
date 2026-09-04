@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { browserPreviewSnapshot, searchBrowserPreview } from "./browser-preview";
+import { summarizeIndexOutcome } from "./index-outcome";
 import type {
   BraceConnector,
   BraceAutomation,
@@ -302,16 +303,17 @@ export const useBrace = create<BraceState>((set, get) => {
         try { result = await api.addBraceProject(); } finally { set({ indexTask: null }); }
         if (result) {
           await refresh();
-          set({ notice: "Project indexed. Original files were not changed." });
+          set({ notice: summarizeIndexOutcome(result) });
         }
       }),
     reindexProject: async (id) =>
       perform("Refreshing project index…", async () => {
         const api = desktop();
         if (!api?.reindexBraceProject) throw new Error("Project indexing is available in the desktop app.");
-        try { await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }
+        let result;
+        try { result = await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }
         await refresh();
-        set({ notice: "Project index is current." });
+        set({ notice: summarizeIndexOutcome(result, { refresh: true }) });
       }),
     cancelIndexing: async () => {
       const task = get().indexTask;

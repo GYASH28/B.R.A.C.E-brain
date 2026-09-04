@@ -308,6 +308,21 @@ export interface SearchResponse {
   }>;
 }
 
+export interface BraceDiagnostics {
+  generatedAt: string;
+  runtime: { platform: string; arch: string; node: string; electron: string | null };
+  storage: {
+    schemaVersion: number;
+    databaseBytes: number;
+    integrity: { ok: boolean; messages: string[]; schemaVersion: number };
+    pendingRestore: boolean;
+    lastRestore: Record<string, unknown> | null;
+    backups: Array<{ name: string; bytes: number; modifiedAt: string }>;
+  };
+  retrieval: { enabled: boolean; config: Record<string, unknown> };
+  automation: { paused: boolean; schedulerError: unknown };
+  stats: BraceSnapshot["stats"];
+}
 export interface BraceElectronApi {
   getBraceSnapshot: () => Promise<BraceSnapshot>;
   initializeBraceDemo: () => Promise<BraceSnapshot>;
@@ -333,6 +348,10 @@ export interface BraceElectronApi {
   setBraceEmbeddingConfig: (input: Record<string, unknown>) => Promise<unknown>;
   exportBraceData: () => Promise<unknown>;
   backupBraceData: () => Promise<unknown>;
+  getBraceDiagnostics: () => Promise<BraceDiagnostics>;
+  stageBraceRestore: () => Promise<{ pending: boolean; safetyBackup: string } | null>;
+  cancelBracePendingRestore: () => Promise<boolean>;
+  exportBraceSupportBundle: () => Promise<{ path: string } | null>;
   deleteAllBraceData: (confirmation: string) => Promise<boolean>;
   listBraceConnectors: () => Promise<BraceConnector[]>;
   installBraceConnector: (

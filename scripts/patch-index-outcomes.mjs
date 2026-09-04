@@ -17,15 +17,19 @@ if (!source.includes('from "./index-outcome"')) {
     "index outcome import",
   );
 }
-replaceRequired(
-  '          set({ notice: "Project indexed. Original files were not changed." });\n',
-  '          set({ notice: summarizeIndexOutcome(result) });\n',
-  "project import notice",
-);
-replaceRequired(
-  '        await api.reindexBraceProject(id);\n        await refresh();\n        set({ notice: "Project index is current." });\n',
-  '        const result = await api.reindexBraceProject(id);\n        await refresh();\n        set({ notice: summarizeIndexOutcome(result, { refresh: true }) });\n',
-  "project reindex notice",
-);
+if (!source.includes("summarizeIndexOutcome(result)")) {
+  replaceRequired(
+    '          set({ notice: "Project indexed. Original files were not changed." });\n',
+    '          set({ notice: summarizeIndexOutcome(result) });\n',
+    "project import notice",
+  );
+}
+if (!source.includes("summarizeIndexOutcome(result, { refresh: true })")) {
+  replaceRequired(
+    '        try { await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }\n        await refresh();\n        set({ notice: "Project index is current." });\n',
+    '        let result;\n        try { result = await api.reindexBraceProject(id); } finally { set({ indexTask: null }); }\n        await refresh();\n        set({ notice: summarizeIndexOutcome(result, { refresh: true }) });\n',
+    "project reindex notice",
+  );
+}
 fs.writeFileSync(file, source.replace(/\r\n/g, "\n"));
 process.stdout.write("Applied clear project index outcome reporting.\n");

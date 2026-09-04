@@ -11,11 +11,12 @@ function similarityPercent(value) {
   return Math.max(0, Math.min(100, Math.round(similarity * 100)));
 }
 
-function explainRetrieval(retrieval, mode = "lexical") {
+function explainRetrieval(retrieval, mode) {
   const lexicalRank = ordinalRank(retrieval?.lexicalRank);
   const semanticRank = ordinalRank(retrieval?.semanticRank);
   const semanticSimilarity = similarityPercent(retrieval?.semanticSimilarity);
-  const normalizedMode = ["lexical", "semantic", "hybrid"].includes(mode) ? mode : "lexical";
+  const inferredMode = lexicalRank && semanticRank ? "hybrid" : semanticRank ? "semantic" : "lexical";
+  const normalizedMode = ["lexical", "semantic", "hybrid"].includes(mode) ? mode : inferredMode;
 
   const signals = [];
   if (lexicalRank) signals.push(`lexical #${lexicalRank}`);

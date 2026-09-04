@@ -3,9 +3,9 @@
 const { spawnSync } = require("node:child_process");
 
 const ATTEMPTS = Math.max(1, Number(process.env.BRACE_AUDIT_ATTEMPTS) || 3);
-const FETCH_TIMEOUT_MS = Math.max(5_000, Number(process.env.BRACE_AUDIT_FETCH_TIMEOUT_MS) || 30_000);
-const PROCESS_TIMEOUT_MS = Math.max(FETCH_TIMEOUT_MS + 5_000, Number(process.env.BRACE_AUDIT_PROCESS_TIMEOUT_MS) || 45_000);
-const RETRY_DELAY_MS = Math.max(0, Number(process.env.BRACE_AUDIT_RETRY_DELAY_MS) || 10_000);
+const FETCH_TIMEOUT_MS = Math.max(5_000, Number(process.env.BRACE_AUDIT_FETCH_TIMEOUT_MS) || 60_000);
+const PROCESS_TIMEOUT_MS = Math.max(FETCH_TIMEOUT_MS + 5_000, Number(process.env.BRACE_AUDIT_PROCESS_TIMEOUT_MS) || 70_000);
+const RETRY_DELAY_MS = Math.max(0, Number(process.env.BRACE_AUDIT_RETRY_DELAY_MS) || 5_000);
 const LEVELS = ["moderate", "high", "critical"];
 
 function parseAuditPayload(text) {
@@ -30,6 +30,22 @@ function hasBlockingVulnerabilities(payload) {
 function sleep(milliseconds) {
   if (!milliseconds) return;
   Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, milliseconds);
+}
+
+function auditFailureReason(payload, result) {
+  if (result.error?.code === "ETIMEDOUT") return `timed out after ${PROCESS_TIMEOUT_MS}ms`;
+  const auditError = payload?.error;
+  if (typeof auditError === "string" && auditError.trim()) return auditError.trim();
+  if (auditError && typeof auditError === "object") {
+    if (typeof auditError.summary === "string" && auditError.summary.trim()) return auditError.summary.trim();
+    if (typeof auditError.message === "string" && auditError.message.trim()) return auditError.message.trim();
+    const compact = Object.fromEntries(
+      ["code", "statusCode", "method", "uri"].filter((key) => auditError[key] != null).map((key) => [key, auditError[key]])
+    );
+    if (Object.keys(compact).length) return JSON.stringify(compact);
+  }
+  if (typeof result.stderr === "string" && result.stderr.trim()) return result.stderr.trim();
+  return `npm exited ${result.status}`;
 }
 
 function runAudit() {
@@ -65,9 +81,7 @@ function runAudit() {
       return;
     }
 
-    const reason = result.error?.code === "ETIMEDOUT"
-      ? `timed out after ${PROCESS_TIMEOUT_MS}ms`
-      : (payload?.error?.summary || payload?.error || result.stderr || `npm exited ${result.status}`).toString().trim();
+    const reason = auditFailureReason(payload, result);
     process.stderr.write(`Dependency audit infrastructure attempt ${attempt}/${ATTEMPTS} failed: ${reason}\n`);
 
     if (attempt < ATTEMPTS) sleep(RETRY_DELAY_MS);
@@ -80,6 +94,7 @@ function runAudit() {
 if (require.main === module) runAudit();
 
 module.exports = {
+  auditFailureReason,
   hasBlockingVulnerabilities,
   parseAuditPayload,
   vulnerabilityCounts,

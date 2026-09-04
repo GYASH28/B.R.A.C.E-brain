@@ -27,7 +27,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Apply exact provider-boundary preview
-        run: node scripts/patch-assistant-boundary.mjs
+        run: |
+          node scripts/patch-assistant-boundary.mjs
+          node scripts/patch-assistant-boundary-v2.mjs
       - name: Provider-boundary fixtures
         run: node --test tests/assistant-context-cache.test.js tests/assistant-provider-boundary.test.js tests/electron-boundary.test.js tests/memory-store.test.js
       - run: npm run verify

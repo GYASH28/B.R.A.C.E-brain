@@ -20,13 +20,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Dependency audit (moderate or higher)
-        shell: bash
-        run: |
-          for attempt in 1 2 3; do
-            if npm audit --audit-level=moderate; then exit 0; fi
-            if [ "$attempt" -eq 3 ]; then exit 1; fi
-            sleep 10
-          done
+        run: node scripts/dependency-audit.js
       - run: npm run license:audit
       - run: npm run verify
       - run: xvfb-run -a npm run electron:e2e
@@ -54,13 +48,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Dependency audit (moderate or higher)
-        shell: bash
-        run: |
-          for attempt in 1 2 3; do
-            if npm audit --audit-level=moderate; then exit 0; fi
-            if [ "$attempt" -eq 3 ]; then exit 1; fi
-            sleep 10
-          done
+        run: node scripts/dependency-audit.js
       - run: npm run license:audit
       - run: npm run verify
       - run: npm run electron:e2e

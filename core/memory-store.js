@@ -1935,6 +1935,52 @@ class MemoryStore {
     return this.getAutomationRun(id);
   }
 
+  updateAutomationRunSteps(id, steps) {
+    const current = this.getAutomationRun(id);
+    if (!current) throw new Error("Automation run not found.");
+    if (current.status !== "running") return current;
+    this.db.prepare("UPDATE automation_runs SET steps_json=? WHERE id=? AND status='running'")
+      .run(JSON.stringify(Array.isArray(steps) ? steps : []), current.id);
+    return this.getAutomationRun(current.id);
+  }
+
+  recoverInterruptedAutomationRuns(recoveredAt = nowIso()) {
+    const rows = this.db.prepare(
+      "SELECT id FROM automation_runs WHERE status='running' ORDER BY started_at ASC",
+    ).all();
+    const recovered = [];
+    for (const row of rows) {
+      const current = this.getAutomationRun(row.id);
+      if (!current) continue;
+      const steps = Array.isArray(current.steps)
+        ? current.steps.map((step) => ({ ...step }))
+        : [];
+      for (let index = steps.length - 1; index >= 0; index -= 1) {
+        if (steps[index]?.status !== "running") continue;
+        steps[index] = {
+          ...steps[index],
+          status: "failed",
+          detail: "BRACE closed before this action reported completion.",
+          recoveredAt,
+        };
+        break;
+      }
+      steps.push({
+        type: "recovery",
+        status: "failed",
+        detail: "BRACE closed before this automation run completed. It was not retried automatically.",
+        recoveredAt,
+      });
+      recovered.push(this.finishAutomationRun(current.id, {
+        status: "failed",
+        steps,
+        error: "BRACE closed before this automation run completed.",
+        finishedAt: recoveredAt,
+      }));
+    }
+    return recovered;
+  }
+
   finishAutomationRun(id, input) {
     const current = this.getAutomationRun(id);
     if (!current) throw new Error("Automation run not found.");

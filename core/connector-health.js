@@ -19,7 +19,7 @@ function inspectJsonConfig(filePath) {
     const syntax = error instanceof SyntaxError;
     return {
       exists: true,
-      readable: !syntax ? false : true,
+      readable: syntax,
       valid: false,
       value: null,
       error: syntax
@@ -27,6 +27,18 @@ function inspectJsonConfig(filePath) {
         : "The client configuration could not be read safely.",
     };
   }
+}
+
+function loadJsonConfigForWrite(filePath) {
+  const state = inspectJsonConfig(filePath);
+  if (!state.valid) {
+    const error = new Error(
+      `${state.error || "The client configuration needs attention."} BRACE did not modify it.`,
+    );
+    error.code = "BRACE_CONNECTOR_CONFIG_INVALID";
+    throw error;
+  }
+  return state.value || {};
 }
 
 function connectorHealth({ id, detected, configured, configState = null }) {
@@ -63,4 +75,5 @@ function connectorHealth({ id, detected, configured, configState = null }) {
 module.exports = {
   connectorHealth,
   inspectJsonConfig,
+  loadJsonConfigForWrite,
 };

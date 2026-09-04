@@ -26,6 +26,21 @@ patchFile("electron/connector-service.ts", [
     "connector health helpers",
   ],
   [
+    'function readJson(filePath: string, fallback: any) {\n  try {\n    return JSON.parse(fs.readFileSync(filePath, "utf8"));\n  } catch {\n    return fallback;\n  }\n}',
+    '// JSON connector files are inspected explicitly so malformed configuration is never treated as empty.',
+    "legacy JSON fallback",
+  ],
+  [
+    '  private claudeConfigured() {\n    const filePath = this.clientConfigPath("claude");\n    if (!filePath || !fs.existsSync(filePath)) return false;\n    const config = readJson(filePath, {});\n    const pools = [config?.mcpServers, config?.user?.mcpServers];',
+    '  private claudeConfigured() {\n    const filePath = this.clientConfigPath("claude");\n    if (!filePath) return false;\n    const state = inspectJsonConfig(filePath);\n    if (!state.valid || !state.exists) return false;\n    const config = state.value || {};\n    const pools = [config?.mcpServers, config?.user?.mcpServers];',
+    "Claude configuration validation",
+  ],
+  [
+    '  private antigravityConfigured() {\n    const config = readJson(this.antigravityConfigPath(), {});\n    return Boolean(config?.mcpServers?.brace);\n  }',
+    '  private antigravityConfigured() {\n    const state = inspectJsonConfig(this.antigravityConfigPath());\n    if (!state.valid || !state.exists) return false;\n    return Boolean(state.value?.mcpServers?.brace);\n  }',
+    "Antigravity configuration validation",
+  ],
+  [
     '        const executablePath = findExecutable(client.commandNames);\n        const configured = this.isConfigured(id);\n        return {',
     '        const executablePath = findExecutable(client.commandNames);\n        const detected = id === "generic" || Boolean(executablePath);\n        const configState = id === "claude" || id === "antigravity"\n          ? inspectJsonConfig(this.clientConfigPath(id))\n          : null;\n        const configured = configState?.valid === false ? false : this.isConfigured(id);\n        const health = connectorHealth({ id, detected, configured, configState });\n        return {',
     "connector list health preparation",
@@ -39,6 +54,11 @@ patchFile("electron/connector-service.ts", [
     '          configured,\n          configPath: this.clientConfigPath(id),',
     '          configured,\n          health: health.status,\n          healthDetail: health.detail,\n          configPath: this.clientConfigPath(id),',
     "connector health response",
+  ],
+  [
+    '  private installAntigravity(access: ConnectorAccess) {\n    const filePath = this.antigravityConfigPath();\n    const config = readJson(filePath, {});\n    const next = {',
+    '  private installAntigravity(access: ConnectorAccess) {\n    const filePath = this.antigravityConfigPath();\n    const state = inspectJsonConfig(filePath);\n    if (!state.valid) {\n      throw new Error("Antigravity configuration changed or became unreadable during setup. BRACE did not modify it.");\n    }\n    const config = state.value || {};\n    const next = {',
+    "Antigravity write-time validation",
   ],
   [
     '    if (!new Set<ConnectorAccess>(["read-only", "remember"]).has(access)) {\n      throw new Error("Choose read-only or remember access.");\n    }\n    const window = this.options.getWindow();',

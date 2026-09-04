@@ -28,14 +28,15 @@ jobs:
       - run: npm ci
       - name: Wire production security boundaries
         run: node scripts/patch-production-security.mjs
-      - name: Upgrade patched Next.js toolchain
+      - name: Upgrade patched dependencies
         run: |
           npm install --save-exact next@16.3.4
           npm install --save-dev --save-exact eslint-config-next@16.3.4
+          npm install --save-exact @xmldom/xmldom@0.8.15
       - name: Audit dependencies
         run: |
           for attempt in 1 2 3; do
-            if npm audit --audit-level=high; then
+            if npm audit --audit-level=moderate; then
               exit 0
             fi
             if [ "$attempt" -eq 3 ]; then

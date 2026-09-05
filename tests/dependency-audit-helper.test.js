@@ -3,10 +3,33 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
+  auditFailureReason,
   hasBlockingVulnerabilities,
+  npmAuditInvocation,
   parseAuditPayload,
   vulnerabilityCounts,
 } = require("../scripts/dependency-audit");
+
+test("dependency audit uses the Windows npm command shim through a fixed shell command", () => {
+  const args = ["audit", "--json", "--fetch-retries=0"];
+  assert.deepEqual(npmAuditInvocation("win32", args), {
+    command: "npm audit --json --fetch-retries=0",
+    args: [],
+    shell: true,
+  });
+  assert.deepEqual(npmAuditInvocation("linux", args), {
+    command: "npm",
+    args,
+    shell: false,
+  });
+});
+
+test("dependency audit reports process launch errors instead of hiding them as null exits", () => {
+  assert.equal(
+    auditFailureReason(null, { error: { code: "EINVAL", message: "spawnSync npm.cmd EINVAL" } }),
+    "spawnSync npm.cmd EINVAL",
+  );
+});
 
 test("dependency audit classifies moderate, high, and critical findings as blocking", () => {
   const payload = { metadata: { vulnerabilities: { info: 1, low: 2, moderate: 1, high: 0, critical: 0 } } };

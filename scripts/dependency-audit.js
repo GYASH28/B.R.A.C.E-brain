@@ -34,6 +34,7 @@ function sleep(milliseconds) {
 
 function auditFailureReason(payload, result) {
   if (result.error?.code === "ETIMEDOUT") return `timed out after ${PROCESS_TIMEOUT_MS}ms`;
+  if (result.error?.message) return result.error.message;
   const auditError = payload?.error;
   if (typeof auditError === "string" && auditError.trim()) return auditError.trim();
   if (auditError && typeof auditError === "object") {
@@ -48,8 +49,16 @@ function auditFailureReason(payload, result) {
   return `npm exited ${result.status}`;
 }
 
+function npmAuditInvocation(platform, args) {
+  if (platform === "win32") {
+    // Node 24 no longer launches .cmd shims directly without a shell. Every
+    // argument here is a fixed constant owned by this script, not user input.
+    return { command: `npm ${args.join(" ")}`, args: [], shell: true };
+  }
+  return { command: "npm", args, shell: false };
+}
+
 function runAudit() {
-  const command = process.platform === "win32" ? "npm.cmd" : "npm";
   const args = [
     "audit",
     "--audit-level=moderate",
@@ -57,13 +66,15 @@ function runAudit() {
     `--fetch-timeout=${FETCH_TIMEOUT_MS}`,
     "--fetch-retries=0",
   ];
+  const invocation = npmAuditInvocation(process.platform, args);
 
   for (let attempt = 1; attempt <= ATTEMPTS; attempt += 1) {
-    const result = spawnSync(command, args, {
+    const result = spawnSync(invocation.command, invocation.args, {
       encoding: "utf8",
       timeout: PROCESS_TIMEOUT_MS,
       maxBuffer: 20 * 1024 * 1024,
       windowsHide: true,
+      shell: invocation.shell,
     });
     const payload = parseAuditPayload(result.stdout);
 
@@ -96,6 +107,7 @@ if (require.main === module) runAudit();
 module.exports = {
   auditFailureReason,
   hasBlockingVulnerabilities,
+  npmAuditInvocation,
   parseAuditPayload,
   vulnerabilityCounts,
 };

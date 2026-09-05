@@ -28,7 +28,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Dependency audit (moderate or higher, bounded retries)
+        run: node scripts/dependency-audit.js
       - run: npm run license:audit
       - run: npm run verify
       - name: Long-running profile stress gate (Linux)
@@ -78,6 +79,9 @@ jobs:
           npm run audit:layout --prefix website/builds/brace
           npm run audit:focus --prefix website/builds/brace
           npm run audit:interactions --prefix website/builds/brace
+          npm run audit:production --prefix website/builds/brace
+          npm run audit:performance --prefix website/builds/brace
+          npm run audit:visual --prefix website/builds/brace
       - name: Upload website audit evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:

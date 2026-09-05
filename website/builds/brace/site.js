@@ -17,7 +17,7 @@
     if (opening) opening.hidden = true;
     body.classList.remove("is-opening");
     mainSurfaces.forEach((surface) => surface.removeAttribute("inert"));
-    root.dataset.braceRuntime = "v9";
+    root.dataset.braceRuntime = "ready";
   };
 
   const playOpening = () => {
@@ -65,10 +65,20 @@
   let videoReady = false;
 
   if (filmVideo && !reduce && !navigator.connection?.saveData) {
-    const mobile = matchMedia("(max-width: 700px)").matches;
-    filmVideo.src = mobile ? filmVideo.dataset.scSrcMobile : filmVideo.dataset.scSrc;
-    filmVideo.load();
-    filmVideo.addEventListener("loadedmetadata", () => { videoReady = true; }, {once: true});
+    let videoRequested = false;
+    const requestFilm = () => {
+      if (videoRequested) return;
+      videoRequested = true;
+      const mobile = matchMedia("(max-width: 700px)").matches;
+      filmVideo.src = mobile ? filmVideo.dataset.scSrcMobile : filmVideo.dataset.scSrc;
+      filmVideo.load();
+      filmVideo.addEventListener("loadedmetadata", () => { videoReady = true; }, { once: true });
+    };
+    addEventListener("scroll", requestFilm, { once: true, passive: true });
+    addEventListener("pointerdown", requestFilm, { once: true, passive: true });
+    const scheduleFilm = () => setTimeout(requestFilm, 1_800);
+    if ("requestIdleCallback" in window) window.requestIdleCallback(scheduleFilm, { timeout: 2_500 });
+    else setTimeout(scheduleFilm, 1_500);
   }
 
   let scrollTick = false;
@@ -277,7 +287,11 @@
       canvas.style.width = `${width}px`; canvas.style.height = `${height}px`;
       context.setTransform(dpr, 0, 0, dpr, 0, 0);
     };
-    const draw = () => {
+    let lastFrameAt = 0;
+    const draw = (frameAt = 0) => {
+      frame = requestAnimationFrame(draw);
+      if (frameAt - lastFrameAt < 32) return;
+      lastFrameAt = frameAt;
       context.clearRect(0, 0, width, height);
       points.forEach((point) => {
         point.y = (point.y + point.speed) % 1.05;
@@ -286,7 +300,6 @@
         context.beginPath(); context.arc(x, y, point.r + proximity * 2, 0, Math.PI * 2);
         context.fillStyle = `rgba(255,255,255,${.18 + proximity * .32})`; context.fill();
       });
-      frame = requestAnimationFrame(draw);
     };
     size(); draw();
     addEventListener("resize", size, {passive: true});

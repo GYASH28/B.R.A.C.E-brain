@@ -39,6 +39,9 @@ jobs:
           npm run audit:layout --prefix website/builds/brace
           npm run audit:focus --prefix website/builds/brace
           npm run audit:interactions --prefix website/builds/brace
+          npm run audit:production --prefix website/builds/brace
+          npm run audit:performance --prefix website/builds/brace
+          npm run audit:visual --prefix website/builds/brace
       - name: Stage optimized public site
         shell: bash
         run: |

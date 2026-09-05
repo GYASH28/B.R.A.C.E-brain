@@ -38,9 +38,13 @@ test("Electron renderer is isolated behind a narrow BRACE bridge", () => {
     "installBraceSkill",
     "exportBraceData",
     "backupBraceData",
+    "saveBraceSupportBundle",
+    "restoreBraceBackup",
+    "getBraceDiagnostics",
     "deleteAllBraceData",
     "listBraceConnectors",
     "installBraceConnector",
+    "prepareBraceAssistantContext",
     "runBraceAssistant",
     "clearBraceAssistantHistory",
     "copyBraceText",
@@ -68,4 +72,24 @@ test("desktop storage is external and startup contains no machine path fallback"
   assert.doesNotMatch(main, /local-api|agent-runtime|backup-manager/);
   assert.match(service, /brace:set-memory-pinned/);
   assert.match(service, /Boolean\(pinned\)/);
+});
+
+test("privileged IPC registrations validate sender and payload", () => {
+  const service = read("electron/memory-service.ts");
+  const security = read("electron/ipc-trust.ts");
+  const contracts = read("src/shared/ipc/schemas.ts");
+
+  assert.match(service, /assertTrustedIpcSender/);
+  assert.match(service, /parseIpcArguments/);
+  assert.match(service, /const trustedHandle/);
+  assert.doesNotMatch(service, /ipcMain\.handle\("brace:/);
+  assert.match(security, /senderFrame/);
+  assert.match(security, /frame\.top/);
+  assert.match(security, /brain:/);
+  assert.match(contracts, /zod/);
+  assert.match(contracts, /brace:delete-all/);
+  assert.match(contracts, /brace:run-assistant/);
+  assert.match(contracts, /brace:prepare-assistant-context/);
+  assert.match(contracts, /brace:cancel-task/);
+  assert.match(contracts, /brace:restore-backup/);
 });

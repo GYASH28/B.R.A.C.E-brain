@@ -9,13 +9,14 @@
   <meta property="og:description" content="Install BRACE, build your first local memory, and connect a compatible AI, step by step.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://b-r-a-c-e-brain.vercel.app/guide/">
-  <meta property="og:image" content="https://raw.githubusercontent.com/GYASH28/B.R.A.C.E-brain/main/artifacts/screenshots/app-onboarding.png">
+  <meta property="og:image" content="https://b-r-a-c-e-brain.vercel.app/assets/app-overview.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="BRACE Beginner Guide">
   <meta name="twitter:description" content="A step-by-step path from installation to private, source-backed AI recall.">
-  <meta name="twitter:image" content="https://raw.githubusercontent.com/GYASH28/B.R.A.C.E-brain/main/artifacts/screenshots/app-onboarding.png">
+  <meta name="twitter:image" content="https://b-r-a-c-e-brain.vercel.app/assets/app-overview.png">
   <title>BRACE Beginner Guide | Start your private AI memory</title>
   <link rel="canonical" href="https://b-r-a-c-e-brain.vercel.app/guide/">
+  <link rel="manifest" href="../manifest.webmanifest">
   <link rel="icon" href="../favicon.ico">
   <link rel="stylesheet" href="guide.css">
 </head>
@@ -157,7 +158,7 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <li><strong>Explore synthetic demo</strong><span>Load the fictional Northstar workspace to try recall, decisions, the graph, timeline, and bundled skills.</span></li>
           </ul>
           <figure class="guide-shot">
-            <img src="../assets/app-onboarding.png" width="1440" height="960" alt="BRACE first-run screen with Import a project and Explore synthetic demo choices">
+            <img src="../assets/app-onboarding.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE first-run screen with Import a project and Explore synthetic demo choices">
             <figcaption><strong>The first-run screen.</strong> The synthetic demo is optional and labelled before it writes anything.</figcaption>
           </figure>
         </section>
@@ -175,7 +176,7 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
           </div>
           <p class="guide-note">Indexing is incremental. Use <strong>Reindex</strong> after meaningful file changes. Removed source files are removed from the index; durable memories remain until you forget or supersede them.</p>
           <figure class="guide-shot">
-            <img src="../assets/app-overview.png" width="1440" height="960" alt="BRACE Command center after the synthetic Northstar project is indexed">
+            <img src="../assets/app-overview.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Command center after the synthetic Northstar project is indexed">
             <figcaption><strong>Command center after import.</strong> Source coverage and durable memory are counted separately.</figcaption>
           </figure>
         </section>
@@ -199,11 +200,11 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <li><span>4</span><div><strong>Search your memory.</strong><p>Open <b>Search</b>, then choose Today, 7 days, 30 days, or All time. BRACE reports lexical, semantic, or hybrid mode and keeps memories separate from source evidence.</p></div></li>
           </ol>
           <figure class="guide-shot">
-            <img src="../assets/app-inbox.png" width="1440" height="960" alt="BRACE Inbox with separate memory and decision capture modes">
+            <img src="../assets/app-inbox.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Inbox with separate memory and decision capture modes">
             <figcaption><strong>Capture deliberately.</strong> Inbox stores a useful outcome or explicit decision, never a raw transcript by default.</figcaption>
           </figure>
           <figure class="guide-shot">
-            <img src="../assets/app-recall.png" width="1440" height="960" alt="BRACE Search results with Durable memory and Source evidence sections">
+            <img src="../assets/app-recall.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Search results with Durable memory and Source evidence sections">
             <figcaption><strong>Search is evidence-aware.</strong> Durable context is not disguised as a source excerpt.</figcaption>
           </figure>
           <p>Semantic retrieval is optional. In Settings, enable a loopback Ollama endpoint and choose an embedding model. If the provider is unavailable, BRACE completes lexical search and reports the fallback.</p>
@@ -217,27 +218,27 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
           <p>Search answers a question. These workspace views show how that answer stays precise, reaches an AI, and fits into the larger history. Every view reads the same local database.</p>
           <div class="feature-walkthrough">
             <article>
-              <img src="../assets/app-automations.png" width="1440" height="960" alt="BRACE Automation Studio with a local recipe, permission envelope, and execution history">
+              <img src="../assets/app-automations.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Automation Studio with a local recipe, permission envelope, and execution history">
               <div><strong>Automation Studio</strong><p>Start from a template or create a recipe with one typed trigger, optional AND/OR conditions, and bounded actions. New recipes start paused: inspect the permission envelope, run <b>Preview</b>, then enable only when its trace is correct. The desktop app must remain open for schedules.</p></div>
             </article>
             <article>
-              <img src="../assets/app-ai-workspace.png" width="1440" height="960" alt="BRACE AI Workspace with Codex CLI detected and a visible context boundary">
+              <img src="../assets/app-ai-workspace.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE AI Workspace with Codex CLI detected and a visible context boundary">
               <div><strong>AI Workspace</strong><p>Ask through a detected Codex CLI or Claude Code client. BRACE retrieves a bounded context capsule locally, previews the provider boundary, and keeps conversation history separate from durable memory until you choose <b>Retain latest answer</b>.</p></div>
             </article>
             <article>
-              <img src="../assets/app-memory-review.png" width="1440" height="960" alt="BRACE memory review queue comparing two synthetic checksum procedures">
+              <img src="../assets/app-memory-review.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE memory review queue comparing two synthetic checksum procedures">
               <div><strong>Memory review</strong><p>Open <b>Memory</b>, then <b>Review queue</b>, when BRACE flags likely overlap. Inspect both records, keep either one as canonical, or confirm that both are distinct. BRACE never silently merges them.</p></div>
             </article>
             <article>
-              <img src="../assets/app-timeline.png" width="1440" height="960" alt="BRACE Timeline showing synthetic Northstar decisions and indexing events">
+              <img src="../assets/app-timeline.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Timeline showing synthetic Northstar decisions and indexing events">
               <div><strong>Timeline</strong><p>Open <b>Timeline</b> to review dated memory, evidence, indexing, and decision events. Choose <b>Record decision</b> to capture the decision, rationale, project scope, and accepted status explicitly.</p></div>
             </article>
             <article>
-              <img src="../assets/app-graph.png" width="1440" height="960" alt="BRACE knowledge graph using synthetic Northstar projects, sources, memories, decisions, and entities">
+              <img src="../assets/app-graph.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE knowledge graph using synthetic Northstar projects, sources, memories, decisions, and entities">
               <div><strong>Knowledge map</strong><p>Open <b>Library → Map</b> and move the same graph through <b>Rings</b>, <b>Living</b>, <b>Orbit</b>, <b>Flow</b>, or <b>Chronicle</b>. Filter by type, select a node, or use the arrow keys to inspect typed relationships and travel back to provenance.</p></div>
             </article>
             <article>
-              <img src="../assets/app-skills.png" width="1440" height="960" alt="BRACE Skills showing synthetic declarative skills and their permissions">
+              <img src="../assets/app-skills.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Skills showing synthetic declarative skills and their permissions">
               <div><strong>Skills</strong><p>Open <b>Skills</b>, choose <b>Install manifest</b>, and select one <code>brace-skill.json</code>. Review the exact permission list. Third-party skills install disabled; use the switch only after the checksum and permissions are acceptable.</p></div>
             </article>
           </div>
@@ -256,7 +257,7 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <li><span>3</span><div><strong>Start with memory.</strong><p>The client can call <code>brace_session_start</code> before work and <code>brace_session_handoff</code> after work when retention is enabled.</p></div></li>
           </ol>
           <figure class="guide-shot">
-            <img src="../assets/app-connections.png" width="1440" height="960" alt="BRACE Connection studio detecting Codex CLI and offering read-only or remember access">
+            <img src="../assets/app-connections.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Connection studio detecting Codex CLI and offering read-only or remember access">
             <figcaption><strong>Guided and recoverable.</strong> Forgetting is never enabled by the connection studio, and BRACE never copies a provider API key.</figcaption>
           </figure>
           <p>For another MCP-compatible tool, choose <strong>Any MCP client</strong> and copy the generated JSON. Linux uses the compact <code>--mcp</code> form shown below. Windows uses the bundled server in Electron Node mode so redirected stdio remains reliable.</p>

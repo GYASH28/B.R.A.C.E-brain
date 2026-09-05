@@ -6,7 +6,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 const { MemoryStore } = require("../core/memory-store");
-const { inspectSqliteDatabase, restoreSqliteDatabase } = require("../core/database-recovery");
+const { applyPendingRestore, inspectSqliteDatabase, pendingPaths, restoreSqliteDatabase, stageRestore } = require("../core/database-recovery");
 
 test("backup inspection and atomic restore preserve a recoverable current database", async (context) => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "brace-restore-"));
@@ -41,4 +41,29 @@ test("backup inspection rejects non-BRACE files", (context) => {
   const invalid = path.join(directory, "invalid.sqlite3");
   fs.writeFileSync(invalid, "not a database".repeat(100));
   assert.throws(() => inspectSqliteDatabase(invalid), /file is not a database|BRACE database|integrity/i);
+});
+
+test("restore staging leaves the open database untouched until startup applies the verified copy", (context) => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), "brace-staged-restore-"));
+  context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const livePath = path.join(directory, "brace.sqlite3");
+  const candidatePath = path.join(directory, "candidate.sqlite3");
+  const live = new MemoryStore(livePath);
+  live.createMemory({ title: "Live memory", content: "The current profile remains active during staging." });
+  const candidate = new MemoryStore(candidatePath);
+  candidate.createMemory({ title: "Candidate memory", content: "This profile is activated only at startup." });
+  candidate.createMemory({ title: "Candidate two", content: "A second synthetic record." });
+  candidate.close();
+
+  stageRestore(directory, candidatePath, { maximumSchemaVersion: 6 });
+  assert.equal(live.stats().memories, 1);
+  assert.equal(fs.existsSync(pendingPaths(directory).staged), true);
+  live.close();
+
+  const restored = applyPendingRestore(directory, livePath, { maximumSchemaVersion: 6 });
+  assert.equal(restored.restored, true);
+  assert.ok(restored.safetyPath);
+  const reopened = new MemoryStore(livePath);
+  assert.equal(reopened.stats().memories, 2);
+  reopened.close();
 });

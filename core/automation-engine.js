@@ -343,6 +343,18 @@ class AutomationEngine {
     this.adapters = adapters;
     this.running = new Set();
     this.maximumConcurrent = Math.min(8, Math.max(1, Number(adapters.maximumConcurrent) || 3));
+    this.recoveredRuns = typeof this.store.recoverInterruptedAutomationRuns === "function"
+      ? this.store.recoverInterruptedAutomationRuns()
+      : [];
+    for (const run of this.recoveredRuns) {
+      const automation = run.automationId ? this.store.getAutomation(run.automationId) : null;
+      if (!automation?.enabled || !automation.trigger.type.startsWith("schedule.")) continue;
+      this.store.markAutomationRun(
+        automation.id,
+        run.finishedAt,
+        nextRunAt(automation.trigger, new Date(run.finishedAt)),
+      );
+    }
   }
 
   templates() {
@@ -520,6 +532,9 @@ class AutomationEngine {
     }
     this.running.add(automation.id);
     const steps = [];
+    const persistSteps = () => {
+      if (typeof this.store.updateAutomationRunSteps === "function") this.store.updateAutomationRunSteps(run.id, steps);
+    };
     try {
       const passed = this.conditionsPass(automation, payload);
       steps.push({
@@ -529,6 +544,7 @@ class AutomationEngine {
           ? `${automation.conditions.length} ${automation.conditionLogic.toUpperCase()} condition(s) evaluated.`
           : "No conditions configured.",
       });
+      persistSteps();
       if (!passed) {
         return this.store.finishAutomationRun(run.id, { status: "skipped", steps });
       }
@@ -544,23 +560,34 @@ class AutomationEngine {
         const preview = renderTemplate(action.config, context);
         if (dryRun) {
           steps.push({ index, type: action.type, status: "preview", input: cleanObject(preview) });
+          persistSteps();
           continue;
         }
         const startedAt = Date.now();
         const controller = new AbortController();
         context.signal = controller.signal;
+        const step = {
+          index,
+          type: action.type,
+          status: "running",
+          input: cleanObject(preview),
+          startedAt: new Date(startedAt).toISOString(),
+        };
+        steps.push(step);
+        persistSteps();
         const output = await withTimeout(
           this.executeAction(action, context),
           Math.max(1, deadline - Date.now()),
           controller,
         );
-        steps.push({
-          index,
-          type: action.type,
+        steps[steps.length - 1] = {
+          ...step,
           status: output?.skipped ? "skipped" : "success",
           durationMs: Date.now() - startedAt,
+          finishedAt: new Date().toISOString(),
           output: cleanObject(output),
-        });
+        };
+        persistSteps();
       }
       const finished = this.store.finishAutomationRun(run.id, {
         status: dryRun ? "preview" : "success",
@@ -581,7 +608,13 @@ class AutomationEngine {
       return finished;
     } catch (error) {
       const message = cleanText(error instanceof Error ? error.message : "Automation failed.", 2_000);
+      for (let index = steps.length - 1; index >= 0; index -= 1) {
+        if (steps[index]?.status !== "running") continue;
+        steps[index] = { ...steps[index], status: "failed", detail: message, finishedAt: new Date().toISOString() };
+        break;
+      }
       steps.push({ type: "error", status: "failed", detail: message });
+      persistSteps();
       const failed = this.store.finishAutomationRun(run.id, { status: "failed", steps, error: message });
       if (!dryRun && triggerType.startsWith("schedule.")) {
         const retryLimit = Number(persistedAutomation.trigger.config.retryAttempts || 0);

@@ -15,7 +15,7 @@ async function check(name, run) {
 }
 try {
   await page.goto(`${base}/`, {waitUntil: "networkidle"});
-  await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v9");
+  await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "ready");
   await check("opening sequence can be replayed and skipped", async () => {
     await page.locator("[data-replay-opening]").click();
     if (!await page.locator("[data-opening]").isVisible()) throw new Error("Replay did not open the memory sequence");

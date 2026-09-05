@@ -61,6 +61,8 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("brace:install-connector", id, access),
   restoreBraceConnector: (id: string) =>
     ipcRenderer.invoke("brace:restore-connector", id),
+  prepareBraceAssistantContext: (input: unknown) =>
+    ipcRenderer.invoke("brace:prepare-assistant-context", input),
   runBraceAssistant: (input: unknown) =>
     ipcRenderer.invoke("brace:run-assistant", input),
   clearBraceAssistantHistory: () =>

@@ -292,8 +292,13 @@ class MemoryStore {
     this.db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
     if (databasePath !== ":memory:") this.db.exec("PRAGMA journal_mode = WAL;");
     const currentSchema = Number(this.db.prepare("PRAGMA user_version").get().user_version || 0);
+    this.migrationBackup = null;
     if (currentSchema > 0 && currentSchema < SCHEMA_VERSION) {
-      this.createPreMigrationBackup(currentSchema);
+      this.migrationBackup = {
+        path: this.createPreMigrationBackup(currentSchema),
+        from: currentSchema,
+        to: SCHEMA_VERSION,
+      };
     }
     this.migrate();
     this.organizations = new OrganizationRepository(this.db, (callback) => this.transaction(callback));
@@ -328,6 +333,11 @@ class MemoryStore {
       .reverse();
     for (const stale of backups.slice(5)) fs.rmSync(path.join(directory, stale), { force: true });
     return target;
+  }
+
+  quickCheck() {
+    const details = this.db.prepare("PRAGMA quick_check").all().map((row) => String(row.quick_check || Object.values(row)[0] || ""));
+    return { ok: details.length === 1 && details[0].toLowerCase() === "ok", details };
   }
 
   migrate() {
@@ -2212,6 +2222,43 @@ class MemoryStore {
       input.dryRun ? 1 : 0,
     );
     return this.getAutomationRun(id);
+  }
+
+  updateAutomationRunSteps(id, steps) {
+    const current = this.getAutomationRun(id);
+    if (!current) throw new Error("Automation run not found.");
+    if (current.status !== "running") return current;
+    this.db.prepare("UPDATE automation_runs SET steps_json=? WHERE id=? AND status='running'")
+      .run(JSON.stringify(Array.isArray(steps) ? steps : []), current.id);
+    return this.getAutomationRun(current.id);
+  }
+
+  recoverInterruptedAutomationRuns(recoveredAt = nowIso()) {
+    const rows = this.db.prepare("SELECT id FROM automation_runs WHERE status='running' ORDER BY started_at ASC").all();
+    const recovered = [];
+    for (const row of rows) {
+      const current = this.getAutomationRun(row.id);
+      if (!current) continue;
+      const steps = Array.isArray(current.steps) ? current.steps.map((step) => ({ ...step })) : [];
+      for (let index = steps.length - 1; index >= 0; index -= 1) {
+        if (steps[index]?.status !== "running") continue;
+        steps[index] = { ...steps[index], status: "failed", detail: "BRACE closed before this action reported completion.", recoveredAt };
+        break;
+      }
+      steps.push({
+        type: "recovery",
+        status: "failed",
+        detail: "BRACE closed before this automation run completed. It was not retried automatically.",
+        recoveredAt,
+      });
+      recovered.push(this.finishAutomationRun(current.id, {
+        status: "failed",
+        steps,
+        error: "BRACE closed before this automation run completed.",
+        finishedAt: recoveredAt,
+      }));
+    }
+    return recovered;
   }
 
   finishAutomationRun(id, input) {

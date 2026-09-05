@@ -96,6 +96,7 @@ import {
   type GraphDisplayEdge,
   type GraphDisplayNode,
 } from "@/lib/brace/graph-view-model";
+import { explainRetrieval } from "@/lib/brace/retrieval-explain";
 import { TaskCenter } from "@/components/brace/shell/task-center";
 import { GraphCanvas, GraphView } from "@/components/brace/graph/graph-view";
 import { Page } from "@/components/brace/primitives/page";
@@ -1142,7 +1143,7 @@ function InboxView() {
 }
 
 function AiWorkspaceView() {
-  const { snapshot, connectors, assistantDraft, setAssistantDraft, runAssistant, clearAssistantHistory, createMemory, setView } = useBrace();
+  const { snapshot, connectors, assistantDraft, setAssistantDraft, prepareAssistant, assistantPreview, runAssistant, clearAssistantHistory, createMemory, setView } = useBrace();
   const available = connectors.filter((connector) => (connector.id === "codex" || connector.id === "claude") && connector.detected);
   const [client, setClient] = useState<"codex" | "claude">("codex");
   const history = snapshot?.assistant?.history || [];
@@ -1153,6 +1154,7 @@ function AiWorkspaceView() {
     }
   }, [available, client]);
   if (!snapshot) return null;
+  const previewReady = Boolean(assistantPreview && assistantPreview.client === client && assistantPreview.prompt === assistantDraft);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     await runAssistant(client, assistantDraft);
@@ -1177,7 +1179,7 @@ function AiWorkspaceView() {
         <div><div className="brace-eyebrow"><span />Ask with your context</div><h1>Ask BRACE</h1><p>Write your question, review the attached local context, then choose when to send it to your AI client.</p></div>
         <div className="ai-runtime-state"><span className={available.length ? "is-online" : ""} /><div><strong>{available.length ? `${available.length} local client${available.length === 1 ? "" : "s"} ready` : "No runnable client detected"}</strong><small>Read-only agent workspace · persistent local history</small></div></div>
       </header>
-      <div className="ai-boundary"><ShieldCheck className="h-4 w-4" /><span><strong>Every turn has a visible boundary.</strong> BRACE previews how many memory and source records will be sent. Retrieved context may be sent to the selected provider. Imported projects cannot be edited from this surface.</span></div>
+      <div className="ai-boundary"><ShieldCheck className="h-4 w-4" /><span><strong>Every turn has a visible boundary.</strong> Preview the exact memory summaries and source excerpts first. Retrieved context may be sent to the selected provider. Send consumes that same short-lived capsule once; changing the question or client invalidates it.</span></div>
       <div className="ai-workspace-grid">
         <section className="ai-thread" aria-live="polite">
           <div className="ai-thread-toolbar"><span>LOCAL CONVERSATION HISTORY</span>{history.length > 0 && <button type="button" onClick={() => void clearAssistantHistory()}><Trash2 className="h-3.5 w-3.5" />Clear</button>}</div>
@@ -1187,11 +1189,11 @@ function AiWorkspaceView() {
           </div>
           <form onSubmit={submit} className="ai-composer">
             <textarea required value={assistantDraft} onChange={(event) => setAssistantDraft(event.target.value)} placeholder="Ask BRACE with your durable context…" disabled={!available.length} />
-            <div><label><span className="sr-only">AI client</span><select value={client} onChange={(event) => setClient(event.target.value as "codex" | "claude")} disabled={!available.length}>{available.map((connector) => <option key={connector.id} value={connector.id}>{connector.name}</option>)}</select></label><span>{assistantDraft ? "Draft stays on this device until you send it." : "Context is selected locally before the provider boundary."}</span><button type="submit" disabled={!available.length || !assistantDraft.trim()} className="brace-primary">Send<CornerDownLeft className="h-3.5 w-3.5" /></button></div>
+            <div><label><span className="sr-only">AI client</span><select value={client} onChange={(event) => setClient(event.target.value as "codex" | "claude")} disabled={!available.length}>{available.map((connector) => <option key={connector.id} value={connector.id}>{connector.name}</option>)}</select></label><span>{previewReady ? "The exact capsule shown at right is ready for one send." : assistantDraft ? "Preview the exact local context before crossing the provider boundary." : "Your draft stays on this device until you choose to send."}</span><button type="button" disabled={!available.length || !assistantDraft.trim()} className="brace-secondary" onClick={() => void prepareAssistant(client, assistantDraft)}>Preview context</button><button type="submit" disabled={!available.length || !assistantDraft.trim() || !previewReady} className="brace-primary">Send<CornerDownLeft className="h-3.5 w-3.5" /></button></div>
           </form>
         </section>
         <aside className="ai-context-rail">
-          <section><span>LAST CONTEXT CAPSULE</span>{latest ? <><strong>{latest.context.memoryCount + latest.context.sourceCount}</strong><p>{latest.context.memoryCount} durable memories<br />{latest.context.sourceCount} source excerpts<br />{latest.context.embeddingModel || "Lexical retrieval"}</p></> : <p>No turn prepared yet.</p>}</section>
+          <section><span>EXACT CONTEXT CAPSULE</span>{previewReady && assistantPreview ? <><strong>{assistantPreview.memories.length + assistantPreview.sources.length}</strong><p>{assistantPreview.mode} retrieval · {assistantPreview.embeddingModel || "lexical only"}<br />Expires {new Date(assistantPreview.expiresAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}{assistantPreview.promptRedacted ? <><br /><b className="text-amber-200/70">Sensitive prompt patterns will be redacted before provider send.</b></> : null}</p><div className="mt-3 max-h-72 space-y-3 overflow-y-auto pr-1">{assistantPreview.memories.map((memory, index) => <div key={`memory-${index}`} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-2"><small className="text-[9px] uppercase tracking-wider text-sky-200/55">Memory · {memory.kind}</small><strong className="mt-1 block text-[11px] text-white/75">{memory.title}</strong><p className="mt-1 text-[10px] leading-4 text-white/35">{memory.summary}</p>{memory.sourceUri && <code className="mt-1 block truncate text-[9px] text-white/22">{memory.sourceUri}</code>}</div>)}{assistantPreview.sources.map((source, index) => <div key={`source-${index}`} className="rounded-lg border border-white/[0.06] bg-white/[0.025] p-2"><small className="text-[9px] uppercase tracking-wider text-emerald-200/55">Source evidence</small><strong className="mt-1 block text-[11px] text-white/75">{source.title}</strong><p className="mt-1 text-[10px] leading-4 text-white/35">{source.excerpt}</p><code className="mt-1 block truncate text-[9px] text-white/22">{source.uri}</code></div>)}</div></> : latest ? <><strong>{latest.context.memoryCount + latest.context.sourceCount}</strong><p>Last sent turn: {latest.context.memoryCount} memories · {latest.context.sourceCount} source excerpts. Prepare the current draft to inspect the next exact capsule.</p></> : <p>No context is prepared. Write a question and choose Preview context.</p>}</section>
           <section><span>DURABLE RETENTION</span><h2>History is not memory.</h2><p>BRACE keeps this chat local. No answer becomes durable memory automatically; you explicitly choose the useful outcome.</p><button type="button" onClick={() => void retain()} disabled={!latest}><Brain className="h-4 w-4" />Retain latest answer</button></section>
           <section><span>CLIENT CONNECTIONS</span>{connectors.filter((connector) => connector.id !== "generic").map((connector) => <div key={connector.id}><i className={connector.configured ? "is-online" : connector.detected ? "is-detected" : ""} /><strong>{connector.name}</strong><small>{connector.configured ? "Configured" : connector.detected ? "Detected" : "Not installed"}</small></div>)}<button type="button" onClick={() => setView("connections")}><GitBranch className="h-4 w-4" />Open connection studio</button></section>
         </aside>
@@ -1291,7 +1293,8 @@ function SearchView() {
 }
 
 function RetrievalWhy({ mode, diagnostics, retrieval, facts }: { mode: "lexical" | "semantic" | "hybrid"; diagnostics: { scope: string; since: string | null; embeddingModel: string | null }; retrieval?: { score: number; lexicalRank: number | null; semanticRank: number | null; semanticSimilarity: number | null }; facts: string[] }) {
-  return <details className="retrieval-why"><summary><CircleDot />Why this result?<ChevronRight /></summary><div><p>This is a ranking explanation, not an AI confidence score.</p><dl><div><dt>Mode</dt><dd>{mode}</dd></div><div><dt>Lexical rank</dt><dd>{retrieval?.lexicalRank ?? "—"}</dd></div><div><dt>Semantic rank</dt><dd>{retrieval?.semanticRank ?? "—"}</dd></div><div><dt>Similarity</dt><dd>{retrieval?.semanticSimilarity == null ? "—" : retrieval.semanticSimilarity.toFixed(3)}</dd></div><div><dt>Scope</dt><dd>{diagnostics.scope}</dd></div><div><dt>Time</dt><dd>{diagnostics.since ? `Since ${formatShortDate(diagnostics.since)}` : "All time"}</dd></div></dl><ul>{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul><small>{diagnostics.embeddingModel ? `Vectors: ${diagnostics.embeddingModel}` : "No embedding vectors influenced this result."}</small></div></details>;
+  const explanation = explainRetrieval(retrieval, mode);
+  return <details className="retrieval-why"><summary><CircleDot />Why this result?<ChevronRight /></summary><div><p><strong>{explanation.label}</strong><br />This is a ranking explanation, not an AI confidence score.</p><dl><div><dt>Mode</dt><dd>{explanation.mode}</dd></div><div><dt>Lexical rank</dt><dd>{explanation.lexicalRank ?? "—"}</dd></div><div><dt>Semantic rank</dt><dd>{explanation.semanticRank ?? "—"}</dd></div><div><dt>Similarity</dt><dd>{explanation.semanticSimilarity == null ? "—" : `${explanation.semanticSimilarity}%`}</dd></div><div><dt>Scope</dt><dd>{diagnostics.scope}</dd></div><div><dt>Time</dt><dd>{diagnostics.since ? `Since ${formatShortDate(diagnostics.since)}` : "All time"}</dd></div></dl><ul>{facts.map((fact) => <li key={fact}>{fact}</li>)}</ul><small>{diagnostics.embeddingModel ? `Vectors: ${diagnostics.embeddingModel}` : "No embedding vectors influenced this result."}</small></div></details>;
 }
 
 function MemoriesView() {

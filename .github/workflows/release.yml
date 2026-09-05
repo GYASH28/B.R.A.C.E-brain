@@ -19,7 +19,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Dependency audit (moderate or higher)
+        run: node scripts/dependency-audit.js
       - run: npm run license:audit
       - run: npm run verify
       - run: xvfb-run -a npm run electron:e2e
@@ -46,7 +47,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm audit --audit-level=high
+      - name: Dependency audit (moderate or higher)
+        run: node scripts/dependency-audit.js
       - run: npm run license:audit
       - run: npm run verify
       - run: npm run electron:e2e

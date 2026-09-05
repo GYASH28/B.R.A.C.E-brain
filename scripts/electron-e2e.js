@@ -267,7 +267,18 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Copied')");
   await clickText(window, "Continue with AI");
   await waitFor(window, "document.body.innerText.includes('Every turn has a visible boundary') && document.querySelector('.ai-composer textarea')?.value.includes('Verify')");
-  const memoryHandoffReady = await window.webContents.executeJavaScript("document.querySelector('.ai-composer textarea')?.value.includes('Use this durable BRACE memory as the starting context') && document.body.innerText.includes('Draft stays on this device until you send it.')");
+  const memoryHandoffReady = await window.webContents.executeJavaScript(`
+    (() => {
+      const draft = document.querySelector('.ai-composer textarea')?.value || '';
+      const preview = Array.from(document.querySelectorAll('.ai-composer button')).find((button) => button.textContent?.trim() === 'Preview context');
+      const send = Array.from(document.querySelectorAll('.ai-composer button')).find((button) => button.textContent?.includes('Send'));
+      return draft.includes('Use this durable BRACE memory as the starting context') &&
+        Boolean(preview) &&
+        document.body.innerText.includes('Retrieved context may be sent to the selected provider.') &&
+        document.body.innerText.includes('Preview the exact') &&
+        Boolean(send?.disabled);
+    })()
+  `);
   await clickText(window, "Library");
   await waitFor(window, "document.querySelector('.memory-toolbelt')");
   await setInput(window, ".memory-toolbelt input", "checksum");

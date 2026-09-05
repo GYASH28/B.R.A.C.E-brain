@@ -1,6 +1,7 @@
 (() => {
   "use strict";
   const root = document.documentElement;
+  root.dataset.braceGuideRuntime = "ready";
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   document.querySelectorAll(".copy-code").forEach((button) => {
@@ -122,7 +123,8 @@
     let width = 0, height = 0, frame = 0;
     const nodes = Array.from({length: innerWidth < 700 ? 18 : 36}, (_, index) => ({x: ((index * 83) % 991) / 991, y: ((index * 173) % 983) / 983, r: 1 + index % 2, speed: .000014 + index % 5 * .000004}));
     const size = () => { const dpr = Math.min(devicePixelRatio || 1, 1.3); width = innerWidth; height = innerHeight; canvas.width = width * dpr; canvas.height = height * dpr; canvas.style.width = `${width}px`; canvas.style.height = `${height}px`; context.setTransform(dpr, 0, 0, dpr, 0, 0); };
-    const draw = () => { context.clearRect(0,0,width,height); nodes.forEach((node) => { node.y = (node.y + node.speed) % 1.04; context.beginPath(); context.arc(node.x * width,node.y * height,node.r,0,Math.PI*2); context.fillStyle="rgba(255,255,255,.42)"; context.fill(); }); frame=requestAnimationFrame(draw); };
+    let lastFrameAt = 0;
+    const draw = (frameAt = 0) => { frame=requestAnimationFrame(draw); if(frameAt-lastFrameAt<40)return; lastFrameAt=frameAt; context.clearRect(0,0,width,height); nodes.forEach((node) => { node.y = (node.y + node.speed) % 1.04; context.beginPath(); context.arc(node.x * width,node.y * height,node.r,0,Math.PI*2); context.fillStyle="rgba(255,255,255,.42)"; context.fill(); }); };
     size(); draw(); addEventListener("resize",size,{passive:true}); addEventListener("pagehide",()=>cancelAnimationFrame(frame),{once:true});
   }
 })();

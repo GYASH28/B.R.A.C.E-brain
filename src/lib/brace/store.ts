@@ -3,9 +3,11 @@
 import { create } from "zustand";
 import { desktopApi, runtimeAdapter } from "./adapters";
 import { browserPreviewSnapshot } from "./browser-preview";
+import { summarizeIndexOutcome } from "./index-outcome";
 import type {
   BraceConnector,
   BraceAutomation,
+  AssistantContextPreview,
   BraceMemory,
   BraceSnapshot,
   ConnectorAccess,
@@ -39,6 +41,7 @@ interface BraceState {
   selectedMemory: BraceMemory | null;
   graphFocusId: string | null;
   assistantDraft: string;
+  assistantPreview: AssistantContextPreview | null;
   searchQuery: string;
   searchResult: SearchResponse | null;
   loading: boolean;
@@ -59,6 +62,7 @@ interface BraceState {
   refreshConnectors: () => Promise<void>;
   installConnector: (id: ConnectorId, access: ConnectorAccess) => Promise<void>;
   restoreConnector: (id: Exclude<ConnectorId, "generic">) => Promise<void>;
+  prepareAssistant: (client: "codex" | "claude", prompt: string) => Promise<void>;
   runAssistant: (client: "codex" | "claude", prompt: string) => Promise<void>;
   clearAssistantHistory: () => Promise<void>;
   initializeDemo: () => Promise<void>;
@@ -160,6 +164,7 @@ export const useBrace = create<BraceState>((set, get) => {
     selectedMemory: null,
     graphFocusId: null,
     assistantDraft: "",
+    assistantPreview: null,
     searchQuery: "",
     searchResult: null,
     loading: true,
@@ -186,7 +191,10 @@ export const useBrace = create<BraceState>((set, get) => {
       set({ graphFocusId });
       get().setView("graph");
     },
-    setAssistantDraft: (assistantDraft) => set({ assistantDraft }),
+    setAssistantDraft: (assistantDraft) => set((state) => ({
+      assistantDraft,
+      assistantPreview: state.assistantPreview?.prompt === assistantDraft ? state.assistantPreview : null,
+    })),
     clearMessage: () => set({ error: null, errorInfo: null, notice: null }),
     retryLastOperation: async () => {
       const retry = retryTask;
@@ -236,16 +244,29 @@ export const useBrace = create<BraceState>((set, get) => {
         const connectors = await api.listBraceConnectors();
         set({ connectors, notice: "The previous client configuration was restored from BRACE's local backup." });
       }),
+    prepareAssistant: async (client, prompt) =>
+      perform("Preparing exact context…", async () => {
+        const api = desktop();
+        if (!api?.prepareBraceAssistantContext) {
+          throw new Error("Context preview is available in the desktop app.");
+        }
+        const assistantPreview = await api.prepareBraceAssistantContext({ client, prompt });
+        set({ assistantPreview, notice: "Context capsule prepared locally. Review it before sending." });
+      }),
     runAssistant: async (client, prompt) =>
       perform("Recalling context and asking AI…", async () => {
         const api = desktop();
         if (!api?.runBraceAssistant) {
           throw new Error("Ask BRACE is available in the desktop app.");
         }
-        const result = await api.runBraceAssistant({ client, prompt });
+        const preview = get().assistantPreview;
+        if (!preview || preview.client !== client || preview.prompt !== prompt) {
+          throw new Error("Preview the exact context capsule for this question and client before sending.");
+        }
+        const result = await api.runBraceAssistant({ client, prompt, contextId: preview.id });
         if (result.cancelled) return;
         await refresh();
-        set({ notice: "Answer received. Nothing was added to durable memory automatically." });
+        set({ assistantPreview: null, notice: "Answer received. Nothing was added to durable memory automatically." });
       }),
     clearAssistantHistory: async () =>
       perform("Clearing Ask BRACE history…", async () => {
@@ -255,7 +276,7 @@ export const useBrace = create<BraceState>((set, get) => {
         }
         if (await api.clearBraceAssistantHistory()) {
           await refresh();
-          set({ notice: "Local Ask BRACE history cleared." });
+          set({ assistantPreview: null, notice: "Local Ask BRACE history cleared." });
         }
       }),
     initializeDemo: async () =>
@@ -381,7 +402,7 @@ export const useBrace = create<BraceState>((set, get) => {
         const result = await api.addBraceProject();
         if (result) {
           await refresh();
-          set({ notice: `Indexed ${result.indexed.toLocaleString()} changed files, kept ${result.unchanged.toLocaleString()} current, and protected ${result.redacted.toLocaleString()} secret-like value${result.redacted === 1 ? "" : "s"}. Original files were not changed.` });
+          set({ notice: summarizeIndexOutcome(result) });
         }
       }),
     reindexProject: async (id) =>
@@ -390,7 +411,7 @@ export const useBrace = create<BraceState>((set, get) => {
         if (!api?.reindexBraceProject) throw new Error("Project indexing is available in the desktop app.");
         const result = await api.reindexBraceProject(id);
         await refresh();
-        set({ notice: `Project index is current: ${result.indexed.toLocaleString()} changed, ${result.unchanged.toLocaleString()} unchanged, ${result.ignoredByRule.toLocaleString()} ignored by .braceignore, ${result.redacted.toLocaleString()} secret-like value${result.redacted === 1 ? "" : "s"} protected.` });
+        set({ notice: summarizeIndexOutcome(result, { refresh: true }) });
       }),
     setProjectWatch: async (id, enabled) =>
       perform(enabled ? "Enabling background indexing…" : "Pausing background indexing…", async () => {

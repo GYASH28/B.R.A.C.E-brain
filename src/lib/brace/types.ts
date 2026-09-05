@@ -384,6 +384,20 @@ export interface AssistantTurn {
   };
 }
 
+export interface AssistantContextPreview {
+  id: string;
+  client: "codex" | "claude";
+  prompt: string;
+  promptRedacted: boolean;
+  mode: "lexical" | "semantic" | "hybrid";
+  embeddingModel: string | null;
+  warning: string | null;
+  preparedAt: string;
+  expiresAt: string;
+  memories: Array<{ title: string; kind: string; summary: string; sourceUri: string | null }>;
+  sources: Array<{ title: string; uri: string; excerpt: string }>;
+}
+
 export type ConnectorId = "codex" | "claude" | "antigravity" | "generic";
 export type ConnectorAccess = "read-only" | "remember";
 
@@ -482,9 +496,14 @@ export interface BraceElectronApi {
     access: ConnectorAccess,
   ) => Promise<{ connected: boolean; cancelled: boolean }>;
   restoreBraceConnector: (id: Exclude<ConnectorId, "generic">) => Promise<{ restored: boolean; cancelled: boolean }>;
+  prepareBraceAssistantContext: (input: {
+    client: "codex" | "claude";
+    prompt: string;
+  }) => Promise<AssistantContextPreview>;
   runBraceAssistant: (input: {
     client: "codex" | "claude";
     prompt: string;
+    contextId: string;
   }) => Promise<{ cancelled: boolean; turn?: AssistantTurn }>;
   clearBraceAssistantHistory: () => Promise<boolean>;
   copyBraceText: (value: string) => Promise<boolean>;

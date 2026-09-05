@@ -62,7 +62,13 @@ async function keyboardAudit(page) {
 
 try {
   for (const target of targets) {
-    const page = await browser.newPage({ viewport: target.viewport, reducedMotion: target.reducedMotion || "reduce" });
+    // axe is injected only by this test harness. Production deliberately blocks
+    // inline scripts, so deployed-site audits need a test-scoped CSP bypass.
+    const page = await browser.newPage({
+      viewport: target.viewport,
+      reducedMotion: target.reducedMotion || "reduce",
+      bypassCSP: true,
+    });
     const consoleErrors = [];
     const httpErrors = [];
     page.on("console", (message) => {

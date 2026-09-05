@@ -63,6 +63,7 @@
   const productAct = document.querySelector(".product-act");
   const productRail = document.querySelector(".product-rail");
   let videoReady = false;
+  let proofControlLockUntil = 0;
 
   if (filmVideo && !reduce && !navigator.connection?.saveData) {
     let videoRequested = false;
@@ -107,7 +108,7 @@
       const frames = Array.from(document.querySelectorAll("[data-proof]"));
       if (frames.length) {
         const index = Math.min(frames.length - 1, Math.floor(progress * frames.length));
-        setActiveProof(index, false);
+        if (performance.now() >= proofControlLockUntil) setActiveProof(index, false);
       }
     }
     scrollTick = false;
@@ -232,6 +233,9 @@
     activeProof = (next + proofFrames.length) % proofFrames.length;
     if (proofPosition) proofPosition.textContent = proofFrames[activeProof].dataset.proofTitle;
     if (scroll && productAct) {
+      // Keep the chosen label stable while the page performs its smooth seek.
+      // Scroll-linked updates resume as soon as the control transition settles.
+      proofControlLockUntil = performance.now() + 900;
       if (reduce) proofFrames[activeProof].scrollIntoView({behavior: "auto", inline: "center", block: "nearest"});
       else {
         const progress = proofFrames.length === 1 ? 0 : (activeProof + .5) / proofFrames.length;

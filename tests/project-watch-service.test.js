@@ -5,7 +5,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
-const { ProjectWatchService, relevantFile, watchModeForPlatform, windowsWatchDirectories } = require("../core/project-watch-service");
+const { ProjectWatchService, projectTreeStamp, relevantFile, watchModeForPlatform } = require("../core/project-watch-service");
 
 test("project watcher excludes generated and temporary paths", () => {
   assert.equal(relevantFile("src/notes.md"), true);
@@ -22,8 +22,12 @@ test("Windows watcher avoids the process-aborting native recursive backend", () 
   try {
     fs.mkdirSync(path.join(rootPath, "src", "nested"), { recursive: true });
     fs.mkdirSync(path.join(rootPath, "node_modules", "ignored"), { recursive: true });
-    const relative = windowsWatchDirectories(rootPath).map((directory) => path.relative(rootPath, directory).replaceAll("\\", "/"));
-    assert.deepEqual(relative.sort(), ["", "src", "src/nested"]);
+    const before = projectTreeStamp(rootPath);
+    fs.writeFileSync(path.join(rootPath, "src", "nested", "watched.md"), "one");
+    const changed = projectTreeStamp(rootPath);
+    assert.notEqual(changed, before);
+    fs.writeFileSync(path.join(rootPath, "node_modules", "ignored", "package.js"), "ignored");
+    assert.equal(projectTreeStamp(rootPath), changed);
   } finally {
     fs.rmSync(rootPath, { recursive: true, force: true });
   }
@@ -35,6 +39,7 @@ test("project watcher is opt-in, debounced, coalesced, and stoppable", async (co
   let changes = 0;
   const service = new ProjectWatchService({
     debounceMs: 1_000,
+    platform: "win32",
     onChange: async () => { changes += 1; },
   });
   context.after(() => {

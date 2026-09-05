@@ -8,7 +8,7 @@ const IGNORED_PARTS = new Set([
   "node_modules", "vendor", "dist", "build", "coverage", "target", "tmp", "temp",
 ]);
 const IGNORED_SUFFIXES = ["~", ".tmp", ".swp", ".swo", ".part", ".crdownload"];
-const MAX_WINDOWS_WATCH_DIRECTORIES = 2_048;
+const MAX_WINDOWS_WATCH_ENTRIES = 20_000;
 
 function relevantFile(filename) {
   if (!filename) return true;
@@ -22,29 +22,45 @@ function watchModeForPlatform(platform) {
   return platform === "win32" ? "directory-tree" : "native-recursive";
 }
 
-function windowsWatchDirectories(rootPath) {
-  const directories = [];
+function projectTreeStamp(rootPath) {
   const queue = [rootPath];
-  for (let cursor = 0; cursor < queue.length && directories.length < MAX_WINDOWS_WATCH_DIRECTORIES; cursor += 1) {
+  let hash = 2_166_136_261;
+  let count = 0;
+  const mix = (value) => {
+    for (const character of value) {
+      hash ^= character.charCodeAt(0);
+      hash = Math.imul(hash, 16_777_619) >>> 0;
+    }
+  };
+  for (let cursor = 0; cursor < queue.length && count < MAX_WINDOWS_WATCH_ENTRIES; cursor += 1) {
     const directory = queue[cursor];
-    directories.push(directory);
     let entries = [];
     try {
-      entries = fs.readdirSync(directory, { withFileTypes: true });
+      entries = fs.readdirSync(directory, { withFileTypes: true })
+        .sort((left, right) => left.name.localeCompare(right.name));
     } catch {
       continue;
     }
     for (const entry of entries) {
-      if (!entry.isDirectory() || entry.isSymbolicLink()) continue;
       const child = path.join(directory, entry.name);
       const relative = path.relative(rootPath, child);
-      if (relevantFile(relative)) queue.push(child);
+      if (!relevantFile(relative) || entry.isSymbolicLink()) continue;
+      if (entry.isDirectory()) queue.push(child);
+      let stats;
+      try {
+        stats = fs.statSync(child);
+      } catch {
+        continue;
+      }
+      count += 1;
+      mix(`${relative.replaceAll("\\", "/")}|${entry.isDirectory() ? "d" : "f"}|${stats.size}|${stats.mtimeMs};`);
+      if (count >= MAX_WINDOWS_WATCH_ENTRIES) break;
     }
   }
-  return directories;
+  return `${count}:${hash}`;
 }
 
-function createWatcher(rootPath, onEvent, onError, platform = process.platform) {
+function createWatcher(rootPath, onEvent, onError, platform = process.platform, pollMs = 800) {
   if (watchModeForPlatform(platform) === "native-recursive") {
     const watcher = fs.watch(rootPath, { recursive: true, persistent: false }, (_eventType, filename) => {
       onEvent(filename == null ? "" : String(filename));
@@ -53,25 +69,31 @@ function createWatcher(rootPath, onEvent, onError, platform = process.platform) 
     return watcher;
   }
 
-  // libuv's recursive Windows watcher can abort Node 24 for valid path/casing
-  // combinations. A bounded set of ordinary directory watches fails through
-  // JavaScript errors instead of terminating the process.
-  const watchers = [];
-  for (const directory of windowsWatchDirectories(rootPath)) {
+  // libuv file events can abort Node 24 on Windows for valid path/casing
+  // combinations before JavaScript can catch the error. Bounded metadata
+  // polling avoids that native crash and never reads project file contents.
+  let previous;
+  try {
+    previous = projectTreeStamp(rootPath);
+  } catch (error) {
+    onError(error);
+    previous = "";
+  }
+  const timer = setInterval(() => {
     try {
-      const watcher = fs.watch(directory, { recursive: false, persistent: false }, (_eventType, filename) => {
-        const changed = filename == null ? directory : path.join(directory, String(filename));
-        onEvent(path.relative(rootPath, changed));
-      });
-      watcher.on("error", onError);
-      watchers.push(watcher);
+      const next = projectTreeStamp(rootPath);
+      if (next !== previous) {
+        previous = next;
+        onEvent("");
+      }
     } catch (error) {
       onError(error);
     }
-  }
+  }, pollMs);
+  timer.unref?.();
   return {
     close() {
-      for (const watcher of watchers) watcher.close();
+      clearInterval(timer);
     },
   };
 }
@@ -82,6 +104,7 @@ class ProjectWatchService {
     this.onChange = options.onChange;
     this.onError = typeof options.onError === "function" ? options.onError : () => {};
     this.debounceMs = Math.min(60_000, Math.max(1_000, Number(options.debounceMs) || 4_000));
+    this.platform = options.platform || process.platform;
     this.entries = new Map();
     this.resourcePaused = false;
   }
@@ -100,7 +123,8 @@ class ProjectWatchService {
       entry.timer = setTimeout(() => void this.flush(entry), this.debounceMs);
       entry.timer.unref?.();
     };
-    entry.watcher = createWatcher(rootPath, onEvent, (error) => this.onError(id, error));
+    const pollMs = Math.max(100, Math.min(1_000, Math.floor(this.debounceMs / 5)));
+    entry.watcher = createWatcher(rootPath, onEvent, (error) => this.onError(id, error), this.platform, pollMs);
     entry.onEvent = onEvent;
     this.entries.set(id, entry);
     return { enabled: true, projectId: id };
@@ -116,9 +140,10 @@ class ProjectWatchService {
     } catch (error) {
       this.onError(entry.id, error);
     } finally {
-      if (process.platform === "win32" && this.entries.has(entry.id)) {
+      if (this.platform === "win32" && this.entries.has(entry.id)) {
         entry.watcher?.close();
-        entry.watcher = createWatcher(entry.rootPath, entry.onEvent, (error) => this.onError(entry.id, error));
+        const pollMs = Math.max(100, Math.min(1_000, Math.floor(this.debounceMs / 5)));
+        entry.watcher = createWatcher(entry.rootPath, entry.onEvent, (error) => this.onError(entry.id, error), this.platform, pollMs);
       }
       entry.running = false;
       if (entry.pending && !this.resourcePaused) {
@@ -154,4 +179,4 @@ class ProjectWatchService {
   }
 }
 
-module.exports = { ProjectWatchService, relevantFile, watchModeForPlatform, windowsWatchDirectories };
+module.exports = { ProjectWatchService, projectTreeStamp, relevantFile, watchModeForPlatform };

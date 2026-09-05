@@ -1,0 +1,9 @@
+{
+  "description": "Synthetic deterministic recall cases for BRACE's local retrieval contract.",
+  "cases": [
+    { "id": "exact-decision", "query": "canonical imported files", "scope": "project:northstar", "expectedMemoryId": "memory-canonical" },
+    { "id": "exact-warning", "query": "never auto merge conflicts", "scope": "project:northstar", "expectedMemoryId": "memory-conflict" },
+    { "id": "time-scoped", "query": "current release constraint", "scope": "project:northstar", "since": "2026-01-01T00:00:00.000Z", "expectedMemoryId": "memory-current" },
+    { "id": "no-result", "query": "orbital banana telescope", "scope": "project:northstar", "expectedMemoryId": null }
+  ]
+}

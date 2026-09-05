@@ -5,6 +5,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
+const { DatabaseSync } = require("node:sqlite");
 const { MemoryStore } = require("../core/memory-store");
 
 function fixture(context) {
@@ -56,7 +57,7 @@ test("structured memories survive restart with provenance and evidence", (contex
   assert.equal(memory.sourceId, source.id);
   assert.equal(memory.evidence.length, 1);
   assert.equal(memory.evidence[0].outcome, "promoted");
-  assert.equal(reopened.stats().schemaVersion, 5);
+  assert.equal(reopened.stats().schemaVersion, 6);
   reopened.close();
 });
 
@@ -89,6 +90,50 @@ test("pinned working context is durable, filterable, and ordered first", (contex
   assert.equal(reopened.setMemoryPinned(routine.id, false).pinned, false);
   assert.equal(reopened.stats().pinnedMemories, 0);
   reopened.close();
+});
+
+test("organization workspaces keep governed knowledge separate from personal memory", (context) => {
+  const { databasePath, store } = fixture(context);
+  const overview = store.createOrganization({
+    name: "Northstar Labs",
+    edition: "enterprise",
+    actorLabel: "Synthetic owner",
+  });
+  assert.equal(overview.organization.dataResidency, "local");
+  assert.equal(overview.workspaces.length, 3);
+  const companyBrain = overview.workspaces.find((workspace) => workspace.name === "Company Brain");
+  const member = store.upsertWorkspaceMember({
+    workspaceId: companyBrain.id,
+    displayName: "Synthetic Operator",
+    email: "operator@example.invalid",
+    role: "manager",
+  });
+  const project = store.upsertProject({
+    workspaceId: companyBrain.id,
+    name: "Synthetic roadmap",
+    rootPath: path.join(path.dirname(databasePath), "synthetic-roadmap"),
+  });
+  const governed = store.createMemory({
+    workspaceId: companyBrain.id,
+    kind: "decision",
+    title: "Keep governance explicit",
+    content: "Company knowledge has a visible ownership boundary.",
+  }).memory;
+  const personal = store.createMemory({
+    kind: "preference",
+    title: "Private working style",
+    content: "This synthetic preference is outside company workspaces.",
+  }).memory;
+
+  const updated = store.getOrganizationOverview(overview.organization.id);
+  assert.equal(member.role, "manager");
+  assert.equal(project.workspace_id, companyBrain.id);
+  assert.equal(governed.workspaceId, companyBrain.id);
+  assert.equal(personal.workspaceId, null);
+  assert.deepEqual(store.listMemories({ workspaceId: companyBrain.id }).map((memory) => memory.id), [governed.id]);
+  assert.deepEqual(updated.totals, { workspaces: 3, members: 1, projects: 1, memories: 1 });
+  assert.ok(updated.audit.some((event) => event.eventType === "member.added"));
+  assert.equal(store.exportData().organizations[0].organization.name, "Northstar Labs");
 });
 
 test("exact duplicates reuse the active record and near duplicates are reviewable", (context) => {
@@ -170,6 +215,23 @@ test("review resolution keeps one canonical memory without deleting the other", 
   assert.equal(store.getMemory(superseded.id).supersededBy, canonical.id);
   assert.equal(store.getMemory(superseded.id).content.length > 0, true);
   assert.deepEqual(store.listMemoryReviewCandidates({ scope: "project:review" }), []);
+});
+
+test("superseded memory and evidence decisions remain explicitly recoverable", (context) => {
+  const { store } = fixture(context);
+  const left = store.createMemory({ kind: "fact", scope: "global", title: "Launch window", content: "Launch during the second week of October with the complete migration." }).memory;
+  const right = store.createMemory({ kind: "fact", scope: "global", title: "Launch timing", content: "Launch in the second week of October after the migration is complete." }).memory;
+  store.supersedeMemory(right.id, left.id);
+  const superseded = store.getMemory(right.id);
+  assert.equal(superseded.status, "superseded");
+  const evidence = store.addEvidence(superseded.id, { outcome: "observed", summary: "Migration sign-off", reference: "brace-test://sign-off" });
+  const reviewed = store.setEvidenceOutcome(superseded.id, evidence.id, "promoted");
+  assert.equal(reviewed.evidence[0].outcome, "promoted");
+  const restored = store.restoreSupersededMemory(superseded.id);
+  assert.equal(restored.status, "active");
+  assert.equal(restored.supersededBy, null);
+  assert.equal(restored.evidence[0].outcome, "promoted");
+  assert.ok(store.listTimeline({ limit: 20 }).some((event) => event.eventType === "memory.restored"));
 });
 
 test("search reports lexical mode unless real model vectors are supplied", (context) => {
@@ -335,7 +397,10 @@ test("deleteAll removes user content without invalidating the schema", (context)
   store.createMemory({ kind: "fact", title: "Delete me", content: "Synthetic data", projectId: project.id });
   store.deleteAll();
   assert.deepEqual(store.stats(), {
-    schemaVersion: 5,
+    schemaVersion: 6,
+    organizations: 0,
+    workspaces: 0,
+    workspaceMembers: 0,
     projects: 0,
     sources: 0,
     sourceChunks: 0,
@@ -370,7 +435,7 @@ test("version-one databases migrate source chunks without losing memories", (con
   `);
   store.close();
   const migrated = new MemoryStore(databasePath);
-  assert.equal(migrated.stats().schemaVersion, 5);
+  assert.equal(migrated.stats().schemaVersion, 6);
   assert.deepEqual(migrated.listMemoryReviewCandidates(), []);
   assert.equal(migrated.getMemory(memory.id).title, "Migration fixture");
   assert.deepEqual(migrated.searchSources("anything").results, []);
@@ -378,7 +443,7 @@ test("version-one databases migrate source chunks without losing memories", (con
 });
 
 test("version-three desktop profiles migrate to automation storage without losing memory", (context) => {
-  const { databasePath, store } = fixture(context);
+  const { directory, databasePath, store } = fixture(context);
   const memory = store.createMemory({
     kind: "decision",
     title: "Existing 0.5 profile memory",
@@ -391,9 +456,42 @@ test("version-three desktop profiles migrate to automation storage without losin
   `);
   store.close();
   const migrated = new MemoryStore(databasePath);
-  assert.equal(migrated.stats().schemaVersion, 5);
+  assert.equal(migrated.stats().schemaVersion, 6);
   assert.equal(migrated.getMemory(memory.id).title, "Existing 0.5 profile memory");
   assert.deepEqual(migrated.listAutomations(), []);
   assert.deepEqual(migrated.listAutomationRuns(), []);
+  const recoveryDirectory = path.join(directory, "recovery");
+  const backups = fs.readdirSync(recoveryDirectory)
+    .filter((name) => /pre-migration-v3-to-v6-.*\.sqlite3$/.test(name));
+  assert.equal(backups.length, 1);
+  const backup = new DatabaseSync(path.join(recoveryDirectory, backups[0]), { readOnly: true });
+  assert.equal(backup.prepare("SELECT title FROM memories WHERE id=?").get(memory.id).title, "Existing 0.5 profile memory");
+  backup.close();
   migrated.close();
+});
+
+test("version-five preview profiles receive a verified recovery backup before organization migration", (context) => {
+  const { directory, databasePath, store } = fixture(context);
+  const memory = store.createMemory({
+    kind: "decision",
+    title: "Existing 0.7 profile memory",
+    content: "This synthetic record must remain intact across the organization schema migration.",
+  }).memory;
+  store.db.exec("PRAGMA user_version = 5");
+  store.close();
+
+  const migrated = new MemoryStore(databasePath);
+  assert.equal(migrated.stats().schemaVersion, 6);
+  assert.equal(migrated.getMemory(memory.id).content, "This synthetic record must remain intact across the organization schema migration.");
+  const organization = migrated.createOrganization({ name: "Synthetic Upgrade Company", edition: "team" });
+  assert.equal(organization.workspaces.length, 3);
+  migrated.close();
+
+  const recoveryDirectory = path.join(directory, "recovery");
+  const backupName = fs.readdirSync(recoveryDirectory)
+    .find((name) => /pre-migration-v5-to-v6-.*\.sqlite3$/.test(name));
+  assert.ok(backupName);
+  const backup = new DatabaseSync(path.join(recoveryDirectory, backupName), { readOnly: true });
+  assert.equal(backup.prepare("SELECT title FROM memories WHERE id=?").get(memory.id).title, "Existing 0.7 profile memory");
+  backup.close();
 });

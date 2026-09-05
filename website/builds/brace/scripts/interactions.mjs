@@ -16,6 +16,12 @@ async function check(name, run) {
 try {
   await page.goto(`${base}/`, {waitUntil: "networkidle"});
   await page.waitForFunction(() => document.documentElement.dataset.braceRuntime === "v9");
+  await check("opening sequence can be replayed and skipped", async () => {
+    await page.locator("[data-replay-opening]").click();
+    if (!await page.locator("[data-opening]").isVisible()) throw new Error("Replay did not open the memory sequence");
+    await page.keyboard.press("Escape");
+    if (await page.locator("[data-opening]").isVisible()) throw new Error("Escape did not skip the opening sequence");
+  });
   await check("scroll film mounts with poster fallback", async () => {
     if (await page.locator("[data-sc-scrub]").count() !== 1) throw new Error("Expected one scroll film");
     if (!await page.locator(".film-poster").isVisible()) throw new Error("Film poster is not visible");
@@ -39,6 +45,13 @@ try {
     if (!String(await relay.locator("[data-relay-output]").textContent()).includes("Only the context you choose")) throw new Error("Relay did not explain the handoff boundary");
     await relay.locator('[data-relay-step="1"]').click();
     if (await relay.getAttribute("data-sc-verify-state") !== "relay:1") throw new Error("Relay node controls are not interactive");
+  });
+  await check("live demo covers the source-backed recall loop", async () => {
+    await page.locator('[data-demo-tab="recall"]').click();
+    if (!String(await page.locator("[data-demo-title]").textContent()).includes("Inspect the receipt")) throw new Error("Recall story did not render");
+    if (!String(await page.locator("[data-demo-receipt]").textContent()).includes("Architecture Decisions.md")) throw new Error("Recall story has no source receipt");
+    await page.locator("[data-demo-next]").click();
+    if (await page.locator("[data-demo-shell]").getAttribute("data-demo-state") !== "graph") throw new Error("Demo story controls did not advance");
   });
   await check("sideways gallery has real overflow", async () => {
     const overflow = await page.locator(".product-rail").evaluate((rail) => rail.scrollWidth - window.innerWidth);
@@ -71,6 +84,13 @@ try {
     const response = await page.request.get(`${base}/guide/`);
     if (!response.ok()) throw new Error(`Guide returned ${response.status()}`);
     if (!await page.locator('a[href="guide/"]').count()) throw new Error("Main page does not link to the guide");
+  });
+  await check("beginner guide adapts and diagnoses locally", async () => {
+    await page.goto(`${base}/guide/`, {waitUntil: "networkidle"});
+    await page.locator('[data-platform-choice="windows"]').click();
+    if (!String(await page.locator("[data-platform-command]").textContent()).includes(".exe")) throw new Error("Windows guide path did not render");
+    await page.locator('[data-trouble="connect"]').click();
+    if (!String(await page.locator("[data-trouble-output]").textContent()).includes("brace_status")) throw new Error("Troubleshooter did not provide the MCP check");
   });
 } finally { await browser.close(); }
 process.stdout.write(`${JSON.stringify({interactions: results, consoleErrors: errors}, null, 2)}\n`);

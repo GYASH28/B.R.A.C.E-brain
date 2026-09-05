@@ -1,10 +1,10 @@
 # BRACE website
 
-The public website is deliberately separated into a production surface, a reproducible opening film, and experiments.
+The public website is deliberately separated into a release-preview surface, a reproducible opening film, and experiments. The site may be deployed publicly without implying that the unsigned desktop build is a stable production release.
 
 | Path | Purpose | Deployment status |
 | --- | --- | --- |
-| `builds/brace/` | Static launch site, beginner guide, downloads, assets, and browser audits | Production; Vercel project root and GitHub Pages source |
+| `builds/brace/` | Static launch site, beginner guide, downloads, assets, and browser audits | Public preview; Vercel project root and GitHub Pages source |
 | `remotion-opening/` | Remotion source for the opening film used by the launch site | Source only; rendered media is copied into the production build intentionally |
 | `lab/` | Visual prototypes and discarded directions | Never deployed implicitly |
 
@@ -25,9 +25,12 @@ npm run audit:focus
 npm run audit:a11y
 ```
 
-The opening is a 7-second Remotion composition rendered in landscape and
-portrait, then encoded with dense H.264 keyframes for low-latency scroll
-seeking. Rebuild the visual source with:
+The launch has two motion systems with separate jobs:
+
+- a skippable, sub-three-second Anime.js memory ignition that introduces the BRACE mark;
+- a 7-second Remotion product film rendered in landscape and portrait, then encoded with dense H.264 keyframes for low-latency scroll seeking.
+
+Rebuild the film source with:
 
 ```bash
 cd website/remotion-opening
@@ -42,6 +45,10 @@ poster and do not download either film.
 
 The site is static by design. Keep asset paths relative, keep download URLs pinned to a real release, and do not introduce a runtime network dependency for the core experience. The synthetic Northstar workspace is the only approved source for product examples and screenshots. The sideways product reel is intentional product evidence and must remain reachable with native horizontal scrolling under reduced motion.
 
+The maintained runtime surface is intentionally small: `index.html`, `site.css`, `site.js`, `guide/index.html`, `guide/guide.css`, `guide/guide.js`, and the vendored Anime.js file. Historical version layers were removed after the interaction, layout, focus, accessibility, and repository test suites passed against the consolidated files.
+
 The context relay in the custody passage is the second signature interaction. Its three stages must remain truthful: the source is canonical, BRACE holds a local durable memory with evidence, and only user-selected context reaches a compatible AI client. Keep both the stage buttons and the range control keyboard-operable.
 
-Before changing motion or interaction behavior, read [the interaction contract](INTERACTION_CONTRACT.md). The deployment workflow in `.github/workflows/pages.yml` runs both browser audits before publishing.
+Before changing motion or interaction behavior, read [the interaction contract](INTERACTION_CONTRACT.md). The deployment workflow in `.github/workflows/pages.yml` runs the browser audits before publishing.
+
+Vercel deploys `builds/brace` directly using its checked-in `vercel.json`. GitHub Pages stages only the public runtime files and excludes dependency, environment, Vercel-state, audit-lab, and source-note files. `robots.txt`, `sitemap.xml`, canonical links, social cards, and the software schema use the production Vercel origin.

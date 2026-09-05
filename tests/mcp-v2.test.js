@@ -93,7 +93,7 @@ test("official MCP v2 stdio server exposes structured read-only memory tools", a
   assert.match(compass.messages[0].content.text, /read-only/);
 
   const resource = await client.readResource({ uri: "brace://status" });
-  assert.match(resource.contents[0].text, /"schemaVersion": 5/);
+  assert.match(resource.contents[0].text, /"schemaVersion": 6/);
   await client.close();
 });
 

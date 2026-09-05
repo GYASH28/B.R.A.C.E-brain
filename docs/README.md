@@ -12,6 +12,8 @@ This directory is the maintained documentation hub for BRACE. Start with the rou
 ## Understand the system
 
 - [Architecture](ARCHITECTURE.md) — desktop, core, SQLite, indexing, retrieval, and trust boundaries.
+- [IPC contracts](IPC_CONTRACTS.md) and [threat model](THREAT_MODEL.md) — renderer authority and security assumptions.
+- [Provider data flow](PROVIDER_DATA_FLOW.md) and [indexing privacy](INDEXING_PRIVACY.md) — what can leave the device and how sources are handled.
 - [Data model](DATA_MODEL.md) — records, evidence, lifecycle states, and migrations.
 - [Architecture decisions](architecture/) — durable choices and their consequences.
 - [Repository map](REPOSITORY_MAP.md) — where application, website, test, example, and release code belongs.
@@ -24,6 +26,8 @@ This directory is the maintained documentation hub for BRACE. Start with the rou
 ## Build and release
 
 - [Distribution](DISTRIBUTION.md) — package production and artifact verification.
+- [Recovery and migrations](RECOVERY_AND_MIGRATIONS.md), [release trust](RELEASE_TRUST.md), and [update model](UPDATE_MODEL.md).
+- [Diagnostics](DIAGNOSTICS.md), [performance](PERFORMANCE.md), [accessibility](ACCESSIBILITY.md), and [current limitations](CURRENT_LIMITATIONS.md).
 - [Dependency review](DEPENDENCY_REVIEW.md) — license and dependency-release gate.
 - [Long-running profile stress testing](STRESS_TESTING.md) — large-corpus, restart, recovery, latency, and integrity gates.
 - [Brain UX contract](GRAPH_UX.md) — graph hierarchy, node language, density, interaction, and responsive rules.

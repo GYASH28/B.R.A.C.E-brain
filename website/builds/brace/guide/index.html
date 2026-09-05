@@ -8,15 +8,22 @@
   <meta property="og:title" content="BRACE Beginner Guide">
   <meta property="og:description" content="Install BRACE, build your first local memory, and connect a compatible AI, step by step.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://b-r-a-c-e-brain.vercel.app/guide/">
+  <meta property="og:image" content="https://raw.githubusercontent.com/GYASH28/B.R.A.C.E-brain/main/artifacts/screenshots/app-onboarding.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="BRACE Beginner Guide">
+  <meta name="twitter:description" content="A step-by-step path from installation to private, source-backed AI recall.">
+  <meta name="twitter:image" content="https://raw.githubusercontent.com/GYASH28/B.R.A.C.E-brain/main/artifacts/screenshots/app-onboarding.png">
   <title>BRACE Beginner Guide | Start your private AI memory</title>
+  <link rel="canonical" href="https://b-r-a-c-e-brain.vercel.app/guide/">
   <link rel="icon" href="../favicon.ico">
-  <link rel="stylesheet" href="../motion.css">
-  <link rel="stylesheet" href="../site.css">
   <link rel="stylesheet" href="guide.css">
 </head>
 <body class="guide-body">
   <a class="skip-link" href="#guide-main">Skip to the guide</a>
-  <div class="sc-grain" aria-hidden="true"></div>
+  <canvas class="guide-signal" data-guide-signal aria-hidden="true"></canvas>
+  <div class="guide-grain" aria-hidden="true"></div>
+  <div class="guide-reading-progress" aria-hidden="true"><i></i></div>
 
   <header class="guide-bar">
     <a class="product-mark" href="../" aria-label="Back to BRACE">
@@ -28,15 +35,35 @@
       <a href="#connect">Connect AI</a>
       <a href="#privacy">Privacy</a>
     </nav>
-    <a class="bar-action" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Get BRACE</a>
+    <a class="bar-action" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Get BRACE <span>↗</span></a>
   </header>
 
   <main id="guide-main">
     <section class="guide-hero">
       <div class="guide-wrap">
-        <p class="surface-kicker">START HERE</p>
-        <h1>Your first private AI memory, step by step.</h1>
-        <p class="guide-lede">No account is required. Your database starts empty. This guide takes you from installation to a working local recall connection.</p>
+        <div class="guide-hero-grid">
+          <div class="guide-intro">
+            <p class="surface-kicker"><span></span> START HERE / ABOUT 10 MINUTES</p>
+            <h1>Your first private AI memory, step by step.</h1>
+            <p class="guide-lede">No account. No mystery upload. Start with one focused project, recover one source-backed answer, then connect an AI read-only.</p>
+            <div class="guide-hero-actions"><a href="#install">Begin setup <span>↓</span></a><button type="button" data-reset-progress>Reset progress</button></div>
+          </div>
+          <aside class="launchpad" aria-label="Choose your installation path">
+            <div class="launchpad-head"><span>YOUR FASTEST PATH</span><b data-detected-platform>DETECTING</b></div>
+            <div class="platform-picker" role="group" aria-label="Operating system">
+              <button type="button" data-platform-choice="windows" aria-pressed="false">Windows</button>
+              <button type="button" data-platform-choice="linux" aria-pressed="false">Linux</button>
+              <button type="button" data-platform-choice="source" aria-pressed="false">Build source</button>
+            </div>
+            <div class="launchpad-command">
+              <small data-platform-label>RECOMMENDED INSTALL</small>
+              <strong data-platform-title>Choose your operating system</strong>
+              <code data-platform-command>BRACE 0.7.0 public preview</code>
+              <a data-platform-download href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Open download <span>↗</span></a>
+            </div>
+            <p><i></i><span><strong>Local-first check</strong>Your database starts empty and stays on this device by default.</span></p>
+          </aside>
+        </div>
         <div class="guide-route" aria-label="Guide route">
           <a href="#install"><span>01</span> Install</a>
           <a href="#first-run"><span>02</span> First run</a>
@@ -45,6 +72,7 @@
           <a href="#structure"><span>05</span> Automate</a>
           <a href="#connect"><span>06</span> Connect</a>
           <a href="#privacy"><span>07</span> Protect</a>
+          <a href="#troubleshooting"><span>?</span> Fix issues</a>
         </div>
       </div>
     </section>
@@ -63,6 +91,18 @@
           <a href="#troubleshooting">Troubleshooting</a>
         </nav>
         <div class="toc-status"><span></span><p><strong>Local-first</strong><small>No telemetry or account</small></p></div>
+        <div class="setup-progress" data-setup-progress>
+          <div><strong>YOUR SETUP</strong><b><span data-progress-count>0</span>/7</b></div>
+          <i aria-hidden="true"><span></span></i>
+          <label><input type="checkbox" data-setup-check="install"> Installed BRACE</label>
+          <label><input type="checkbox" data-setup-check="first-run"> Chose first-run path</label>
+          <label><input type="checkbox" data-setup-check="import"> Imported one project</label>
+          <label><input type="checkbox" data-setup-check="recall"> Recalled with evidence</label>
+          <label><input type="checkbox" data-setup-check="structure"> Reviewed automations</label>
+          <label><input type="checkbox" data-setup-check="connect"> Connected read-only</label>
+          <label><input type="checkbox" data-setup-check="privacy"> Created a backup</label>
+          <small>Saved only in this browser.</small>
+        </div>
       </aside>
 
       <article class="guide-article">
@@ -264,6 +304,16 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
             <span>?</span>
             <div><p>TROUBLESHOOTING</p><h2>Common first-run questions.</h2></div>
           </header>
+          <div class="trouble-finder" data-trouble-finder>
+            <div><span>QUICK DIAGNOSIS</span><h3>What is getting in your way?</h3><p>Choose the closest symptom. This stays entirely in your browser.</p></div>
+            <div class="trouble-options" role="group" aria-label="Troubleshooting symptoms">
+              <button type="button" data-trouble="launch">BRACE will not launch</button>
+              <button type="button" data-trouble="file">A file is missing</button>
+              <button type="button" data-trouble="recall">Recall looks incomplete</button>
+              <button type="button" data-trouble="connect">AI cannot connect</button>
+            </div>
+            <output data-trouble-output aria-live="polite"><strong>Choose a symptom above.</strong><span>You will get a focused first check and the safest next action.</span></output>
+          </div>
           <div class="faq-list">
             <details><summary>Why does Search say “lexical”?</summary><div class="details-body"><p>That is the private default and it is fully functional. Enable a local Ollama embedding model only if you want semantic or hybrid ranking.</p></div></details>
             <details><summary>Why is an imported file missing?</summary><div class="details-body"><p>BRACE rejects binary, oversized, hidden, credential-like, database, dependency, build, cache, and symlink content. Check that the file is supported and inside the selected folder.</p></div></details>

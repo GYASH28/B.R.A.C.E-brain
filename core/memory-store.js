@@ -4,8 +4,9 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash, randomUUID } = require("node:crypto");
 const { DatabaseSync, backup: backupSqlite } = require("node:sqlite");
+const { OrganizationRepository } = require("./repositories/organization-repository");
 
-const SCHEMA_VERSION = 5;
+const SCHEMA_VERSION = 6;
 const MEMORY_KINDS = new Set([
   "project",
   "decision",
@@ -156,6 +157,7 @@ function hydrateMemory(row) {
   if (!row) return null;
   return {
     id: row.id,
+    workspaceId: row.workspace_id || null,
     kind: row.kind,
     scope: row.scope,
     title: row.title,
@@ -177,6 +179,62 @@ function hydrateMemory(row) {
     supersededBy: row.superseded_by,
     duplicateOf: row.duplicate_of,
     redacted: Boolean(row.redacted),
+  };
+}
+
+function hydrateOrganization(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    name: row.name,
+    slug: row.slug,
+    edition: row.edition,
+    dataResidency: row.data_residency,
+    ownershipBoundary: row.ownership_boundary,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function hydrateWorkspace(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    name: row.name,
+    kind: row.kind,
+    visibility: row.visibility,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function hydrateWorkspaceMember(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    workspaceId: row.workspace_id,
+    displayName: row.display_name,
+    email: row.email,
+    role: row.role,
+    status: row.status,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function hydrateOrganizationAuditEvent(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    organizationId: row.organization_id,
+    workspaceId: row.workspace_id,
+    eventType: row.event_type,
+    actorLabel: row.actor_label,
+    summary: row.summary,
+    metadata: safeJsonParse(row.metadata_json, {}),
+    occurredAt: row.occurred_at,
   };
 }
 
@@ -233,7 +291,43 @@ class MemoryStore {
     });
     this.db.exec("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
     if (databasePath !== ":memory:") this.db.exec("PRAGMA journal_mode = WAL;");
+    const currentSchema = Number(this.db.prepare("PRAGMA user_version").get().user_version || 0);
+    if (currentSchema > 0 && currentSchema < SCHEMA_VERSION) {
+      this.createPreMigrationBackup(currentSchema);
+    }
     this.migrate();
+    this.organizations = new OrganizationRepository(this.db, (callback) => this.transaction(callback));
+  }
+
+  createPreMigrationBackup(currentSchema) {
+    if (this.databasePath === ":memory:") return null;
+    const directory = path.join(path.dirname(path.resolve(this.databasePath)), "recovery");
+    fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+    this.db.exec("PRAGMA wal_checkpoint(FULL)");
+    const stamp = nowIso().replace(/[:.]/g, "-");
+    const target = path.join(directory, `brace-pre-migration-v${currentSchema}-to-v${SCHEMA_VERSION}-${stamp}.sqlite3`);
+    fs.copyFileSync(this.databasePath, target, fs.constants.COPYFILE_EXCL);
+    fs.chmodSync(target, 0o600);
+    const check = new DatabaseSync(target, { readOnly: true });
+    try {
+      const result = check.prepare("PRAGMA quick_check").all().map((row) => String(row.quick_check));
+      if (result.length !== 1 || result[0] !== "ok") {
+        throw new Error("The automatic pre-migration backup failed its integrity check.");
+      }
+    } catch (error) {
+      fs.rmSync(target, { force: true });
+      throw error;
+    } finally {
+      check.close();
+      fs.rmSync(`${target}-shm`, { force: true });
+      fs.rmSync(`${target}-wal`, { force: true });
+    }
+    const backups = fs.readdirSync(directory)
+      .filter((name) => /^brace-pre-migration-v\d+-to-v\d+-.*\.sqlite3$/.test(name))
+      .sort()
+      .reverse();
+    for (const stale of backups.slice(5)) fs.rmSync(path.join(directory, stale), { force: true });
+    return target;
   }
 
   migrate() {
@@ -244,8 +338,54 @@ class MemoryStore {
     if (current === 0) {
       this.db.exec(`
         BEGIN IMMEDIATE;
+        CREATE TABLE organizations (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          slug TEXT NOT NULL UNIQUE,
+          edition TEXT NOT NULL DEFAULT 'team' CHECK(edition IN ('personal', 'team', 'enterprise')),
+          data_residency TEXT NOT NULL DEFAULT 'local',
+          ownership_boundary TEXT NOT NULL DEFAULT 'Company workspaces are governed; personal memory remains private.',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        );
+        CREATE TABLE workspaces (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+          name TEXT NOT NULL,
+          kind TEXT NOT NULL DEFAULT 'team' CHECK(kind IN ('personal', 'team', 'executive', 'project')),
+          visibility TEXT NOT NULL DEFAULT 'team' CHECK(visibility IN ('personal', 'team', 'organization')),
+          status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'archived')),
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          UNIQUE(organization_id, name)
+        );
+        CREATE INDEX workspaces_organization_idx ON workspaces(organization_id, status);
+        CREATE TABLE workspace_members (
+          id TEXT PRIMARY KEY,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+          display_name TEXT NOT NULL,
+          email TEXT,
+          role TEXT NOT NULL CHECK(role IN ('owner', 'admin', 'manager', 'member', 'guest', 'auditor')),
+          status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'invited', 'suspended')),
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          UNIQUE(workspace_id, email)
+        );
+        CREATE INDEX workspace_members_workspace_idx ON workspace_members(workspace_id, status);
+        CREATE TABLE organization_audit_events (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+          workspace_id TEXT REFERENCES workspaces(id) ON DELETE SET NULL,
+          event_type TEXT NOT NULL,
+          actor_label TEXT NOT NULL,
+          summary TEXT NOT NULL,
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          occurred_at TEXT NOT NULL
+        );
+        CREATE INDEX organization_audit_time_idx ON organization_audit_events(organization_id, occurred_at DESC);
         CREATE TABLE projects (
           id TEXT PRIMARY KEY,
+          workspace_id TEXT REFERENCES workspaces(id) ON DELETE SET NULL,
           name TEXT NOT NULL,
           root_path TEXT NOT NULL UNIQUE,
           created_at TEXT NOT NULL,
@@ -303,6 +443,7 @@ class MemoryStore {
         END;
         CREATE TABLE memories (
           id TEXT PRIMARY KEY,
+          workspace_id TEXT REFERENCES workspaces(id) ON DELETE SET NULL,
           kind TEXT NOT NULL,
           scope TEXT NOT NULL,
           title TEXT NOT NULL,
@@ -475,7 +616,7 @@ class MemoryStore {
         );
         CREATE INDEX automation_runs_time_idx ON automation_runs(started_at DESC);
         CREATE INDEX automation_runs_status_idx ON automation_runs(status, started_at DESC);
-        PRAGMA user_version = 5;
+        PRAGMA user_version = 6;
         COMMIT;
       `);
     }
@@ -597,6 +738,76 @@ class MemoryStore {
         throw error;
       }
     }
+    if (current > 0 && current < 6) {
+      const projectColumns = this.db.prepare("PRAGMA table_info(projects)").all();
+      const memoryColumns = this.db.prepare("PRAGMA table_info(memories)").all();
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS organizations (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            edition TEXT NOT NULL DEFAULT 'team' CHECK(edition IN ('personal', 'team', 'enterprise')),
+            data_residency TEXT NOT NULL DEFAULT 'local',
+            ownership_boundary TEXT NOT NULL DEFAULT 'Company workspaces are governed; personal memory remains private.',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+          );
+          CREATE TABLE IF NOT EXISTS workspaces (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+            name TEXT NOT NULL,
+            kind TEXT NOT NULL DEFAULT 'team' CHECK(kind IN ('personal', 'team', 'executive', 'project')),
+            visibility TEXT NOT NULL DEFAULT 'team' CHECK(visibility IN ('personal', 'team', 'organization')),
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'archived')),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(organization_id, name)
+          );
+          CREATE INDEX IF NOT EXISTS workspaces_organization_idx ON workspaces(organization_id, status);
+          CREATE TABLE IF NOT EXISTS workspace_members (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+            display_name TEXT NOT NULL,
+            email TEXT,
+            role TEXT NOT NULL CHECK(role IN ('owner', 'admin', 'manager', 'member', 'guest', 'auditor')),
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'invited', 'suspended')),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(workspace_id, email)
+          );
+          CREATE INDEX IF NOT EXISTS workspace_members_workspace_idx ON workspace_members(workspace_id, status);
+          CREATE TABLE IF NOT EXISTS organization_audit_events (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+            workspace_id TEXT REFERENCES workspaces(id) ON DELETE SET NULL,
+            event_type TEXT NOT NULL,
+            actor_label TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            occurred_at TEXT NOT NULL
+          );
+          CREATE INDEX IF NOT EXISTS organization_audit_time_idx
+            ON organization_audit_events(organization_id, occurred_at DESC);
+        `);
+        if (!projectColumns.some((column) => column.name === "workspace_id")) {
+          this.db.exec("ALTER TABLE projects ADD COLUMN workspace_id TEXT REFERENCES workspaces(id) ON DELETE SET NULL");
+        }
+        if (!memoryColumns.some((column) => column.name === "workspace_id")) {
+          this.db.exec("ALTER TABLE memories ADD COLUMN workspace_id TEXT REFERENCES workspaces(id) ON DELETE SET NULL");
+        }
+        this.db.exec(`
+          CREATE INDEX IF NOT EXISTS projects_workspace_idx ON projects(workspace_id, updated_at DESC);
+          CREATE INDEX IF NOT EXISTS memories_workspace_idx ON memories(workspace_id, status, updated_at DESC);
+          PRAGMA user_version = 6;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }
     return { from: current, to: SCHEMA_VERSION };
   }
 
@@ -616,6 +827,13 @@ class MemoryStore {
     }
   }
 
+  createOrganization(input = {}) { return this.organizations.create(input); }
+  listOrganizations() { return this.organizations.list(); }
+  createWorkspace(input = {}) { return this.organizations.createWorkspace(input); }
+  upsertWorkspaceMember(input = {}) { return this.organizations.upsertMember(input); }
+  insertOrganizationAuditEvent(input = {}) { return this.organizations.insertAudit(input); }
+  getOrganizationOverview(organizationId) { return this.organizations.overview(organizationId); }
+
   upsertProject(input) {
     const rootPath = path.resolve(String(input.rootPath || ""));
     if (!input.rootPath || rootPath === path.parse(rootPath).root) {
@@ -626,13 +844,14 @@ class MemoryStore {
     const id = existing?.id || String(input.id || randomUUID());
     const name = normalizeText(input.name || path.basename(rootPath)).slice(0, 120);
     this.db.prepare(`
-      INSERT INTO projects(id, name, root_path, created_at, updated_at, last_indexed_at)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO projects(id, workspace_id, name, root_path, created_at, updated_at, last_indexed_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(root_path) DO UPDATE SET
+        workspace_id=COALESCE(excluded.workspace_id, projects.workspace_id),
         name=excluded.name,
         updated_at=excluded.updated_at,
         last_indexed_at=COALESCE(excluded.last_indexed_at, projects.last_indexed_at)
-    `).run(id, name, rootPath, timestamp, timestamp, input.lastIndexedAt || null);
+    `).run(id, input.workspaceId || null, name, rootPath, timestamp, timestamp, input.lastIndexedAt || null);
     return this.db.prepare("SELECT * FROM projects WHERE id = ?").get(id);
   }
 
@@ -724,6 +943,85 @@ class MemoryStore {
       }
     });
     return prepared;
+  }
+
+  commitIndexedSource(input, chunks, embedding = null) {
+    const uri = normalizeText(input.uri);
+    if (!uri) throw new Error("A source URI is required.");
+    const existing = this.db.prepare("SELECT id, created_at FROM sources WHERE uri = ?").get(uri);
+    const sourceId = existing?.id || String(input.id || randomUUID());
+    const timestamp = nowIso();
+    const prepared = (Array.isArray(chunks) ? chunks : []).map((chunk, ordinal) => {
+      const content = String(chunk.content || "").trim().slice(0, 200_000);
+      if (!content) return null;
+      return {
+        id: String(chunk.id || sha256(`${sourceId}:${ordinal}:${content}`).slice(0, 32)),
+        ordinal,
+        heading: normalizeText(chunk.heading).slice(0, 400),
+        content,
+        contentHash: sha256(normalizeForHash(content)),
+      };
+    }).filter(Boolean);
+    const embeddingModel = embedding?.model ? normalizeText(embedding.model).slice(0, 180) : null;
+    const vectors = embeddingModel
+      ? (Array.isArray(embedding.vectors) ? embedding.vectors.map(validateVector) : [])
+      : [];
+    if (embeddingModel && vectors.length !== prepared.length) {
+      throw new Error("The embedding adapter returned an unexpected vector count.");
+    }
+    this.transaction(() => {
+      this.db.prepare(`
+        INSERT INTO sources(
+          id, project_id, uri, title, media_type, content_hash, mtime_ms,
+          metadata_json, created_at, updated_at, indexed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(uri) DO UPDATE SET
+          project_id=excluded.project_id,
+          title=excluded.title,
+          media_type=excluded.media_type,
+          content_hash=excluded.content_hash,
+          mtime_ms=excluded.mtime_ms,
+          metadata_json=excluded.metadata_json,
+          updated_at=excluded.updated_at,
+          indexed_at=excluded.indexed_at
+      `).run(
+        sourceId,
+        input.projectId || null,
+        uri,
+        normalizeText(input.title || uri).slice(0, 240),
+        normalizeText(input.mediaType || "text/plain").slice(0, 120),
+        normalizeText(input.contentHash || sha256(uri)),
+        Number.isFinite(Number(input.mtimeMs)) ? Number(input.mtimeMs) : null,
+        JSON.stringify(input.metadata || {}),
+        existing?.created_at || timestamp,
+        timestamp,
+        timestamp,
+      );
+      this.db.prepare("DELETE FROM source_chunks WHERE source_id = ?").run(sourceId);
+      this.db.prepare("DELETE FROM relations WHERE from_type = 'source' AND from_id = ?").run(sourceId);
+      const insert = this.db.prepare(`
+        INSERT INTO source_chunks(
+          id, source_id, ordinal, heading, content, content_hash,
+          embedding_model, embedding_json, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
+      for (let index = 0; index < prepared.length; index += 1) {
+        const chunk = prepared[index];
+        insert.run(
+          chunk.id,
+          sourceId,
+          chunk.ordinal,
+          chunk.heading,
+          chunk.content,
+          chunk.contentHash,
+          embeddingModel,
+          embeddingModel ? JSON.stringify(vectors[index]) : null,
+          timestamp,
+          timestamp,
+        );
+      }
+    });
+    return { source: this.getSource(sourceId), chunks: prepared };
   }
 
   listSourceChunks(sourceId) {
@@ -906,12 +1204,13 @@ class MemoryStore {
     this.transaction(() => {
       this.db.prepare(`
         INSERT INTO memories(
-          id, kind, scope, title, summary, content, status, confidence,
+          id, workspace_id, kind, scope, title, summary, content, status, confidence,
           importance, pinned, tags_json, source_id, source_uri, source_excerpt,
           content_hash, created_at, updated_at, accessed_at, duplicate_of, redacted
-        ) VALUES (?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         id,
+        input.workspaceId || null,
         kind,
         scope,
         title,
@@ -975,6 +1274,10 @@ class MemoryStore {
       filters.push("scope = ?");
       params.push(normalizeText(options.scope));
     }
+    if (options.workspaceId) {
+      filters.push("workspace_id = ?");
+      params.push(String(options.workspaceId));
+    }
     if (options.kind && MEMORY_KINDS.has(options.kind)) {
       filters.push("kind = ?");
       params.push(options.kind);
@@ -1007,11 +1310,12 @@ class MemoryStore {
       current.title !== title || current.summary !== summary || current.content !== content;
     this.db.prepare(`
       UPDATE memories SET
-        kind=?, scope=?, title=?, summary=?, content=?, status=?, confidence=?,
+        workspace_id=?, kind=?, scope=?, title=?, summary=?, content=?, status=?, confidence=?,
         importance=?, pinned=?, tags_json=?, source_uri=?, source_excerpt=?, content_hash=?,
         updated_at=?, superseded_by=?
       WHERE id=?
     `).run(
+      merged.workspaceId || null,
       merged.kind,
       normalizeText(merged.scope || "global"),
       title,
@@ -1610,6 +1914,48 @@ class MemoryStore {
     return this.getMemory(memoryId);
   }
 
+  restoreSupersededMemory(memoryId) {
+    const memory = this.getMemory(memoryId);
+    if (!memory) throw new Error("Memory not found.");
+    if (memory.status !== "superseded") throw new Error("Only a superseded memory can be restored.");
+    const timestamp = nowIso();
+    this.transaction(() => {
+      this.db.prepare(`
+        UPDATE memories SET status='active', superseded_by=NULL, duplicate_of=NULL, updated_at=? WHERE id=?
+      `).run(timestamp, memory.id);
+      this.insertEvent({
+        eventType: "memory.restored",
+        occurredAt: timestamp,
+        title: `Restored: ${memory.title}`,
+        summary: "Returned a superseded memory to active recall by explicit user action.",
+        memoryId: memory.id,
+        metadata: { previousReplacementId: memory.supersededBy },
+      });
+    });
+    return this.getMemory(memory.id, { includeEvidence: true });
+  }
+
+  setEvidenceOutcome(memoryId, evidenceId, outcome) {
+    if (!EVIDENCE_OUTCOMES.has(outcome)) throw new Error("Choose a supported evidence outcome.");
+    const memory = this.getMemory(memoryId);
+    if (!memory) throw new Error("Memory not found.");
+    const evidence = this.db.prepare("SELECT * FROM evidence WHERE id=? AND memory_id=?").get(String(evidenceId || ""), memory.id);
+    if (!evidence) throw new Error("Evidence not found for this memory.");
+    const timestamp = nowIso();
+    this.transaction(() => {
+      this.db.prepare("UPDATE evidence SET outcome=? WHERE id=? AND memory_id=?").run(outcome, evidence.id, memory.id);
+      this.insertEvent({
+        eventType: "evidence.reviewed",
+        occurredAt: timestamp,
+        title: `Evidence ${outcome}: ${memory.title}`,
+        summary: normalizeText(evidence.summary).slice(0, 500),
+        memoryId: memory.id,
+        metadata: { evidenceId: evidence.id, outcome },
+      });
+    });
+    return this.getMemory(memory.id, { includeEvidence: true });
+  }
+
   forgetMemory(memoryId, options = {}) {
     const memory = this.getMemory(memoryId);
     if (!memory) return false;
@@ -1895,6 +2241,17 @@ class MemoryStore {
     );
   }
 
+  findAutomationRunByIdempotencyKey(key) {
+    const normalized = normalizeText(key).slice(0, 128);
+    if (!normalized) return null;
+    const rows = this.db.prepare(`
+      SELECT * FROM automation_runs
+      WHERE json_extract(trigger_payload_json, '$._idempotencyKey') = ?
+      ORDER BY started_at DESC LIMIT 1
+    `).all(normalized);
+    return hydrateAutomationRun(rows[0]);
+  }
+
   listAutomationRuns(options = {}) {
     const filters = [];
     const parameters = [];
@@ -1918,6 +2275,7 @@ class MemoryStore {
     return {
       schemaVersion: SCHEMA_VERSION,
       exportedAt: nowIso(),
+      organizations: this.listOrganizations().map((organization) => this.getOrganizationOverview(organization.id)),
       projects: this.listProjects().map((project) => ({
         id: project.id,
         name: project.name,
@@ -1994,6 +2352,10 @@ class MemoryStore {
         "source_chunks",
         "sources",
         "projects",
+        "organization_audit_events",
+        "workspace_members",
+        "workspaces",
+        "organizations",
         "skills",
         "settings",
       ]) {
@@ -2009,6 +2371,9 @@ class MemoryStore {
     );
     return {
       schemaVersion: Number(this.db.prepare("PRAGMA user_version").get().user_version),
+      organizations: count("organizations"),
+      workspaces: count("workspaces"),
+      workspaceMembers: count("workspace_members", "WHERE status='active'"),
       projects: count("projects"),
       sources: count("sources"),
       sourceChunks: count("source_chunks"),

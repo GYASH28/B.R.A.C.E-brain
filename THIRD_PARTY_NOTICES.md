@@ -22,7 +22,7 @@ The exact resolved dependency graph and integrity hashes are recorded in `packag
 
 ## Website motion runtime
 
-The public launch surface uses the BRACE-authored `motion.js`, `motion.css`, and `site.js` files. It also vendors Anime.js 3.2.2, licensed under MIT, for deterministic interface transitions. Scrollcraft informed the design and local verification process, but no installed skill source, prompt, reference, runtime, or verification file is redistributed.
+The public launch surface uses the BRACE-authored `site.js`, `site.css`, `guide/guide.js`, and `guide/guide.css` files. It vendors Anime.js 3.2.2, licensed under MIT, for the deterministic opening timeline and product-simulation transitions. External reference repositories informed interaction, accessibility, and performance decisions, but no reference application assets, prompts, or runtime code are redistributed.
 
 ## Synthetic examples
 

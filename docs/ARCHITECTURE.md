@@ -11,7 +11,7 @@ BRACE separates private data, trusted local services, and untrusted presentation
                         │ guarded, incremental read
                         ▼
 ┌──────────────── core modules ─────────────────────────────┐
-│ indexer  memory store  embeddings  skills  automations   │
+│ index worker  repositories  retrieval  skills  automations│
 └───────────────────────┬───────────────────────────────────┘
                         │ parameterized SQLite operations
                         ▼
@@ -31,7 +31,7 @@ The CommonJS modules under `core/` are environment-independent and directly test
 
 ### Memory store
 
-`core/memory-store.js` owns schema migration and every SQL query. It uses Node's built-in `node:sqlite`, enables WAL mode, creates FTS5 indexes, and keeps durable memory separate from rebuildable source chunks.
+`core/memory-store.js` remains the compatibility facade and transaction owner. It uses Node's built-in `node:sqlite`, enables WAL mode, creates FTS5 indexes, and keeps durable memory separate from rebuildable source chunks. Bounded domains are moving behind repositories; organization persistence is the first extracted repository under `core/repositories/`.
 
 Responsibilities include:
 
@@ -46,7 +46,7 @@ Responsibilities include:
 
 ### Project indexer
 
-`core/project-indexer.js` resolves a user-selected root, rejects broad roots, traverses without following symlinks, filters directories and filenames, hashes content, chunks text by Markdown heading, and assigns private-path-free URIs.
+`core/project-indexer.js` defines guarded traversal and chunking. `core/project-index-worker.js` performs disk-heavy scanning away from Electron's main thread, while `core/project-index-jobs.js` owns the narrow job protocol, cancellation, bounded progress, and per-source staged commit. `core/project-watch-service.js` is an explicit per-project, debounced watcher; it is never globally enabled.
 
 Source chunks are rebuildable. Durable memories are not automatically deleted when a project file changes or disappears.
 

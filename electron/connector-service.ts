@@ -1,5 +1,6 @@
 import { dialog, type BrowserWindow } from "electron";
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -26,6 +27,21 @@ interface LaunchDefinition {
 interface ConfigBackup {
   path: string | null;
   existed: boolean;
+}
+
+type ConnectorHealth =
+  | "manual"
+  | "not-installed"
+  | "detected"
+  | "configured"
+  | "verified"
+  | "needs-repair"
+  | "missing-executable";
+
+interface ConnectorVerification {
+  access: ConnectorAccess;
+  configFingerprint: string;
+  verifiedAt: string;
 }
 
 const CLIENTS: Record<ConnectorId, {
@@ -130,10 +146,12 @@ function connectionInstruction() {
 export class BraceConnectorService {
   private readonly options: ConnectorOptions;
   private readonly backupDirectory: string;
+  private readonly verificationPath: string;
 
   constructor(options: ConnectorOptions) {
     this.options = options;
     this.backupDirectory = path.join(options.userDataPath, "connector-backups");
+    this.verificationPath = path.join(options.userDataPath, "connector-health.json");
   }
 
   launchDefinition(access: ConnectorAccess = "read-only"): LaunchDefinition {
@@ -170,6 +188,69 @@ export class BraceConnectorService {
     if (id === "claude") return path.join(os.homedir(), ".claude.json");
     if (id === "antigravity") return this.antigravityConfigPath();
     return null;
+  }
+
+  private configFingerprint(id: ConnectorId) {
+    const filePath = this.clientConfigPath(id);
+    if (!filePath || !fs.existsSync(filePath)) return null;
+    try {
+      return createHash("sha256").update(fs.readFileSync(filePath)).digest("hex");
+    } catch {
+      return null;
+    }
+  }
+
+  private verificationRecords(): Partial<Record<ConnectorId, ConnectorVerification>> {
+    return readJson(this.verificationPath, {});
+  }
+
+  private recordVerification(id: ConnectorId, access: ConnectorAccess) {
+    const configFingerprint = this.configFingerprint(id);
+    if (!configFingerprint) return;
+    const records = this.verificationRecords();
+    records[id] = { access, configFingerprint, verifiedAt: new Date().toISOString() };
+    fs.mkdirSync(path.dirname(this.verificationPath), { recursive: true, mode: 0o700 });
+    const temporary = `${this.verificationPath}.${process.pid}.tmp`;
+    fs.writeFileSync(temporary, `${JSON.stringify(records, null, 2)}\n`, {
+      encoding: "utf8",
+      mode: 0o600,
+      flag: "wx",
+    });
+    fs.renameSync(temporary, this.verificationPath);
+  }
+
+  private latestBackup(id: ConnectorId) {
+    try {
+      return fs.readdirSync(this.backupDirectory)
+        .filter((name) => name.startsWith(`${id}-`))
+        .sort()
+        .reverse()
+        .map((name) => path.join(this.backupDirectory, name))
+        .find((candidate) => fs.statSync(candidate).isFile()) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  private configuredEntryMatches(id: ConnectorId) {
+    if (id === "generic") return true;
+    const filePath = this.clientConfigPath(id);
+    if (!filePath || !fs.existsSync(filePath)) return false;
+    const definition = this.launchDefinition("read-only");
+    if (id === "codex") {
+      const source = fs.readFileSync(filePath, "utf8");
+      const block = source.match(/^\[mcp_servers\.brace\][\s\S]*?(?=^\[|\s*$)/m)?.[0] || "";
+      return block.includes(definition.command) && definition.args.every((argument) => block.includes(argument));
+    }
+    const config = readJson(filePath, {});
+    const entry = id === "claude"
+      ? config?.mcpServers?.brace || config?.user?.mcpServers?.brace || Object.values(config?.projects || {})
+        .map((project: any) => project?.mcpServers?.brace).find(Boolean)
+      : config?.mcpServers?.brace;
+    return Boolean(entry)
+      && entry.command === definition.command
+      && Array.isArray(entry.args)
+      && definition.args.every((argument, index) => entry.args[index] === argument);
   }
 
   private backup(id: ConnectorId) {
@@ -247,11 +328,35 @@ export class BraceConnectorService {
   }
 
   async list() {
+    const verifications = this.verificationRecords();
     const results = await Promise.all(
       (Object.keys(CLIENTS) as ConnectorId[]).map(async (id) => {
         const client = CLIENTS[id];
         const executablePath = findExecutable(client.commandNames);
         const configured = this.isConfigured(id);
+        const entryMatches = configured && this.configuredEntryMatches(id);
+        const verification = verifications[id];
+        const fingerprint = this.configFingerprint(id);
+        const verified = Boolean(
+          id !== "generic"
+          && executablePath
+          && entryMatches
+          && verification
+          && verification.configFingerprint === fingerprint,
+        );
+        const health: ConnectorHealth = id === "generic"
+          ? "manual"
+          : !executablePath && configured
+            ? "missing-executable"
+            : !executablePath
+              ? "not-installed"
+              : !configured
+                ? "detected"
+                : !entryMatches
+                  ? "needs-repair"
+                  : verified
+                    ? "verified"
+                    : "configured";
         return {
           id,
           name: client.name,
@@ -260,6 +365,11 @@ export class BraceConnectorService {
           executablePath,
           version: await this.version(executablePath),
           configured,
+          verified,
+          health,
+          access: verification?.access || null,
+          lastVerifiedAt: verified ? verification?.verifiedAt || null : null,
+          backupAvailable: Boolean(this.latestBackup(id)),
           configPath: this.clientConfigPath(id),
           supportsInstall: id !== "generic",
           instruction: connectionInstruction(),
@@ -436,6 +546,7 @@ export class BraceConnectorService {
           `${CLIENTS[id].name} did not preserve the BRACE server entry after setup.`,
         );
       }
+      this.recordVerification(id, access);
       return {
         connected: true,
         cancelled: false,
@@ -451,5 +562,33 @@ export class BraceConnectorService {
         }`,
       );
     }
+  }
+
+  async restorePrevious(id: ConnectorId) {
+    if (!Object.hasOwn(CLIENTS, id) || id === "generic") {
+      throw new Error("Choose a supported AI client configuration to restore.");
+    }
+    const previous = this.latestBackup(id);
+    const target = this.clientConfigPath(id);
+    if (!previous || !target) throw new Error("No previous configuration backup is available.");
+    const window = this.options.getWindow();
+    if (!window) throw new Error("The BRACE window is unavailable.");
+    const approval = await dialog.showMessageBox(window, {
+      type: "warning",
+      title: `Restore ${CLIENTS[id].name} configuration?`,
+      message: "Replace the current client configuration with its latest BRACE backup?",
+      detail: "BRACE will first preserve the current configuration as another recoverable backup. No memory or project files are changed.",
+      buttons: ["Cancel", "Restore previous configuration"],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (approval.response !== 1) return { restored: false, cancelled: true };
+    this.backup(id);
+    fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+    const temporary = `${target}.brace-restore-${process.pid}.tmp`;
+    fs.copyFileSync(previous, temporary, fs.constants.COPYFILE_EXCL);
+    fs.chmodSync(temporary, 0o600);
+    fs.renameSync(temporary, target);
+    return { restored: true, cancelled: false, client: id };
   }
 }

@@ -33,7 +33,16 @@ jobs:
       - run: npm run verify
       - name: Long-running profile stress gate (Linux)
         if: runner.os == 'Linux'
+        env:
+          BRACE_PERF_OUTPUT: artifacts/performance/app-linux.json
         run: npm run test:stress
+      - name: Upload performance baseline
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: app-performance-linux
+          path: artifacts/performance/app-linux.json
+          if-no-files-found: error
       - name: Electron E2E (Linux)
         if: runner.os == 'Linux'
         run: xvfb-run -a npm run electron:e2e
@@ -69,3 +78,9 @@ jobs:
           npm run audit:layout --prefix website/builds/brace
           npm run audit:focus --prefix website/builds/brace
           npm run audit:interactions --prefix website/builds/brace
+      - name: Upload website audit evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: website-audit-evidence
+          path: website/builds/brace/lab/*.json
+          if-no-files-found: error

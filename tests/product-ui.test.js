@@ -7,7 +7,9 @@ const root = path.resolve(__dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 
 test("product navigation maps to implemented memory workflows", () => {
-  const app = read("src/components/brace/brace-app.tsx");
+  const shell = read("src/components/brace/brace-app.tsx");
+  const automations = read("src/components/brace/automations/automations-view.tsx");
+  const app = `${shell}\n${automations}`;
   const store = read("src/lib/brace/store.ts");
   for (const label of [
     "Home",
@@ -16,7 +18,7 @@ test("product navigation maps to implemented memory workflows", () => {
     "Ask BRACE",
     "Library",
     "Timeline",
-    "Map",
+    "Brain",
     "Projects",
     "Automations",
     "AI connections",
@@ -80,7 +82,7 @@ test("recall exposes explicit time scopes instead of implying timeless search", 
 });
 
 test("premium workspace interactions remain real, keyboard reachable, and locally persisted", () => {
-  const app = read("src/components/brace/brace-app.tsx");
+  const app = `${read("src/components/brace/brace-app.tsx")}\n${read("src/components/brace/graph/graph-view.tsx")}`;
   const styles = read("src/app/globals.css");
 
   for (const capability of [
@@ -147,7 +149,7 @@ test("refinement layer provides wayfinding, draft recovery, filtering, and usefu
 });
 
 test("knowledge atlas exposes five truthful projections over one real graph", () => {
-  const app = read("src/components/brace/brace-app.tsx");
+  const app = read("src/components/brace/graph/graph-view.tsx");
   const layouts = read("src/lib/brace/graph-layouts.ts");
   const memoryStore = read("core/memory-store.js");
 

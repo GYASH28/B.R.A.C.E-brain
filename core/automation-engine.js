@@ -1,5 +1,6 @@
 "use strict";
 
+const { createHash } = require("node:crypto");
 const { redactSecrets } = require("./memory-store");
 
 const TRIGGER_TYPES = new Set([
@@ -151,6 +152,27 @@ function validateTrigger(trigger) {
   const type = cleanText(trigger?.type, 80);
   if (!TRIGGER_TYPES.has(type)) throw new Error("Choose a supported automation trigger.");
   const config = cleanObject(trigger?.config || {});
+  const timeoutSeconds = Number(config.timeoutSeconds ?? 120);
+  const debounceSeconds = Number(config.debounceSeconds ?? 30);
+  const retryAttempts = Number(config.retryAttempts ?? 2);
+  const retryBaseSeconds = Number(config.retryBaseSeconds ?? 15);
+  if (!Number.isInteger(timeoutSeconds) || timeoutSeconds < 5 || timeoutSeconds > 600) {
+    throw new Error("Automation timeout must be between 5 and 600 seconds.");
+  }
+  if (!Number.isInteger(debounceSeconds) || debounceSeconds < 0 || debounceSeconds > 86_400) {
+    throw new Error("Automation debounce must be between 0 and 86,400 seconds.");
+  }
+  if (!Number.isInteger(retryAttempts) || retryAttempts < 0 || retryAttempts > 5) {
+    throw new Error("Automation retry attempts must be between 0 and 5.");
+  }
+  if (!Number.isInteger(retryBaseSeconds) || retryBaseSeconds < 5 || retryBaseSeconds > 3_600) {
+    throw new Error("Automation retry delay must be between 5 seconds and one hour.");
+  }
+  config.timeoutSeconds = timeoutSeconds;
+  config.debounceSeconds = debounceSeconds;
+  config.retryAttempts = retryAttempts;
+  config.retryBaseSeconds = retryBaseSeconds;
+  config.missedRunPolicy = config.missedRunPolicy === "skip" ? "skip" : "run-once";
   if (type === "schedule.interval") {
     const intervalMinutes = Number(config.intervalMinutes);
     if (!Number.isInteger(intervalMinutes) || intervalMinutes < 5 || intervalMinutes > 525_600) {
@@ -275,12 +297,52 @@ function compareCondition(condition, payload) {
   return false;
 }
 
+function stableJson(value) {
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function idempotencyKey(automation, triggerType, payload, attempt = 0) {
+  const debounceSeconds = Number(automation?.trigger?.config?.debounceSeconds || 0);
+  const identity = payload?.eventId || payload?.id || payload?.scheduledAt || (
+    triggerType !== "manual" && debounceSeconds > 0
+      ? `${stableJson(payload)}:${Math.floor(Date.now() / (debounceSeconds * 1_000))}`
+      : null
+  );
+  if (!identity) return null;
+  return createHash("sha256")
+    .update(stableJson([automation.id, triggerType, identity, Number(attempt) || 0]))
+    .digest("hex");
+}
+
+async function withTimeout(task, milliseconds, controller) {
+  let timer;
+  try {
+    return await Promise.race([
+      task,
+      new Promise((_resolve, reject) => {
+        timer = setTimeout(() => {
+          controller.abort();
+          reject(new Error(`Automation exceeded its ${Math.round(milliseconds / 1_000)} second safety timeout.`));
+        }, milliseconds);
+        timer.unref?.();
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 class AutomationEngine {
   constructor(store, adapters = {}) {
     if (!store) throw new Error("AutomationEngine requires a BRACE memory store.");
     this.store = store;
     this.adapters = adapters;
     this.running = new Set();
+    this.maximumConcurrent = Math.min(8, Math.max(1, Number(adapters.maximumConcurrent) || 3));
   }
 
   templates() {
@@ -403,7 +465,7 @@ class AutomationEngine {
       if (typeof this.adapters.reindexProject !== "function") {
         throw new Error("Project refresh is unavailable in this BRACE runtime.");
       }
-      const result = await this.adapters.reindexProject(config.projectId);
+      const result = await this.adapters.reindexProject(config.projectId, { signal: context.signal });
       return { projectId: config.projectId, indexed: Boolean(result) };
     }
     if (action.type === "skill.run") {
@@ -432,20 +494,28 @@ class AutomationEngine {
       throw new Error("This automation is paused.");
     }
     const payload = cleanObject(options.payload || {});
+    const retryAttempt = Math.max(0, Number(options.retryAttempt || payload?._retryAttempt) || 0);
+    const key = options.idempotencyKey || idempotencyKey(automation, triggerType, payload, retryAttempt);
+    if (!dryRun && key) {
+      const previous = this.store.findAutomationRunByIdempotencyKey?.(key);
+      if (previous) return previous;
+    }
     const snapshot = cleanObject(automation);
     const run = this.store.createAutomationRun({
       automationId: automation.id,
       automationName: automation.name,
       triggerType,
-      triggerPayload: payload,
+      triggerPayload: { ...payload, ...(key ? { _idempotencyKey: key } : {}), _retryAttempt: retryAttempt },
       automationSnapshot: snapshot,
       retryOf: options.retryOf || null,
       dryRun,
     });
-    if (this.running.has(automation.id)) {
+    if (this.running.has(automation.id) || this.running.size >= this.maximumConcurrent) {
       return this.store.finishAutomationRun(run.id, {
         status: "skipped",
-        steps: [{ type: "guard", status: "skipped", detail: "A previous run is still active." }],
+        steps: [{ type: "guard", status: "skipped", detail: this.running.has(automation.id)
+          ? "A previous run of this recipe is still active."
+          : `The local concurrency limit of ${this.maximumConcurrent} active recipes was reached.` }],
       });
     }
     this.running.add(automation.id);
@@ -467,7 +537,9 @@ class AutomationEngine {
         automation,
         runId: run.id,
         now: new Date().toISOString(),
+        signal: null,
       };
+      const deadline = Date.now() + Number(automation.trigger.config.timeoutSeconds || 120) * 1_000;
       for (const [index, action] of automation.actions.entries()) {
         const preview = renderTemplate(action.config, context);
         if (dryRun) {
@@ -475,7 +547,13 @@ class AutomationEngine {
           continue;
         }
         const startedAt = Date.now();
-        const output = await this.executeAction(action, context);
+        const controller = new AbortController();
+        context.signal = controller.signal;
+        const output = await withTimeout(
+          this.executeAction(action, context),
+          Math.max(1, deadline - Date.now()),
+          controller,
+        );
         steps.push({
           index,
           type: action.type,
@@ -506,10 +584,16 @@ class AutomationEngine {
       steps.push({ type: "error", status: "failed", detail: message });
       const failed = this.store.finishAutomationRun(run.id, { status: "failed", steps, error: message });
       if (!dryRun && triggerType.startsWith("schedule.")) {
+        const retryLimit = Number(persistedAutomation.trigger.config.retryAttempts || 0);
+        const shouldRetry = retryAttempt < retryLimit;
+        const retryDelay = Number(persistedAutomation.trigger.config.retryBaseSeconds || 15)
+          * (2 ** retryAttempt) * 1_000;
         this.store.markAutomationRun(
           persistedAutomation.id,
           failed.finishedAt,
-          nextRunAt(persistedAutomation.trigger, new Date(failed.finishedAt)),
+          shouldRetry
+            ? new Date(Date.now() + retryDelay).toISOString()
+            : nextRunAt(persistedAutomation.trigger, new Date(failed.finishedAt)),
         );
       }
       return failed;
@@ -553,9 +637,34 @@ class AutomationEngine {
     const due = this.store.listDueAutomations(at.toISOString(), 20);
     const results = [];
     for (const automation of due) {
+      const scheduledAt = new Date(automation.nextRunAt).getTime();
+      const latenessMs = Math.max(0, at.getTime() - scheduledAt);
+      const missedThresholdMs = automation.trigger.type === "schedule.interval"
+        ? Number(automation.trigger.config.intervalMinutes || 5) * 60_000
+        : 6 * 60 * 60_000;
+      if (latenessMs > missedThresholdMs && automation.trigger.config.missedRunPolicy === "skip") {
+        const skipped = this.store.createAutomationRun({
+          automationId: automation.id,
+          automationName: automation.name,
+          triggerType: automation.trigger.type,
+          triggerPayload: { scheduledAt: automation.nextRunAt, firedAt: at.toISOString(), missed: true },
+          automationSnapshot: cleanObject(automation),
+        });
+        results.push(this.store.finishAutomationRun(skipped.id, {
+          status: "skipped",
+          steps: [{ type: "schedule", status: "skipped", detail: "Missed while BRACE was asleep or closed; this recipe is configured to skip missed runs." }],
+        }));
+        this.store.markAutomationRun(automation.id, at.toISOString(), nextRunAt(automation.trigger, at));
+        continue;
+      }
+      const previous = this.store.listAutomationRuns({ automationId: automation.id, limit: 1 })[0];
+      const retryAttempt = previous?.status === "failed" && previous?.triggerType === automation.trigger.type
+        ? Number(previous.triggerPayload?._retryAttempt || 0) + 1
+        : 0;
       results.push(await this.run(automation.id, {
         triggerType: automation.trigger.type,
-        payload: { scheduledAt: automation.nextRunAt, firedAt: at.toISOString() },
+        payload: { scheduledAt: automation.nextRunAt, firedAt: at.toISOString(), missed: latenessMs > missedThresholdMs },
+        retryAttempt,
       }));
     }
     return results;
@@ -570,6 +679,7 @@ module.exports = {
   CONDITION_FIELDS,
   CONDITION_OPERATORS,
   TRIGGER_TYPES,
+  idempotencyKey,
   nextRunAt,
   normalizeDefinition,
   permissionsFor,

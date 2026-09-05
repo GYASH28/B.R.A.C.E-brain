@@ -1,7 +1,0 @@
-/* Guard rails for the liquid-glass override layer. */
-@media (max-width: 760px) {
-  /* liquid-glass.css refines the desktop rail width; restore the base mobile
-     stretching behavior so every bottom-nav action remains a 44px touch target. */
-  .glass-rail { width: auto; }
-  .rail-download { flex: 0 0 44px; min-width: 44px; min-height: 44px; }
-}

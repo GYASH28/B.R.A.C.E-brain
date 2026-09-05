@@ -11,6 +11,7 @@ export type MemoryKind =
 
 export interface BraceMemory {
   id: string;
+  workspaceId: string | null;
   kind: MemoryKind;
   scope: string;
   title: string;
@@ -47,11 +48,121 @@ export interface BraceMemory {
 
 export interface BraceProject {
   id: string;
+  workspace_id?: string | null;
   name: string;
   root_path: string;
   created_at: string;
   updated_at: string;
   last_indexed_at: string | null;
+  watch?: {
+    enabled: boolean;
+    resourcePaused: boolean;
+    pending: boolean;
+    running: boolean;
+    error: { message: string; occurredAt: string } | null;
+  };
+}
+
+export interface BraceOrganization {
+  id: string;
+  name: string;
+  slug: string;
+  edition: "personal" | "team" | "enterprise";
+  dataResidency: "local" | string;
+  ownershipBoundary: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BraceWorkspaceMember {
+  id: string;
+  workspaceId: string;
+  displayName: string;
+  email: string | null;
+  role: "owner" | "admin" | "manager" | "member" | "guest" | "auditor";
+  status: "active" | "invited" | "suspended";
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BraceBusinessWorkspace {
+  id: string;
+  organizationId: string;
+  name: string;
+  kind: "personal" | "team" | "executive" | "project";
+  visibility: "personal" | "team" | "organization";
+  status: "active" | "archived";
+  createdAt: string;
+  updatedAt: string;
+  memberCount: number;
+  projectCount: number;
+  memoryCount: number;
+  members: BraceWorkspaceMember[];
+}
+
+export interface BraceOrganizationOverview {
+  organization: BraceOrganization;
+  workspaces: BraceBusinessWorkspace[];
+  audit: Array<{
+    id: string;
+    organizationId: string;
+    workspaceId: string | null;
+    eventType: string;
+    actorLabel: string;
+    summary: string;
+    metadata: Record<string, unknown>;
+    occurredAt: string;
+  }>;
+  totals: { workspaces: number; members: number; projects: number; memories: number };
+}
+
+export interface BraceIndexResult {
+  projectId: string;
+  status: "complete" | "partial";
+  filesSeen: number;
+  indexed: number;
+  unchanged: number;
+  removed: number;
+  skippedBinary: number;
+  skippedLarge: number;
+  skippedUnsupported: number;
+  skippedUnsupportedEncoding: number;
+  errors: number;
+  embedded: number;
+  redacted: number;
+  ignoredByRule: number;
+  truncated: boolean;
+  completedAt: string;
+}
+
+export interface BraceDatabaseDiagnostics {
+  integrity: "ok" | "attention";
+  details: string[];
+  schemaVersion: number;
+  stats: BraceSnapshot["stats"];
+  checkedAt: string;
+  appVersion: string;
+  platform: string;
+  databasePath: string;
+  projectIndex: Array<{ id: string; lastIndexedAt: string | null }>;
+  embedding: { enabled: boolean; provider: string | null; model: string | null };
+  connectors: Array<{ id: ConnectorId; detected: boolean; configured: boolean; version: string | null }>;
+  scheduler: { paused: boolean; error: { message: string; occurredAt: string } | null };
+}
+
+export interface BraceTask {
+  id: string;
+  type: "project.index" | string;
+  title: string;
+  status: "running" | "complete" | "partial" | "failed" | "cancelled";
+  phase: "scanning" | "reading" | "redacting" | "chunking" | "embedding" | "finalizing" | "complete" | "partial" | "failed" | "cancelled" | string;
+  completed: number;
+  total: number;
+  startedAt: string;
+  updatedAt: string;
+  cancellable: boolean;
+  error?: string | null;
+  result?: { indexed: number; unchanged: number; errors: number; redacted: number; embedded: number };
 }
 
 export interface MemoryReviewCandidate {
@@ -214,6 +325,9 @@ export interface BraceAutomationSnapshot {
 export interface BraceSnapshot {
   stats: {
     schemaVersion: number;
+    organizations: number;
+    workspaces: number;
+    workspaceMembers: number;
     projects: number;
     sources: number;
     sourceChunks: number;
@@ -229,8 +343,10 @@ export interface BraceSnapshot {
     enabledAutomations: number;
     automationRuns: number;
   };
+  organizations: BraceOrganizationOverview[];
   projects: BraceProject[];
   memories: BraceMemory[];
+  supersededMemories?: BraceMemory[];
   memoryQuality: MemoryQuality;
   timeline: TimelineEvent[];
   graph: { nodes: GraphNode[]; edges: GraphEdge[] };
@@ -243,6 +359,7 @@ export interface BraceSnapshot {
     history: AssistantTurn[];
   };
   automations?: BraceAutomationSnapshot;
+  tasks?: BraceTask[];
   storage?: { directory: string; database: string };
   connections?: {
     command: string;
@@ -278,6 +395,11 @@ export interface BraceConnector {
   executablePath: string | null;
   version: string | null;
   configured: boolean;
+  verified: boolean;
+  health: "manual" | "not-installed" | "detected" | "configured" | "verified" | "needs-repair" | "missing-executable";
+  access: ConnectorAccess | null;
+  lastVerifiedAt: string | null;
+  backupAvailable: boolean;
   configPath: string | null;
   supportsInstall: boolean;
   instruction: string;
@@ -289,6 +411,14 @@ export interface SearchResponse {
   mode: "lexical" | "semantic" | "hybrid";
   embeddingModel: string | null;
   warning: string | null;
+  diagnostics: {
+    query: string;
+    mode: "lexical" | "semantic" | "hybrid";
+    scope: string;
+    projectId: string | null;
+    since: string | null;
+    embeddingModel: string | null;
+  };
   memories: BraceMemory[];
   sources: Array<{
     id: string;
@@ -311,6 +441,11 @@ export interface SearchResponse {
 export interface BraceElectronApi {
   getBraceSnapshot: () => Promise<BraceSnapshot>;
   initializeBraceDemo: () => Promise<BraceSnapshot>;
+  createBraceOrganization: (input: Record<string, unknown>) => Promise<BraceOrganizationOverview>;
+  createBraceWorkspace: (input: Record<string, unknown>) => Promise<BraceBusinessWorkspace>;
+  upsertBraceWorkspaceMember: (input: Record<string, unknown>) => Promise<BraceWorkspaceMember>;
+  cancelBraceTask: (id: string) => Promise<boolean>;
+  onBraceTaskProgress: (listener: (task: BraceTask) => void) => () => void;
   searchBrace: (input: Record<string, unknown>) => Promise<SearchResponse>;
   getBraceMemory: (id: string) => Promise<BraceMemory | null>;
   createBraceMemory: (input: Record<string, unknown>) => Promise<unknown>;
@@ -321,24 +456,32 @@ export interface BraceElectronApi {
     rightId: string;
     outcome: "distinct" | "keep-left" | "keep-right";
   }) => Promise<unknown>;
+  restoreBraceMemory: (id: string) => Promise<BraceMemory>;
   forgetBraceMemory: (id: string) => Promise<boolean>;
   addBraceEvidence: (id: string, input: Record<string, unknown>) => Promise<unknown>;
+  setBraceEvidenceOutcome: (memoryId: string, evidenceId: string, outcome: "promoted" | "rejected" | "deferred" | "observed") => Promise<BraceMemory>;
   createBraceDecision: (input: Record<string, unknown>) => Promise<unknown>;
-  addBraceProject: () => Promise<unknown>;
-  reindexBraceProject: (projectId: string) => Promise<unknown>;
+  addBraceProject: () => Promise<BraceIndexResult | null>;
+  reindexBraceProject: (projectId: string) => Promise<BraceIndexResult>;
+  setBraceProjectWatch: (projectId: string, enabled: boolean) => Promise<BraceProject["watch"]>;
   installBraceSkill: () => Promise<unknown>;
   setBraceSkillEnabled: (name: string, enabled: boolean) => Promise<unknown>;
   removeBraceSkill: (name: string) => Promise<unknown>;
   runBraceSkill: (name: string, action: string, input: unknown) => Promise<unknown>;
   setBraceEmbeddingConfig: (input: Record<string, unknown>) => Promise<unknown>;
   exportBraceData: () => Promise<unknown>;
+  importBraceContent: () => Promise<{ documents: number; memories: number; duplicates: number; evidence: number; redactions: number; projects: number; safetyBackupCreated: true } | null>;
   backupBraceData: () => Promise<unknown>;
+  getBraceDiagnostics: () => Promise<BraceDatabaseDiagnostics>;
+  saveBraceSupportBundle: () => Promise<{ path: string; included: string[]; uploaded: false } | null>;
+  restoreBraceBackup: () => Promise<{ restarting: boolean; safetyPath: string } | null>;
   deleteAllBraceData: (confirmation: string) => Promise<boolean>;
   listBraceConnectors: () => Promise<BraceConnector[]>;
   installBraceConnector: (
     id: ConnectorId,
     access: ConnectorAccess,
   ) => Promise<{ connected: boolean; cancelled: boolean }>;
+  restoreBraceConnector: (id: Exclude<ConnectorId, "generic">) => Promise<{ restored: boolean; cancelled: boolean }>;
   runBraceAssistant: (input: {
     client: "codex" | "claude";
     prompt: string;
@@ -354,6 +497,8 @@ export interface BraceElectronApi {
     input: { dryRun?: boolean; payload?: Record<string, unknown> },
   ) => Promise<BraceAutomationRun>;
   retryBraceAutomationRun: (runId: string, dryRun: boolean) => Promise<BraceAutomationRun>;
+  exportBraceAutomations: (id?: string) => Promise<{ count: number; path: string } | null>;
+  importBraceAutomations: () => Promise<{ count: number; ids: string[] } | null>;
   deleteBraceAutomation: (id: string) => Promise<boolean>;
   setBraceAutomationsPaused: (paused: boolean) => Promise<BraceAutomationSnapshot>;
 }

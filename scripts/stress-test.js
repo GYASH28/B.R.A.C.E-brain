@@ -170,7 +170,13 @@ async function main() {
     assert.ok(exportMs < thresholds.exportMs, `export took ${round(exportMs)}ms`);
     assert.ok(restartMs < thresholds.restartMs, `restart took ${round(restartMs)}ms`);
     assert.ok(report.rssGrowthMb < thresholds.rssGrowthMb, `RSS grew ${report.rssGrowthMb}MB`);
-    process.stdout.write(`${JSON.stringify({ ok: true, thresholds, ...report }, null, 2)}\n`);
+    const output = { ok: true, thresholds, ...report };
+    process.stdout.write(`${JSON.stringify(output, null, 2)}\n`);
+    if (process.env.BRACE_PERF_OUTPUT) {
+      const outputPath = path.resolve(process.env.BRACE_PERF_OUTPUT);
+      fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`, { mode: 0o600 });
+    }
   } finally {
     try { restored?.close(); } catch {}
     try { peer?.close(); } catch {}

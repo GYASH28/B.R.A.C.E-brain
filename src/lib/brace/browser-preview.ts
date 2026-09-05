@@ -10,7 +10,10 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     database: "brace.sqlite3",
   },
   stats: {
-    schemaVersion: 5,
+    schemaVersion: 6,
+    organizations: 1,
+    workspaces: 3,
+    workspaceMembers: 4,
     projects: 1,
     sources: 3,
     sourceChunks: 11,
@@ -26,6 +29,43 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     enabledAutomations: 1,
     automationRuns: 1,
   },
+  organizations: [{
+    organization: {
+      id: "organization-northstar",
+      name: "Northstar Labs",
+      slug: "northstar-labs",
+      edition: "enterprise",
+      dataResidency: "local",
+      ownershipBoundary: "Company workspaces are governed; personal memory remains private.",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    },
+    workspaces: [{
+      id: "workspace-company",
+      organizationId: "organization-northstar",
+      name: "Company Brain",
+      kind: "team",
+      visibility: "organization",
+      status: "active",
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      memberCount: 4,
+      projectCount: 1,
+      memoryCount: 3,
+      members: [
+        { id: "member-a", workspaceId: "workspace-company", displayName: "Avery Chen", email: "avery@example.invalid", role: "owner", status: "active", createdAt: timestamp, updatedAt: timestamp },
+        { id: "member-b", workspaceId: "workspace-company", displayName: "Mika Rao", email: "mika@example.invalid", role: "manager", status: "active", createdAt: timestamp, updatedAt: timestamp },
+        { id: "member-c", workspaceId: "workspace-company", displayName: "Sam Rivera", email: "sam@example.invalid", role: "member", status: "active", createdAt: timestamp, updatedAt: timestamp },
+        { id: "member-d", workspaceId: "workspace-company", displayName: "Noor Patel", email: "noor@example.invalid", role: "auditor", status: "active", createdAt: timestamp, updatedAt: timestamp },
+      ],
+    }, {
+      id: "workspace-executive", organizationId: "organization-northstar", name: "Executive Room", kind: "executive", visibility: "team", status: "active", createdAt: timestamp, updatedAt: timestamp, memberCount: 0, projectCount: 0, memoryCount: 0, members: [],
+    }, {
+      id: "workspace-projects", organizationId: "organization-northstar", name: "Projects", kind: "project", visibility: "team", status: "active", createdAt: timestamp, updatedAt: timestamp, memberCount: 0, projectCount: 0, memoryCount: 0, members: [],
+    }],
+    audit: [{ id: "audit-a", organizationId: "organization-northstar", workspaceId: "workspace-company", eventType: "member.added", actorLabel: "Synthetic owner", summary: "Northstar demo team created", metadata: {}, occurredAt: timestamp }],
+    totals: { workspaces: 3, members: 4, projects: 1, memories: 3 },
+  }],
   projects: [
     {
       id: projectId,
@@ -39,6 +79,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
   memories: [
     {
       id: "memory-promise",
+      workspaceId: "workspace-company",
       kind: "project",
       scope: `project:${projectId}`,
       title: "Northstar product promise",
@@ -61,6 +102,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     },
     {
       id: "memory-provenance",
+      workspaceId: "workspace-company",
       kind: "lesson",
       scope: `project:${projectId}`,
       title: "Show provenance beside retrieval results",
@@ -83,6 +125,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     },
     {
       id: "memory-dedup",
+      workspaceId: "workspace-company",
       kind: "warning",
       scope: `project:${projectId}`,
       title: "Do not auto-merge near-duplicate decisions",
@@ -249,6 +292,7 @@ export function searchBrowserPreview(query: string, options: { since?: string | 
     mode: "lexical",
     embeddingModel: null,
     warning: "Browser preview uses the bundled synthetic profile. Desktop search runs against local SQLite.",
+    diagnostics: { query, mode: "lexical", scope: "all active memory", projectId: null, since: options.since || null, embeddingModel: null },
     memories,
     sources: query.trim() && !options.since
       ? [

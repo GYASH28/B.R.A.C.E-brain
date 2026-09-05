@@ -1,7 +1,8 @@
 "use client";
 
 import { create } from "zustand";
-import { browserPreviewSnapshot, searchBrowserPreview } from "./browser-preview";
+import { desktopApi, runtimeAdapter } from "./adapters";
+import { browserPreviewSnapshot } from "./browser-preview";
 import type {
   BraceConnector,
   BraceAutomation,
@@ -21,7 +22,9 @@ export type BraceView =
   | "review"
   | "timeline"
   | "graph"
+  | "documents"
   | "projects"
+  | "organization"
   | "skills"
   | "automations"
   | "connections"
@@ -34,23 +37,28 @@ interface BraceState {
   snapshot: BraceSnapshot | null;
   connectors: BraceConnector[];
   selectedMemory: BraceMemory | null;
+  graphFocusId: string | null;
   assistantDraft: string;
   searchQuery: string;
   searchResult: SearchResponse | null;
   loading: boolean;
   operation: string | null;
   error: string | null;
+  errorInfo: { summary: string; detail: string; nextStep: string; code: string; retryable: boolean } | null;
   notice: string | null;
   setView: (view: BraceView) => void;
   navigateHistory: (direction: -1 | 1) => void;
   setSearchQuery: (query: string) => void;
   setSelectedMemory: (memory: BraceMemory | null) => void;
+  openGraphNode: (id: string) => void;
   setAssistantDraft: (draft: string) => void;
   clearMessage: () => void;
+  retryLastOperation: () => Promise<void>;
   bootstrap: () => Promise<void>;
   refresh: () => Promise<void>;
   refreshConnectors: () => Promise<void>;
   installConnector: (id: ConnectorId, access: ConnectorAccess) => Promise<void>;
+  restoreConnector: (id: Exclude<ConnectorId, "generic">) => Promise<void>;
   runAssistant: (client: "codex" | "claude", prompt: string) => Promise<void>;
   clearAssistantHistory: () => Promise<void>;
   initializeDemo: () => Promise<void>;
@@ -62,70 +70,102 @@ interface BraceState {
     rightId: string;
     outcome: "distinct" | "keep-left" | "keep-right";
   }) => Promise<void>;
+  restoreMemory: (id: string) => Promise<BraceMemory | null>;
+  setEvidenceOutcome: (memoryId: string, evidenceId: string, outcome: "promoted" | "rejected" | "deferred" | "observed") => Promise<BraceMemory | null>;
   forgetMemory: (id: string) => Promise<void>;
   createDecision: (input: Record<string, unknown>) => Promise<void>;
+  createOrganization: (input: Record<string, unknown>) => Promise<void>;
+  createWorkspace: (input: Record<string, unknown>) => Promise<void>;
+  upsertWorkspaceMember: (input: Record<string, unknown>) => Promise<void>;
   addProject: () => Promise<void>;
   reindexProject: (id: string) => Promise<void>;
+  setProjectWatch: (id: string, enabled: boolean) => Promise<void>;
   toggleSkill: (name: string, enabled: boolean) => Promise<void>;
   installSkill: () => Promise<void>;
   configureEmbeddings: (input: Record<string, unknown>) => Promise<void>;
   exportData: () => Promise<void>;
+  importContent: () => Promise<void>;
   backupData: () => Promise<void>;
   deleteAll: (confirmation: string) => Promise<void>;
   saveAutomation: (input: Record<string, unknown>, id?: string) => Promise<BraceAutomation | null>;
   toggleAutomation: (id: string, enabled: boolean) => Promise<void>;
   runAutomation: (id: string, dryRun?: boolean) => Promise<void>;
   retryAutomation: (runId: string, dryRun?: boolean) => Promise<void>;
+  exportAutomations: (id?: string) => Promise<void>;
+  importAutomations: () => Promise<void>;
   deleteAutomation: (id: string) => Promise<void>;
   pauseAutomations: (paused: boolean) => Promise<void>;
 }
 
-function desktop() {
-  return typeof window !== "undefined" ? window.electron : undefined;
+function message(error: unknown) {
+  const raw = error instanceof Error ? error.message : "BRACE could not complete that operation.";
+  return raw
+    .replace(/\b(password|api[_-]?key|access[_-]?token|secret)\s*[:=]\s*\S+/gi, "$1=[REDACTED]")
+    .replace(/(?:[A-Za-z]:\\|\/home\/|\/Users\/)[^\s]+/g, "[local path]")
+    .slice(0, 1_000);
 }
 
-function message(error: unknown) {
-  return error instanceof Error ? error.message : "BRACE could not complete that operation.";
+function structuredError(error: unknown, label: string) {
+  const detail = message(error);
+  const normalized = detail.toLowerCase();
+  const code = normalized.includes("not found") || normalized.includes("not installed") ? "UNAVAILABLE"
+    : normalized.includes("timeout") || normalized.includes("timed out") ? "TIMEOUT"
+      : normalized.includes("permission") || normalized.includes("trusted") ? "PERMISSION"
+        : normalized.includes("database") || normalized.includes("sqlite") ? "LOCAL_DATA"
+          : "OPERATION_FAILED";
+  const nextStep = code === "UNAVAILABLE" ? "Check that the selected item or client still exists, then refresh this screen."
+    : code === "TIMEOUT" ? "Check the local provider or source folder, then try the operation again."
+      : code === "PERMISSION" ? "Return to the relevant settings screen and review the requested local permission."
+        : code === "LOCAL_DATA" ? "Open Settings → Backup & diagnostics and run the local integrity check."
+          : "Review the safe detail below. Your source files were not changed.";
+  const retryable = !/(delet|forget|restore|connect|creat|sav|import)/i.test(label);
+  return { summary: `${label.replace(/…$/, "")} could not finish.`, detail, nextStep, code, retryable };
 }
+
+const desktop = desktopApi;
 
 export const useBrace = create<BraceState>((set, get) => {
+  let retryTask: { label: string; task: () => Promise<void> } | null = null;
   const perform = async (label: string, task: () => Promise<void>) => {
-    set({ operation: label, error: null, notice: null });
+    set({ operation: label, error: null, errorInfo: null, notice: null });
     try {
       await task();
+      retryTask = null;
     } catch (error) {
-      set({ error: message(error) });
+      const info = structuredError(error, label);
+      if (info.retryable) retryTask = { label, task };
+      else retryTask = null;
+      set({ error: info.summary, errorInfo: info });
     } finally {
       set({ operation: null });
     }
   };
 
   const refresh = async () => {
-    const api = desktop();
+    const api = desktopApi();
+    const adapter = runtimeAdapter();
     const [snapshot, connectors] = await Promise.all([
-      api?.getBraceSnapshot
-        ? api.getBraceSnapshot()
-        : Promise.resolve(structuredClone(browserPreviewSnapshot)),
-      api?.listBraceConnectors
-        ? api.listBraceConnectors()
-        : Promise.resolve([]),
+      adapter.snapshot(),
+      adapter.connectors(),
     ]);
     set({ snapshot, connectors, loading: false });
   };
 
   return {
-    view: "home",
-    viewHistory: ["home"],
+    view: "graph",
+    viewHistory: ["graph"],
     viewHistoryIndex: 0,
     snapshot: null,
     connectors: [],
     selectedMemory: null,
+    graphFocusId: null,
     assistantDraft: "",
     searchQuery: "",
     searchResult: null,
     loading: true,
     operation: null,
     error: null,
+    errorInfo: null,
     notice: null,
     setView: (view) => set((state) => {
       if (state.view === view) return state;
@@ -142,28 +182,35 @@ export const useBrace = create<BraceState>((set, get) => {
     }),
     setSearchQuery: (searchQuery) => set({ searchQuery }),
     setSelectedMemory: (selectedMemory) => set({ selectedMemory }),
+    openGraphNode: (graphFocusId) => {
+      set({ graphFocusId });
+      get().setView("graph");
+    },
     setAssistantDraft: (assistantDraft) => set({ assistantDraft }),
-    clearMessage: () => set({ error: null, notice: null }),
+    clearMessage: () => set({ error: null, errorInfo: null, notice: null }),
+    retryLastOperation: async () => {
+      const retry = retryTask;
+      if (!retry) return;
+      await perform(retry.label, retry.task);
+    },
     bootstrap: async () => {
       set({ loading: true, error: null });
       try {
         await refresh();
-        const allowed: BraceView[] = ["home", "inbox", "assistant", "search", "memories", "review", "timeline", "graph", "projects", "skills", "automations", "connections", "settings"];
+        const allowed: BraceView[] = ["home", "inbox", "assistant", "search", "memories", "review", "timeline", "graph", "documents", "projects", "organization", "skills", "automations", "connections", "settings"];
         let saved: BraceView | null = null;
         try { saved = localStorage.getItem("brace.last-view") as BraceView | null; } catch {}
         if (saved && allowed.includes(saved)) {
           set({ view: saved, viewHistory: [saved], viewHistoryIndex: 0 });
         }
       } catch (error) {
-        set({ loading: false, error: message(error) });
+        const info = structuredError(error, "Opening BRACE…");
+        set({ loading: false, error: info.summary, errorInfo: info });
       }
     },
     refresh,
     refreshConnectors: async () => {
-      const api = desktop();
-      const connectors = api?.listBraceConnectors
-        ? await api.listBraceConnectors()
-        : [];
+      const connectors = await runtimeAdapter().connectors();
       set({ connectors });
     },
     installConnector: async (id, access) =>
@@ -179,6 +226,15 @@ export const useBrace = create<BraceState>((set, get) => {
           connectors,
           notice: `${connectors.find((connector) => connector.id === id)?.name || "AI client"} is configured for BRACE. Run a turn to verify the live connection.`,
         });
+      }),
+    restoreConnector: async (id) =>
+      perform("Restoring connector configuration…", async () => {
+        const api = desktop();
+        if (!api?.restoreBraceConnector) throw new Error("Connector recovery is available in the desktop app.");
+        const result = await api.restoreBraceConnector(id);
+        if (!result.restored) return;
+        const connectors = await api.listBraceConnectors();
+        set({ connectors, notice: "The previous client configuration was restored from BRACE's local backup." });
       }),
     runAssistant: async (client, prompt) =>
       perform("Recalling context and asking AI…", async () => {
@@ -208,7 +264,7 @@ export const useBrace = create<BraceState>((set, get) => {
         const snapshot = api?.initializeBraceDemo
           ? await api.initializeBraceDemo()
           : structuredClone(browserPreviewSnapshot);
-        set({ snapshot, notice: "Synthetic Northstar workspace is ready.", view: "home" });
+        set({ snapshot, notice: "Synthetic Northstar workspace is ready.", view: "graph", viewHistory: ["graph"], viewHistoryIndex: 0 });
       }),
     search: async (value, options) =>
       perform("Searching local memory…", async () => {
@@ -217,10 +273,7 @@ export const useBrace = create<BraceState>((set, get) => {
           set({ searchResult: null });
           return;
         }
-        const api = desktop();
-        const result = api?.searchBrace
-          ? await api.searchBrace({ query, limit: 30, ...(options?.since ? { since: options.since } : {}) })
-          : searchBrowserPreview(query, options);
+        const result = await runtimeAdapter().search(query, options);
         set({ searchQuery: query, searchResult: result });
         get().setView("search");
       }),
@@ -257,6 +310,28 @@ export const useBrace = create<BraceState>((set, get) => {
             : "The selected memory is now canonical. The other remains recoverable as superseded.",
         });
       }),
+    restoreMemory: async (id) => {
+      let restored: BraceMemory | null = null;
+      await perform("Restoring memory…", async () => {
+        const api = desktop();
+        if (!api?.restoreBraceMemory) throw new Error("Memory recovery is available in the desktop app.");
+        restored = await api.restoreBraceMemory(id);
+        await refresh();
+        set({ selectedMemory: restored, notice: "Memory restored to active recall. The recovery is recorded on the timeline." });
+      });
+      return restored;
+    },
+    setEvidenceOutcome: async (memoryId, evidenceId, outcome) => {
+      let updated: BraceMemory | null = null;
+      await perform("Reviewing evidence…", async () => {
+        const api = desktop();
+        if (!api?.setBraceEvidenceOutcome) throw new Error("Evidence review is available in the desktop app.");
+        updated = await api.setBraceEvidenceOutcome(memoryId, evidenceId, outcome);
+        await refresh();
+        set({ selectedMemory: updated, notice: `Evidence marked ${outcome}.` });
+      });
+      return updated;
+    },
     forgetMemory: async (id) =>
       perform("Forgetting memory…", async () => {
         const api = desktop();
@@ -275,6 +350,30 @@ export const useBrace = create<BraceState>((set, get) => {
         await refresh();
         set({ notice: "Decision added to the local timeline." });
       }),
+    createOrganization: async (input) =>
+      perform("Creating company brain…", async () => {
+        const api = desktop();
+        if (!api?.createBraceOrganization) throw new Error("Company workspaces are available in the desktop app.");
+        await api.createBraceOrganization(input);
+        await refresh();
+        set({ notice: "Company brain created locally with explicit workspace boundaries." });
+      }),
+    createWorkspace: async (input) =>
+      perform("Creating workspace…", async () => {
+        const api = desktop();
+        if (!api?.createBraceWorkspace) throw new Error("Workspace management is available in the desktop app.");
+        await api.createBraceWorkspace(input);
+        await refresh();
+        set({ notice: "Workspace created and added to the local governance ledger." });
+      }),
+    upsertWorkspaceMember: async (input) =>
+      perform("Updating workspace role…", async () => {
+        const api = desktop();
+        if (!api?.upsertBraceWorkspaceMember) throw new Error("Role management is available in the desktop app.");
+        await api.upsertBraceWorkspaceMember(input);
+        await refresh();
+        set({ notice: "Workspace role saved locally. No invitation email was sent." });
+      }),
     addProject: async () =>
       perform("Indexing project…", async () => {
         const api = desktop();
@@ -282,16 +381,24 @@ export const useBrace = create<BraceState>((set, get) => {
         const result = await api.addBraceProject();
         if (result) {
           await refresh();
-          set({ notice: "Project indexed. Original files were not changed." });
+          set({ notice: `Indexed ${result.indexed.toLocaleString()} changed files, kept ${result.unchanged.toLocaleString()} current, and protected ${result.redacted.toLocaleString()} secret-like value${result.redacted === 1 ? "" : "s"}. Original files were not changed.` });
         }
       }),
     reindexProject: async (id) =>
       perform("Refreshing project index…", async () => {
         const api = desktop();
         if (!api?.reindexBraceProject) throw new Error("Project indexing is available in the desktop app.");
-        await api.reindexBraceProject(id);
+        const result = await api.reindexBraceProject(id);
         await refresh();
-        set({ notice: "Project index is current." });
+        set({ notice: `Project index is current: ${result.indexed.toLocaleString()} changed, ${result.unchanged.toLocaleString()} unchanged, ${result.ignoredByRule.toLocaleString()} ignored by .braceignore, ${result.redacted.toLocaleString()} secret-like value${result.redacted === 1 ? "" : "s"} protected.` });
+      }),
+    setProjectWatch: async (id, enabled) =>
+      perform(enabled ? "Enabling background indexing…" : "Pausing background indexing…", async () => {
+        const api = desktop();
+        if (!api?.setBraceProjectWatch) throw new Error("Background indexing is available in the desktop app.");
+        await api.setBraceProjectWatch(id, enabled);
+        await refresh();
+        set({ notice: enabled ? "Background indexing enabled for this project. Changes are debounced and original files stay untouched." : "Background indexing paused for this project." });
       }),
     toggleSkill: async (name, enabled) =>
       perform(`${enabled ? "Enabling" : "Disabling"} skill…`, async () => {
@@ -323,6 +430,15 @@ export const useBrace = create<BraceState>((set, get) => {
         const api = desktop();
         if (!api?.exportBraceData) throw new Error("Export is available in the desktop app.");
         if (await api.exportBraceData()) set({ notice: "Portable JSON export created." });
+      }),
+    importContent: async () =>
+      perform("Importing local content…", async () => {
+        const api = desktop();
+        if (!api?.importBraceContent) throw new Error("Local imports are available in the desktop app.");
+        const result = await api.importBraceContent();
+        if (!result) return;
+        await refresh();
+        set({ notice: `Imported ${result.documents} document${result.documents === 1 ? "" : "s"} and ${result.memories} memor${result.memories === 1 ? "y" : "ies"}; ${result.duplicates} duplicate${result.duplicates === 1 ? " was" : "s were"} reused. A safety backup was created first.` });
       }),
     backupData: async () =>
       perform("Creating backup…", async () => {
@@ -389,6 +505,22 @@ export const useBrace = create<BraceState>((set, get) => {
         const run = await api.retryBraceAutomationRun(runId, dryRun);
         await refresh();
         set({ notice: `Retry finished with status: ${run.status}.` });
+      }),
+    exportAutomations: async (id) =>
+      perform("Exporting automation recipes…", async () => {
+        const api = desktop();
+        if (!api?.exportBraceAutomations) throw new Error("Automation export is available in the desktop app.");
+        const result = await api.exportBraceAutomations(id);
+        if (result) set({ notice: `${result.count} paused automation recipe${result.count === 1 ? "" : "s"} exported.` });
+      }),
+    importAutomations: async () =>
+      perform("Importing automation recipes…", async () => {
+        const api = desktop();
+        if (!api?.importBraceAutomations) throw new Error("Automation import is available in the desktop app.");
+        const result = await api.importBraceAutomations();
+        if (!result) return;
+        await refresh();
+        set({ notice: `${result.count} automation recipe${result.count === 1 ? "" : "s"} imported paused.` });
       }),
     deleteAutomation: async (id) =>
       perform("Deleting automation…", async () => {

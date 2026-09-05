@@ -1,34 +1,34 @@
 # Launch-site interaction contract
 
-The BRACE site is an explorable explanation of a local memory system, not an animation reel. Every effect must help a visitor recover context, inspect provenance, understand a boundary, view the real product, or choose a package.
+The BRACE site is an explorable explanation of a local memory system, not an animation reel. Every effect must help a visitor understand custody, inspect provenance, see the real product, or complete a safe first run.
 
 ## Interaction map
 
 | # | System | Product purpose | Inputs | Calm/reduced-motion behavior |
 | --- | --- | --- | --- | --- |
-| 1 | Cinematic opening | Establish the fragment-to-memory story and real BRACE mark | Play, skip, `Escape` | Skipped automatically |
-| 2 | Command palette | Jump directly to recall, graph, proof, guide, or download | Click, `Ctrl/Cmd+K`, arrows, `Enter` | Identical without entrance motion |
-| 3 | Memory divider | Compare forgotten fragments with recovered context | Pointer drag, arrows, `Home`, `End` | Immediate state changes |
-| 4 | Fragment recovery | Turn scattered questions into an explicit recovery action | Click/tap, reset | State and count update without travel animation |
-| 5 | Provenance receipts | Inspect the distinction between an original source and durable memory | Click/tap, dialog keyboard controls | Dialog opens without transform animation |
-| 6 | Recall query lab | Try synthetic questions and see source-backed results | Form submit, prompt chips | Loading delay is removed |
-| 7 | Evidence layers | Isolate source, memory, and receipt in the retrieval result | Click/tap toggles | Immediate visibility change |
-| 8 | Copy recall | Copy the displayed synthetic result with confirmation | Click/tap | Identical |
-| 9 | Memory constellation | Explore typed relations instead of a decorative node cloud | Filters, node selection, arrow keys, center | Static readable graph; projection changes are immediate |
-| 10 | Five graph projections | Ask spatial, neighborhood, focus, evidence-flow, or time questions over one graph | Rings, Living, Orbit, Flow, Chronicle buttons | Immediate transform-free layout change |
-| 11 | Privacy vault | Inspect source, memory, and network boundaries | Click/tap | Readout changes without animation |
-| 12 | Product proof gallery | Browse and expand real synthetic-workspace screenshots | Previous/next, expand, dialog controls | Scrolling and dialog opening are immediate |
-| 13 | Package advisor | Match guided or portable intent to equal Windows/Linux release choices | Click/tap | Highlight changes immediately |
-| 14 | Motion control | Let visitors choose a calmer experience independent of OS settings | Click/tap | Locked to system calm when reduced motion is requested |
-| 15 | Memory pulse and card response | Reveal connected interactive surfaces and spatial depth | Click/tap, fine-pointer hover | Disabled or flattened |
+| 1 | Memory ignition | Form fragments into the BRACE mark and establish the local-memory signal | Automatic, Skip, Replay, `Escape` | Skipped automatically; content is immediately available |
+| 2 | Hero product film | Trace source-to-memory progress over a real packaged-app frame | Native scroll | Static poster; video is not requested |
+| 3 | Context relay | Explain source, local memory, and explicit AI handoff boundaries | Stage buttons, range, keyboard | Immediate state changes |
+| 4 | Product simulation | Demonstrate capture, indexing, recall, graph, handoff, and automation using deterministic synthetic data | Tabs, arrows, Previous/Next | Immediate state changes without entrance animation |
+| 5 | Product proof reel | Browse real packaged-app screenshots from the synthetic Northstar profile | Scroll, Previous/Next | Native horizontal scrolling |
+| 6 | Screenshot inspector | Expand product evidence without losing the gallery position | Open, Previous/Next, `Escape` | Opens without transform animation |
+| 7 | Download advisor | Identify the visitor's platform while keeping Windows and Linux equal | Device hint, direct links | Identical |
+| 8 | Guide launchpad | Adapt install instructions to Windows, Linux, or source builds | Platform buttons | Identical |
+| 9 | Setup checklist | Let a beginner track seven local setup milestones | Checkboxes, Reset | Identical; persists only in browser local storage |
+| 10 | Troubleshooter | Turn a first-run symptom into one safe diagnostic action | Symptom buttons | Identical |
+| 11 | Command copy | Copy install and MCP commands with visible confirmation | Copy buttons | Identical |
+| 12 | Reading progress | Show position in a long operational guide | Native scroll | Immediate progress updates |
 
 ## Non-negotiable behavior
 
-- Keyboard users can reach every control, operate the divider and graph, close dialogs, and see focus.
-- `prefers-reduced-motion: reduce` removes autoplay, smooth scrolling, parallax, magnetic motion, tilts, and nonessential transitions.
-- Mobile uses a purpose-built single-column graph and package flow; it is not a squeezed desktop layout.
+- The opening is never mandatory: Skip and `Escape` work, Replay is optional, and reduced-motion users bypass it.
+- Keyboard users can reach every control, operate the relay and simulation tabs, close dialogs, and see focus.
+- `prefers-reduced-motion: reduce` removes the opening, smooth scrolling, scroll transforms, canvas motion, parallax, and nonessential transitions.
+- Mobile uses reflowed controls and a readable single-column guide; it is not a squeezed desktop canvas.
 - Motion never changes the factual meaning of a source, memory, platform, release, or privacy boundary.
-- Product screenshots and examples use only the synthetic Northstar workspace.
-- The graph stays inspectable: typed nodes, readable connections, a selected-node explanation, and no random decorative particles masquerading as data.
+- Product screenshots and examples use only the fictional Northstar workspace.
+- The live demo is labelled as a non-persistent local simulation and cannot imply impossible product behavior.
+- Imported sources remain canonical, local memory remains distinct, and an AI handoff remains an explicit permission boundary.
+- The public site must make the unsigned-preview status visible near downloads.
 
-Run `npm run audit:interactions` and `npm run audit:a11y` from `website/builds/brace` after changing HTML, CSS, JavaScript, or public assets.
+Run `npm run audit:interactions`, `npm run audit:layout`, `npm run audit:focus`, and `npm run audit:a11y` from `website/builds/brace` after changing HTML, CSS, JavaScript, or public assets.

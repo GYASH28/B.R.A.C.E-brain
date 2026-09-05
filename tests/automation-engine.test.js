@@ -52,7 +52,7 @@ test("automation definitions persist with derived permissions and immutable run 
 
   store.close();
   const reopened = new MemoryStore(databasePath);
-  assert.equal(reopened.stats().schemaVersion, 5);
+  assert.equal(reopened.stats().schemaVersion, 6);
   assert.equal(reopened.listAutomations()[0].name, "Decision follow-up");
   assert.equal(reopened.listAutomationRuns()[0].status, "success");
   reopened.close();
@@ -157,6 +157,41 @@ test("scheduled runs are calculated locally, pause globally, and never run early
   const runs = await engine.tick(new Date("2026-08-29T08:15:00.000Z"));
   assert.equal(runs[0].status, "success");
   assert.ok(new Date(store.getAutomation(automation.id).nextRunAt) > new Date("2026-08-29T08:15:00.000Z"));
+});
+
+test("event idempotency prevents duplicate durable actions across retries and restart-like dispatch", async (context) => {
+  const { store, engine } = fixture(context);
+  engine.create({
+    name: "One event, one memory",
+    enabled: true,
+    trigger: { type: "memory.created", config: { debounceSeconds: 60 } },
+    actions: [{ type: "memory.create", config: { title: "Derived {{trigger.title}}", content: "One durable result." } }],
+  });
+  const payload = { id: "memory-event-fixture", title: "Signal" };
+  const [first] = await engine.dispatch("memory.created", payload);
+  const [duplicate] = await engine.dispatch("memory.created", payload);
+  assert.equal(first.id, duplicate.id);
+  assert.equal(store.listMemories().length, 1);
+  assert.equal(store.listAutomationRuns().length, 1);
+});
+
+test("missed schedule policy can skip stale runs without executing actions", async (context) => {
+  const { store, engine } = fixture(context);
+  const automation = engine.create({
+    name: "Skip stale brief",
+    enabled: true,
+    trigger: {
+      type: "schedule.interval",
+      config: { intervalMinutes: 15, missedRunPolicy: "skip" },
+    },
+    actions: [{ type: "memory.create", config: { title: "Should not exist", content: "Skipped." } }],
+  });
+  store.updateAutomation(automation.id, { nextRunAt: "2026-08-29T08:00:00.000Z" });
+  const [run] = await engine.tick(new Date("2026-08-29T10:00:00.000Z"));
+  assert.equal(run.status, "skipped");
+  assert.match(run.steps[0].detail, /asleep or closed/);
+  assert.equal(store.listMemories().length, 0);
+  assert.ok(new Date(store.getAutomation(automation.id).nextRunAt) > new Date("2026-08-29T10:00:00.000Z"));
 });
 
 test("templates cannot evaluate code and secret-like values are redacted", () => {

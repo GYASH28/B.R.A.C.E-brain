@@ -51,7 +51,23 @@ jobs:
       - run: npm run verify
       - run: npm run electron:e2e
       - run: npm run electron:mcp-smoke
-      - run: npx --no-install electron-builder --win nsis --publish never
+      - name: Build Windows package (signs when protected certificate secrets are configured)
+        env:
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+        run: npx --no-install electron-builder --win nsis --publish never
+      - name: Verify Windows signature state
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem "dist/installer" -Filter "BRACE-Setup-*.exe" | Select-Object -First 1
+          if (-not $installer) { throw "The NSIS installer was not produced." }
+          $signature = Get-AuthenticodeSignature $installer.FullName
+          if ($env:BRACE_REQUIRE_WINDOWS_SIGNATURE -eq "1" -and $signature.Status -ne "Valid") {
+            throw "A valid Authenticode signature is required for this release channel; status was $($signature.Status)."
+          }
+          "Windows signature status: $($signature.Status)"
+        env:
+          BRACE_REQUIRE_WINDOWS_SIGNATURE: ${{ vars.BRACE_REQUIRE_WINDOWS_SIGNATURE }}
       - run: npm run package:audit -- "dist/installer/win-unpacked/resources/app.asar"
       - run: npm run electron:smoke -- "dist/installer/win-unpacked/BRACE.exe"
       - run: node scripts/electron-mcp-smoke.js "dist/installer/win-unpacked/BRACE.exe"
@@ -67,6 +83,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -84,6 +102,10 @@ jobs:
           release_version="${GITHUB_REF_NAME#v}"
           npm sbom --sbom-format cyclonedx --sbom-type application | node scripts/normalize-sbom.js > "release-files/brace-${release_version}.cdx.json"
           find release-files -maxdepth 1 -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum | sed 's#  release-files/#  #' > release-files/SHA256SUMS.txt
+      - name: Attest release artifact provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3.0.0
+        with:
+          subject-path: "release-files/*"
       - name: Create GitHub prerelease
         shell: bash
         env:

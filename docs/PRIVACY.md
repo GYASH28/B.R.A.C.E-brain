@@ -40,8 +40,9 @@ The project indexer ignores:
 - dependencies, virtual environments, caches, build output, and coverage output;
 - symlinks and their targets;
 - non-allowlisted extensions, binary files, and oversized text files.
+- paths explicitly excluded through a project-level `.braceignore` file.
 
-This is defense in depth, not a data-classification guarantee. A secret inside an ordinary source file can still be indexed. Select a focused folder and review it before import.
+Before storing chunks or sending them to an enabled embedding adapter, BRACE also applies a bounded best-effort content scanner for common private keys, provider tokens, access keys, and secret assignments. Matches are replaced with typed redaction markers and only counts/types are reported. This is defense in depth, not a data-classification guarantee: uncommon or obfuscated secrets may not be detected. Select a focused folder, use `.braceignore`, and review the reported counts after import.
 
 ## Stable provenance without public machine paths
 

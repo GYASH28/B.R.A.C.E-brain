@@ -10,6 +10,7 @@ const {
   chunkText,
   indexProject,
   listProjectFiles,
+  redactContentSecrets,
 } = require("../core/project-indexer");
 
 function fixture(context) {
@@ -109,4 +110,77 @@ test("chunking preserves Markdown heading provenance and bounded chunks", () => 
   assert.equal(chunks[0].heading, "Overview");
   assert.ok(chunks.some((chunk) => chunk.heading === "Decision"));
   assert.ok(chunks.every((chunk) => chunk.content.length <= 550));
+});
+
+test(".braceignore excludes user-selected paths before content is read", (context) => {
+  const { projectRoot } = fixture(context);
+  fs.mkdirSync(path.join(projectRoot, "drafts"), { recursive: true });
+  fs.writeFileSync(path.join(projectRoot, "drafts", "private.md"), "not for the index");
+  fs.writeFileSync(path.join(projectRoot, "notes.private.md"), "not for the index");
+  fs.writeFileSync(path.join(projectRoot, ".braceignore"), "drafts/\n*.private.md\n");
+  const scan = listProjectFiles(projectRoot);
+  assert.equal(scan.ignoredByRule, 2);
+  assert.doesNotMatch(scan.files.map((item) => item.relativePath).join("\n"), /drafts|private/);
+});
+
+test("ordinary source files receive best-effort content secret redaction", async (context) => {
+  const { projectRoot, store } = fixture(context);
+  const syntheticSecret = ["password", "=", "synthetic-only-value-123"].join("");
+  fs.writeFileSync(path.join(projectRoot, "docs", "deployment.md"), `# Deployment\n\npassword=${syntheticSecret.slice("password=".length)}\nKeep the deployment local.`);
+  const preview = redactContentSecrets(`password=${syntheticSecret.slice("password=".length)}`);
+  assert.equal(preview.redacted, 1);
+  assert.doesNotMatch(preview.value, /synthetic-only-value/);
+  const result = await indexProject(store, { rootPath: projectRoot });
+  assert.equal(result.redacted, 1);
+  assert.equal(store.searchSources("synthetic-only-value").results.length, 0);
+  assert.equal(store.searchSources("redacted generic-secret").results.length, 1);
+});
+
+test("failed embedding leaves the prior complete source index usable", async (context) => {
+  const { projectRoot, store } = fixture(context);
+  const first = await indexProject(store, { rootPath: projectRoot });
+  fs.writeFileSync(path.join(projectRoot, "README.md"), "# Changed\n\nA replacement that must not commit.");
+  await assert.rejects(indexProject(store, {
+    rootPath: projectRoot,
+    projectId: first.projectId,
+    embedder: {
+      model: "synthetic:failure",
+      async embed() { throw new Error("Synthetic embedding failure"); },
+    },
+  }), /Synthetic embedding failure/);
+  assert.equal(store.searchSources("fictional privacy-first").results.length, 1);
+  assert.equal(store.searchSources("replacement that must not commit").results.length, 0);
+  assert.equal(store.listProjects()[0].last_indexed_at, first.completedAt);
+});
+
+test("worker indexing is cancellable and reports bounded phase progress", async (context) => {
+  const { projectRoot, store } = fixture(context);
+  for (let index = 0; index < 80; index += 1) {
+    fs.writeFileSync(path.join(projectRoot, `synthetic-${index}.md`), `# Fixture ${index}\n\nBounded worker document ${index}.`);
+  }
+  const controller = new AbortController();
+  const phases = new Set();
+  await assert.rejects(indexProject(store, {
+    rootPath: projectRoot,
+    signal: controller.signal,
+    onProgress(progress) {
+      phases.add(progress.phase);
+      if (progress.phase === "reading" && progress.completed >= 3) controller.abort();
+    },
+  }), /cancelled/);
+  assert.ok(phases.has("scanning"));
+  assert.ok(phases.has("reading"));
+  assert.equal(store.listProjects()[0].last_indexed_at, null);
+});
+
+test("unsupported encoding produces a partial result without deleting old evidence", async (context) => {
+  const { projectRoot, store } = fixture(context);
+  const first = await indexProject(store, { rootPath: projectRoot });
+  fs.writeFileSync(path.join(projectRoot, "docs", "Offline architecture.md"), Buffer.from([0xc3, 0x28]));
+  const result = await indexProject(store, { rootPath: projectRoot, projectId: first.projectId });
+  assert.equal(result.status, "partial");
+  assert.equal(result.skippedUnsupportedEncoding, 1);
+  assert.equal(result.removed, 0);
+  assert.equal(store.searchSources("validated restart").results.length, 1);
+  assert.equal(store.listProjects()[0].last_indexed_at, first.completedAt);
 });

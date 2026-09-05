@@ -1,6 +1,6 @@
 import type { GraphEdge, GraphNode } from "./types";
 
-export type GraphPreset = "rings" | "living" | "orbit" | "flow" | "chronicle";
+export type GraphPreset = "neural" | "rings" | "living" | "orbit" | "flow" | "chronicle";
 
 export interface GraphPoint {
   x: number;
@@ -103,6 +103,48 @@ function layoutLiving(nodes: GraphNode[]) {
       void index;
     });
   });
+  return map;
+}
+
+/**
+ * A deterministic two-hemisphere map. It gives BRACE a recognisable neural
+ * silhouette without pretending that deterministic relations are biological
+ * or AI-discovered. Project anchors and the current focus form the central
+ * bridge; evidence leans left and durable knowledge leans right.
+ */
+function layoutNeural(nodes: GraphNode[], selectedId: string | null) {
+  const map = new Map<string, GraphPoint>();
+  const core = nodes.find((node) => node.id === selectedId) ||
+    nodes.find((node) => node.type === "project") ||
+    nodes[0];
+  if (!core) return map;
+  map.set(core.id, { x: WIDTH / 2, y: HEIGHT / 2, lane: "bridge" });
+
+  const lane: Record<GraphNode["type"], { side: -1 | 1 | 0; y: number; spreadX: number; spreadY: number }> = {
+    project: { side: 0, y: 310, spreadX: 72, spreadY: 185 },
+    source: { side: -1, y: 310, spreadX: 280, spreadY: 235 },
+    decision: { side: 1, y: 165, spreadX: 235, spreadY: 120 },
+    memory: { side: 1, y: 350, spreadX: 285, spreadY: 205 },
+    entity: { side: -1, y: 455, spreadX: 225, spreadY: 120 },
+  };
+  for (const node of nodes) {
+    if (node.id === core.id) continue;
+    const config = lane[node.type];
+    const angle = fraction(`${node.id}:neural-angle`) * Math.PI * 2;
+    const depth = .3 + fraction(`${node.id}:neural-depth`) * .7;
+    const side = config.side || (fraction(`${node.id}:hemisphere`) > .5 ? 1 : -1);
+    const centerX = 500 + side * 178;
+    const x = centerX + Math.cos(angle) * config.spreadX * depth * .62;
+    const y = config.y + Math.sin(angle) * config.spreadY * depth;
+    // The taper approximates the curved outer edge of a brain silhouette.
+    const vertical = Math.abs(y - HEIGHT / 2) / (HEIGHT / 2);
+    const outer = 454 - vertical * 118;
+    map.set(node.id, {
+      x: clamp(x, 500 - outer, 500 + outer),
+      y: clamp(y, 55, HEIGHT - 55),
+      lane: side < 0 ? "evidence" : "memory",
+    });
+  }
   return map;
 }
 
@@ -222,10 +264,29 @@ function relaxCollisions(points: Map<string, GraphPoint>, nodes: GraphNode[]) {
   const minimumDistance = nodes.length <= 70 ? 46 : nodes.length <= 160 ? 30 : 19;
   const iterations = nodes.length > 320 ? 4 : 7;
   for (let pass = 0; pass < iterations; pass += 1) {
+    const buckets = new Map<string, number[]>();
+    const cellSize = minimumDistance;
+    for (let index = 0; index < nodes.length; index += 1) {
+      const point = points.get(nodes[index].id);
+      if (!point) continue;
+      const key = `${Math.floor(point.x / cellSize)}:${Math.floor(point.y / cellSize)}`;
+      const bucket = buckets.get(key) || [];
+      bucket.push(index);
+      buckets.set(key, bucket);
+    }
     for (let leftIndex = 0; leftIndex < nodes.length; leftIndex += 1) {
       const left = points.get(nodes[leftIndex].id);
       if (!left) continue;
-      for (let rightIndex = leftIndex + 1; rightIndex < nodes.length; rightIndex += 1) {
+      const cellX = Math.floor(left.x / cellSize);
+      const cellY = Math.floor(left.y / cellSize);
+      const candidates: number[] = [];
+      for (let offsetX = -1; offsetX <= 1; offsetX += 1) {
+        for (let offsetY = -1; offsetY <= 1; offsetY += 1) {
+          candidates.push(...(buckets.get(`${cellX + offsetX}:${cellY + offsetY}`) || []));
+        }
+      }
+      for (const rightIndex of candidates) {
+        if (rightIndex <= leftIndex) continue;
         const right = points.get(nodes[rightIndex].id);
         if (!right) continue;
         let dx = right.x - left.x;
@@ -257,8 +318,10 @@ export function graphPositions(
   edges: GraphEdge[],
   selectedId: string | null,
 ) {
-  const points = preset === "rings"
-    ? layoutRings(nodes, selectedId)
+  const points = preset === "neural"
+    ? layoutNeural(nodes, selectedId)
+    : preset === "rings"
+      ? layoutRings(nodes, selectedId)
     : preset === "living"
       ? layoutLiving(nodes)
       : preset === "flow"
@@ -269,12 +332,47 @@ export function graphPositions(
   return relaxCollisions(points, nodes);
 }
 
+export type GraphDirection = "ArrowLeft" | "ArrowRight" | "ArrowUp" | "ArrowDown";
+
+/** Find the closest visible node in a requested screen direction. */
+export function graphNeighborInDirection(
+  nodes: GraphNode[],
+  points: Map<string, GraphPoint>,
+  currentId: string,
+  direction: GraphDirection,
+) {
+  const origin = points.get(currentId);
+  if (!origin) return null;
+  const horizontal = direction === "ArrowLeft" || direction === "ArrowRight";
+  const sign = direction === "ArrowLeft" || direction === "ArrowUp" ? -1 : 1;
+  let best: { id: string; score: number } | null = null;
+  for (const node of nodes) {
+    if (node.id === currentId) continue;
+    const point = points.get(node.id);
+    if (!point) continue;
+    const dx = point.x - origin.x;
+    const dy = point.y - origin.y;
+    const primary = (horizontal ? dx : dy) * sign;
+    if (primary <= 1) continue;
+    const cross = Math.abs(horizontal ? dy : dx);
+    const score = primary + cross * 2.35 + (cross / primary) * 90;
+    if (!best || score < best.score) best = { id: node.id, score };
+  }
+  return best?.id || null;
+}
+
 export const graphPresetDetails: Array<{
   id: GraphPreset;
   label: string;
   description: string;
   lineage: "Original" | "Public" | "Unified";
 }> = [
+  {
+    id: "neural",
+    label: "Neural",
+    description: "A two-hemisphere view with evidence and durable knowledge joined through the current focus.",
+    lineage: "Unified",
+  },
   {
     id: "rings",
     label: "Rings",

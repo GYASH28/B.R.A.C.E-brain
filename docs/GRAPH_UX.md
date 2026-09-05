@@ -33,10 +33,12 @@ The primary user has accumulated enough files and memories that lists no longer 
 
 - Drag empty canvas space to pan.
 - Use the wheel or explicit buttons to zoom; `0` fits the graph.
-- `F` enters real Fullscreen API mode; Escape exits it.
+- `F` enters the Electron-safe app-level Brain focus surface; Escape exits it.
 - Arrow keys move through the rendered node set; Enter/Space selects.
 - Overview, Focus, and All state their trade-off through visible rendered/grouped counts.
 - The inspector can collapse so the graph can own the full width.
+- The Node Index mirrors the visible projection as an equivalent keyboard-accessible list.
+- The Documents ledger opens original evidence directly in recall or on its graph node.
 
 ## Required states
 
@@ -45,6 +47,7 @@ The primary user has accumulated enough files and memories that lists no longer 
 - Search: show matches plus their immediate context.
 - Filtered: retain the selected node while applying the requested type filter.
 - Fullscreen: fill the viewport, retain controls, and exit through Escape or the visible control.
+- Neural: preserve a truthful two-hemisphere visual language while labels and edges continue to describe deterministic source relationships.
 - Reduced motion: stop edge flow and background drift while preserving state changes.
 
 ## Responsive contract
@@ -52,4 +55,3 @@ The primary user has accumulated enough files and memories that lists no longer 
 - Desktop: canvas plus document/node inspector.
 - Narrow desktop/tablet: inspector becomes an overlay rather than shrinking the graph.
 - Mobile: canvas remains usable; secondary legend/hints yield to touch controls.
-

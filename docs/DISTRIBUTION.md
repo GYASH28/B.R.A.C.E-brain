@@ -85,7 +85,7 @@ The AppImage is suitable for distributions with the required FUSE compatibility 
 
 ## Signing and provenance
 
-0.7.0 does not claim code-signing, notarization, or reproducible byte-for-byte builds. GitHub Actions records the source ref and native runner logs. Future releases should add signing and artifact attestations before introducing automatic updates.
+0.7.0 does not claim code-signing, notarization, or reproducible byte-for-byte builds. Tagged workflow artifacts receive GitHub build-provenance attestations that bind their digests to the repository, commit, and workflow identity. The Windows build consumes a protected Authenticode certificate when maintainers configure one, and the release can enforce a valid signature with `BRACE_REQUIRE_WINDOWS_SIGNATURE=1`. Until that protected infrastructure is provisioned and enforced, releases remain unsigned previews and no automatic updater is enabled. See [RELEASE_TRUST.md](RELEASE_TRUST.md) and [UPDATE_MODEL.md](UPDATE_MODEL.md).
 
 ## Release procedure
 

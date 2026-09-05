@@ -183,6 +183,9 @@ async function run() {
   await waitFor(window, "document.body.innerText.includes('Stop re-explaining your work')");
   const onboarding = await screenshot(window, "app-onboarding");
   await clickText(window, "Try an example workspace");
+  await waitFor(window, "document.body.innerText.includes('Your Brain') && document.querySelector('svg[aria-label*=\"knowledge nodes\"]')");
+  const brainFirstReady = await window.webContents.executeJavaScript("document.querySelector('.brace-brain-beacon.is-active') !== null && document.querySelectorAll('.graph-scope-filters select').length === 2");
+  await clickText(window, "Home");
   await waitFor(window, "document.body.innerText.includes('Think through the whole picture.')");
   const overview = await screenshot(window, "app-overview");
 
@@ -322,12 +325,23 @@ async function run() {
       };
     })()
   `);
+  graphInteraction.scopeFilters = await window.webContents.executeJavaScript(`
+    (() => {
+      const [project, time] = document.querySelectorAll('.graph-scope-filters select');
+      if (!project || !time || project.options.length < 2) return false;
+      project.value = project.options[1].value;
+      project.dispatchEvent(new Event('change', { bubbles: true }));
+      time.value = '30d';
+      time.dispatchEvent(new Event('change', { bubbles: true }));
+      return localStorage.getItem('brace.graph-project') === project.value && localStorage.getItem('brace.graph-time') === '30d';
+    })()
+  `);
   pressKey(window, "F");
-  await wait(500);
-  graphInteraction.fullscreenWorks = await window.webContents.executeJavaScript("Boolean(document.fullscreenElement?.classList.contains('graph-stage'))");
+  await waitFor(window, "document.querySelector('.graph-stage.is-fullscreen') !== null");
+  graphInteraction.fullscreenWorks = await window.webContents.executeJavaScript("Boolean(document.querySelector('.graph-stage.is-fullscreen')) && !document.fullscreenElement");
   if (graphInteraction.fullscreenWorks) {
     pressKey(window, "Escape");
-    await waitFor(window, "!document.fullscreenElement");
+    await waitFor(window, "!document.querySelector('.graph-stage.is-fullscreen')");
   }
   await window.webContents.executeJavaScript(`
     (() => {
@@ -407,6 +421,7 @@ async function run() {
       process.env.CI ? path.basename(target) : path.relative(root, target),
     ),
     graphInteraction,
+    brainFirstReady,
     connectionReady,
     connectionHasWorkspacePath,
     preferenceReady,
@@ -439,10 +454,12 @@ async function run() {
     !graphInteraction.selectedSource ||
     !graphInteraction.zoomed ||
     !graphInteraction.fullscreenWorks ||
+    !graphInteraction.scopeFilters ||
     !graphInteraction.keyboardTravel ||
     !Object.values(graphInteraction.presets || {}).every(Boolean) ||
     Object.keys(graphInteraction.presets || {}).length !== 5 ||
     !connectionReady ||
+    !brainFirstReady ||
     connectionHasWorkspacePath ||
     !preferenceReady ||
     !helpReady ||

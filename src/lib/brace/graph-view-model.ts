@@ -6,7 +6,6 @@ export interface GraphDisplayNode extends GraphNode {
   degree: number;
   isCluster?: boolean;
   memberCount?: number;
-  memberIds?: string[];
   showLabel?: boolean;
 }
 
@@ -17,10 +16,45 @@ export interface GraphDisplayEdge extends GraphEdge {
 export interface GraphViewModel {
   nodes: GraphDisplayNode[];
   edges: GraphDisplayEdge[];
+  matchIds: string[];
   totalEligible: number;
   hiddenCount: number;
   clusteredCount: number;
   edgeCount: number;
+}
+
+export function filterGraphByScope(
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+  options: { projectId: string; projectName?: string; timeRange: string; now?: number },
+) {
+  const cutoffDays = options.timeRange === "7d" ? 7 : options.timeRange === "30d" ? 30 : options.timeRange === "year" ? 365 : 0;
+  const cutoff = cutoffDays ? (options.now ?? Date.now()) - cutoffDays * 86_400_000 : 0;
+  const directIds = new Set<string>();
+  const recentIds = new Set<string>();
+  for (const node of nodes) {
+    let belongs = options.projectId === "all" || node.id === options.projectId || node.projectId === options.projectId;
+    if (!belongs && node.scope) {
+      const scope = node.scope.toLowerCase();
+      belongs = scope === `project:${options.projectId}` || Boolean(options.projectName && scope === `project:${options.projectName.toLowerCase()}`);
+    }
+    if (!belongs && node.sourceUri?.startsWith("brace-project://")) {
+      try { belongs = new URL(node.sourceUri).hostname === options.projectId; } catch {}
+    }
+    const timestamp = new Date(node.timestamp || "").getTime();
+    const recent = !cutoff || node.type === "project" || (Number.isFinite(timestamp) && timestamp >= cutoff);
+    if (recent) recentIds.add(node.id);
+    if (belongs && recent) directIds.add(node.id);
+  }
+  if (options.projectId !== "all") {
+    for (const edge of edges) {
+      if (directIds.has(edge.from) && recentIds.has(edge.to)) directIds.add(edge.to);
+      if (directIds.has(edge.to) && recentIds.has(edge.from)) directIds.add(edge.from);
+    }
+  }
+  const filteredNodes = nodes.filter((node) => directIds.has(node.id));
+  const ids = new Set(filteredNodes.map((node) => node.id));
+  return { nodes: filteredNodes, edges: edges.filter((edge) => ids.has(edge.from) && ids.has(edge.to)) };
 }
 
 const NODE_LIMIT: Record<GraphDetail, number> = {
@@ -71,7 +105,12 @@ export function buildGraphViewModel(
   const needle = options.query.trim().toLowerCase();
   const matches = new Set(
     needle
-      ? nodes.filter((node) => node.label.toLowerCase().includes(needle)).map((node) => node.id)
+      ? nodes
+          .filter((node) =>
+            (options.activeType === "all" || node.type === options.activeType) &&
+            node.label.toLowerCase().includes(needle),
+          )
+          .map((node) => node.id)
       : [],
   );
   const searchContext = new Set(matches);
@@ -80,9 +119,10 @@ export function buildGraphViewModel(
   }
 
   const eligible = nodes.filter((node) => {
+    if (needle) return searchContext.has(node.id);
     if (node.id === options.selectedId) return true;
     if (options.activeType !== "all" && node.type !== options.activeType) return false;
-    return !needle || searchContext.has(node.id);
+    return true;
   });
   const selectedNeighbors = options.selectedId
     ? neighbors.get(options.selectedId) || new Set<string>()
@@ -103,6 +143,7 @@ export function buildGraphViewModel(
     (rankScore.get(right.id) || 0) - (rankScore.get(left.id) || 0) ||
     (left.label < right.label ? -1 : left.label > right.label ? 1 : 0),
   );
+  const matchIds = ranked.filter((node) => matches.has(node.id)).map((node) => node.id);
 
   const limit = NODE_LIMIT[options.detail];
   const visible = ranked.slice(0, limit);
@@ -136,7 +177,6 @@ export function buildGraphViewModel(
       degree: members.reduce((sum, node) => sum + (degree.get(node.id) || 0), 0),
       isCluster: true,
       memberCount: members.length,
-      memberIds: members.map((node) => node.id),
       showLabel: true,
     });
   }
@@ -175,6 +215,7 @@ export function buildGraphViewModel(
   return {
     nodes: displayNodes,
     edges: displayEdges,
+    matchIds,
     totalEligible: eligible.length,
     hiddenCount: Math.max(0, eligible.length - visible.length),
     clusteredCount: hidden.length,

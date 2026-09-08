@@ -9,8 +9,9 @@
 
 /* Navigation should never remain visually hidden once the real scroll position
    has left the opening film. scrollcraft-final.js toggles this class from the
-   raw scroll position rather than the eased visual scroll position. */
-.site-nav.nav-force-visible{opacity:1!important;pointer-events:auto!important;transform:translateX(-50%) translateY(-3px)!important;background:rgba(247,252,255,.9);box-shadow:inset 0 1px #fff,0 18px 48px rgba(8,57,114,.13)}
+   raw scroll position rather than the eased visual scroll position. The short
+   opacity transition removes the perceptible lag while keeping the handoff soft. */
+.site-nav.nav-force-visible{opacity:1!important;pointer-events:auto!important;transform:translateX(-50%) translateY(-3px)!important;background:rgba(247,252,255,.9);box-shadow:inset 0 1px #fff,0 18px 48px rgba(8,57,114,.13);transition:transform .2s var(--ease),opacity .08s linear,background .22s ease,box-shadow .22s ease!important}
 
 /* Desktop / laptop composition pass.
    Keep the 21st-inspired scroll morphing, but constrain the cinematic canvas so
@@ -71,7 +72,7 @@
 
 /* Keep every corrected composition flat and fully readable for reduced motion. */
 @media (prefers-reduced-motion:reduce){
-  .site-nav.nav-force-visible{transform:translateX(-50%)!important}
+  .site-nav.nav-force-visible{transform:translateX(-50%)!important;transition:none!important}
   .brain-shell{height:auto}
   .brain-product{transform:none!important}
 }

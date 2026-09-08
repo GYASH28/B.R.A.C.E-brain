@@ -7,7 +7,7 @@
   const all = (selector, scope = document) => [...scope.querySelectorAll(selector)];
 
   const platformData = {
-    windows: { badge: "WINDOWS DETECTED", label: "WINDOWS 10 / 11 · X64", title: "Download the guided installer", command: "BRACE-Setup-0.7.0.exe", href: "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/BRACE-Setup-0.7.0.exe" },
+    windows: { badge: "WINDOWS DETECTED", label: "WINDOWS 10 / 11 · X64", title: "Download the Windows guided installer", command: "BRACE-Setup-0.7.0.exe", href: "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/BRACE-Setup-0.7.0.exe" },
     linux: { badge: "LINUX DETECTED", label: "LINUX · X86_64", title: "Choose AppImage or .deb", command: "chmod +x BRACE-0.7.0.AppImage", href: "https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/BRACE-0.7.0.AppImage" },
     source: { badge: "DEVELOPER PATH", label: "NODE.JS 24+ · SOURCE", title: "Clone and verify the project", command: "git clone https://github.com/GYASH28/B.R.A.C.E-brain.git", href: "https://github.com/GYASH28/B.R.A.C.E-brain" },
   };
@@ -169,7 +169,18 @@
     root.dataset.braceGuideRuntime = "ready";
   }
 
-  const boot = () => requestAnimationFrame(() => requestAnimationFrame(init));
+  function loadPolishThenInit() {
+    if (by('link[data-guide-polish]')) return init();
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'polish.css?v=20260908-clean2';
+    link.dataset.guidePolish = '';
+    link.addEventListener('load', init, { once: true });
+    link.addEventListener('error', init, { once: true });
+    document.head.append(link);
+  }
+
+  const boot = () => requestAnimationFrame(() => requestAnimationFrame(loadPolishThenInit));
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
   else boot();
 })();

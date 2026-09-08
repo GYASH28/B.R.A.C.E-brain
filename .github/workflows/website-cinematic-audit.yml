@@ -1,0 +1,76 @@
+name: BRACE website Scrollcraft audit
+
+on:
+  push:
+    branches:
+      - design/scrollcraft-website-v2
+  pull_request:
+    branches:
+      - codex/unified-second-brain
+    paths:
+      - 'website/builds/brace/**'
+      - '.github/workflows/website-cinematic-audit.yml'
+
+jobs:
+  scrollcraft-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/builds/brace/package-lock.json
+      - name: Install website audit dependencies
+        working-directory: website/builds/brace
+        run: npm ci
+      - name: Check production contract
+        working-directory: website/builds/brace
+        run: node scripts/scrollcraft-contract.mjs
+      - name: Install Chrome
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+      - name: Start website
+        working-directory: website/builds/brace
+        run: |
+          nohup npm run serve > /tmp/brace-site.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4517/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/brace-site.log
+          exit 1
+      - name: Run Scrollcraft Playwright visual and interaction audit
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/cinematic-audit.mjs
+      - name: Run final composition regression audit
+        if: always()
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/refinement-audit.mjs
+      - name: Run whole-site accessibility audit
+        if: always()
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/scrollcraft-a11y.mjs
+      - name: Run performance budgets
+        if: always()
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/performance.mjs
+      - name: Upload verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brace-scrollcraft-verification
+          path: |
+            website/builds/brace/lab/cinematic
+            website/builds/brace/lab/refinement
+            website/builds/brace/lab/scrollcraft-a11y.json
+          if-no-files-found: ignore

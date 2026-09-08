@@ -218,4 +218,5 @@
   setupBrain();
   setupPointer();
   updateScroll();
+  root.dataset.braceRuntime = 'ready';
 })();

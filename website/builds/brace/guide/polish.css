@@ -1,0 +1,102 @@
+/* Final field-guide cleanup after Playwright visual review.
+   Keep the pale Arctic glass identity, remove duplicate decorative UI, and let the
+   actual instructions/screenshots carry the page. */
+
+/* The extra giant typographic slogan was competing with the real hero headline. */
+.guide-intro h1::after{display:none!important;content:none!important}
+.guide-atlas{opacity:.28!important;filter:blur(.2px)}
+.guide-chapter-dock,.guide-step-pill{display:none!important}
+
+.guide-hero{
+  min-height:92svh;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,.52),transparent 58%),
+    radial-gradient(circle at 78% 46%,rgba(70,157,245,.16),transparent 31rem)
+}
+.guide-hero-grid{min-height:86svh;padding-top:calc(var(--bar-h) + 5rem);padding-bottom:5rem}
+.guide-intro{transform:none!important;max-width:680px}
+.guide-intro h1{max-width:8.7ch!important;font-size:clamp(4rem,7.2vw,8rem)!important;line-height:.84!important;letter-spacing:-.078em!important}
+.guide-lede{max-width:38rem!important;font-size:clamp(1rem,1.2vw,1.14rem)!important;line-height:1.65!important}
+.launchpad{
+  transform:none!important;
+  border-radius:24px!important;
+  background:linear-gradient(145deg,rgba(252,254,255,.82),rgba(218,238,253,.6))!important;
+  box-shadow:inset 0 1px white,0 28px 80px rgba(8,62,125,.13)!important
+}
+
+/* One navigation model is enough: keep the sticky route and remove ornamental duplicates. */
+.guide-layout{gap:clamp(2.2rem,4vw,5rem)!important}
+.guide-toc{
+  border-radius:20px!important;
+  background:linear-gradient(150deg,rgba(250,254,255,.82),rgba(222,240,254,.58))!important;
+  box-shadow:inset 0 1px white,0 18px 55px rgba(9,62,121,.09)!important
+}
+
+/* Chapters become clean editorial surfaces, not seven oversized AI cards. */
+.guide-step{
+  margin-bottom:clamp(5rem,10vh,8rem)!important;
+  padding:clamp(2rem,3.5vw,3.5rem)!important;
+  border-radius:24px!important;
+  background:linear-gradient(150deg,rgba(251,254,255,.88),rgba(224,241,254,.62))!important;
+  border-color:rgba(255,255,255,.82)!important;
+  color:var(--guide-ink)!important;
+  box-shadow:inset 0 1px white,0 24px 72px rgba(7,58,119,.09)!important;
+  transform:none!important
+}
+.guide-step::after{opacity:.55!important;font-size:clamp(4rem,8vw,7.4rem)!important}
+.guide-step.is-active{border-color:rgba(88,167,239,.38)!important;box-shadow:inset 0 1px white,0 28px 80px rgba(7,67,139,.12)!important}
+.step-header h2{font-size:clamp(2.25rem,4vw,4.15rem)!important;max-width:18ch!important}
+.step-lede{color:#4d6982!important}
+
+/* Memory + recall are important because of their content, not because they become an unreadable dark theme. */
+#first-memory,#recall{
+  background:linear-gradient(150deg,rgba(248,253,255,.94),rgba(210,235,253,.72))!important;
+  border-color:rgba(119,186,244,.32)!important;
+  color:var(--guide-ink)!important;
+  box-shadow:inset 0 1px white,0 30px 86px rgba(7,65,133,.13)!important
+}
+#first-memory :where(h2,h3,strong,dt),#recall :where(h2,h3,strong,dt){color:#08203a!important}
+#first-memory :where(p,span,small,dd,figcaption),#recall :where(p,span,small,dd,figcaption){color:#506c84!important}
+#first-memory .instruction-list li,#recall .shortcut-line p{
+  border-color:rgba(25,91,157,.12)!important;
+  background:rgba(255,255,255,.54)!important
+}
+#first-memory .guide-shot,#recall .guide-shot{
+  border-color:rgba(255,255,255,.84)!important;
+  background:#e4f1fb!important;
+  box-shadow:0 24px 65px rgba(7,58,119,.13)!important
+}
+.guide-shot{transform:none!important;border-radius:18px!important}
+.guide-shot::before{display:none!important}
+.guide-shot img{transform:none!important;filter:none!important}
+
+/* Keep controls crisp and technical rather than glossy-on-glossy. */
+.platform-rows>section,.choice-lines,.boundary-list,.permission-table,.control-list,.location-list,.trouble-finder,.glossary{
+  box-shadow:none!important;
+  background:rgba(255,255,255,.42)!important
+}
+
+@media(max-width:760px){
+  .guide-bar{top:8px!important;width:calc(100% - 16px)!important}
+  .guide-bar nav{display:none!important}
+  .guide-hero{min-height:auto!important;padding-top:0!important}
+  .guide-hero-grid{
+    min-height:auto!important;
+    display:block!important;
+    padding-top:138px!important;
+    padding-bottom:70px!important
+  }
+  .guide-intro h1{font-size:clamp(3.75rem,16.5vw,5.7rem)!important;max-width:7.6ch!important}
+  .guide-lede{margin-top:1.5rem!important}
+  .launchpad{margin-top:2.4rem!important;border-radius:20px!important}
+  .guide-atlas{opacity:.18!important}
+  .guide-layout{display:block!important;padding-inline:1rem!important}
+  .guide-toc{position:relative!important;top:auto!important;margin-bottom:2.5rem!important}
+  .guide-step{padding:1.35rem!important;margin-bottom:3rem!important;border-radius:20px!important}
+  .guide-step::after{font-size:4.4rem!important;right:1rem!important;top:1rem!important}
+  .step-header h2{font-size:clamp(2rem,10.5vw,3rem)!important}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .guide-intro,.launchpad,.guide-shot,.guide-step{transform:none!important}
+}

@@ -46,6 +46,12 @@ jobs:
         env:
           SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: node scripts/cinematic-audit.mjs
+      - name: Run final composition regression audit
+        if: always()
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/refinement-audit.mjs
       - name: Run whole-site accessibility audit
         if: always()
         working-directory: website/builds/brace
@@ -65,5 +71,6 @@ jobs:
           name: brace-scrollcraft-verification
           path: |
             website/builds/brace/lab/cinematic
+            website/builds/brace/lab/refinement
             website/builds/brace/lab/scrollcraft-a11y.json
           if-no-files-found: ignore

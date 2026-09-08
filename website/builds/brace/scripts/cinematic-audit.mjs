@@ -61,10 +61,8 @@ try {
     assert(openingHeight > 1700, 'opening film is not a real scroll-scrub sequence');
     const openingSource = await page.locator('[data-opening-video] source').getAttribute('src');
     assert(Boolean(openingSource?.includes('brace-opening')), 'opening film source not selected');
-    await page.waitForFunction(() => {
-      const video = document.querySelector('[data-opening-video]');
-      return Boolean(video && (video.classList.contains('is-ready') || video.readyState >= 1));
-    }, null, {timeout:5000});
+    const openingAsset = await page.request.fetch(`${base}/assets/brace-opening.mp4`, {method:'HEAD'});
+    assert(openingAsset.ok(), `opening film asset is not served (${openingAsset.status()})`);
     await page.screenshot({path:path.join(out,'01-opening.png')});
 
     await goTo(page,'#hero',0);

@@ -159,7 +159,10 @@ body::before { opacity: .032; }
 .atlas-depth--far { transform: translate3d(var(--px), var(--py), -80px) scale(1.08); }
 .atlas-depth--mid { transform: translate3d(var(--px), var(--py), -20px) scale(1.035); }
 .evidence-receipt { transform: translateZ(62px); }
-.atlas-node { transform: translateZ(78px); }
+.atlas-node { transform: translate(-50%, -50%) translateZ(78px); }
+.atlas-node:hover,
+.atlas-node.is-active { transform: translate(-50%, -50%) translateZ(84px) scale(1.025); }
+.atlas-node:active { transform: translate(-50%, -50%) translateZ(84px) scale(.98); }
 .replay-pulse { border-radius: 999px; }
 
 .scroll-orbit {
@@ -367,11 +370,11 @@ body::before { opacity: .032; }
 /* --- Mobile art direction ------------------------------------------------- */
 @media (max-width: 900px) {
   .scene-rail { display: none; }
-  .hero { min-height: 100svh; grid-template-columns: 1fr; padding-top: calc(var(--bar-h) + 5rem); align-content: start; gap: 2.2rem; }
+  .hero { height: auto; display: grid; min-height: 100svh; grid-template-columns: 1fr; padding-top: calc(var(--bar-h) + 5rem); align-content: start; gap: 2.2rem; }
   .hero-copy { transform: none; max-width: 100%; }
   .hero h1 { max-width: 8.3ch; font-size: clamp(4rem,18vw,7.2rem); }
   .hero h1::after { margin-top: 1.1rem; }
-  .hero-atlas { transform: translate3d(0,calc(var(--sc-hero) * 12px),0) scale(calc(.98 + var(--sc-hero) * .02)); width: min(680px,112%); margin-left: -6%; }
+  .hero-atlas { position: relative; right: auto; bottom: auto; max-width: none; transform: translate3d(0,calc(var(--sc-hero) * 12px),0) scale(calc(.98 + var(--sc-hero) * .02)); width: min(680px,112%); margin: 0 auto; }
   .scroll-orbit { display: none; }
   .story-lead h2 { font-size: clamp(2.7rem,11vw,5rem); }
   .product-heading { position: relative; top: auto; }
@@ -395,6 +398,7 @@ body::before { opacity: .032; }
 @media (prefers-reduced-motion: reduce) {
   :root { --sc-progress: 0; --sc-hero: 0; --sc-pointer-x: .5; --sc-pointer-y: .5; }
   .hero::before, .hero::after, .hero-copy, .hero-atlas, .role-map, .proof, [data-sc-magnet] { transform: none !important; }
+  .atlas-node { transform: translate(-50%, -50%) !important; }
   .fragment-lines path { animation: none; }
   .scroll-velocity__track { transform: none !important; }
   .motion-ready .reveal { opacity: 1 !important; transform: none !important; clip-path: none !important; transition: none !important; }

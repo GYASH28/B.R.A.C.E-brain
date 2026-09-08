@@ -28,7 +28,8 @@
       const r = side.getBoundingClientRect();
       const travel = Math.max(1, side.offsetHeight - innerHeight);
       const p = clamp(-r.top / travel);
-      const maxX = Math.max(0, rail.scrollWidth - (innerWidth - Math.min(innerWidth * .29, 450)) + innerWidth * .03);
+      const viewport = by('.side-viewport', side);
+      const maxX = Math.max(0, rail.scrollWidth - (viewport?.clientWidth || innerWidth));
       rail.style.setProperty('--side-x', (maxX * p).toFixed(2));
       rail.style.setProperty('--side-p', p.toFixed(4));
       by('[data-side-meter]')?.style.setProperty('--side-p', p.toFixed(4));
@@ -120,8 +121,15 @@
   function trimChat() {
     const stream = by('[data-chat-stream]');
     if (!stream) return;
-    const msgs = all('.message', stream);
-    while (msgs.length > 7) msgs.shift()?.remove();
+    let msgs = all('.message', stream);
+    while (msgs.length > 7) {
+      msgs[0]?.remove();
+      msgs = all('.message', stream);
+    }
+  }
+
+  function removeInterruptedMessage(stream) {
+    all('.message .is-typing', stream).forEach(node => node.closest('.message')?.remove());
   }
 
   async function playScenario(scenario, manual=false) {
@@ -129,14 +137,16 @@
     if (!stream) return;
     const gen = ++chatGeneration;
     if (chatTimer) clearTimeout(chatTimer);
+    removeInterruptedMessage(stream);
     by('[data-chat-state]').textContent = manual ? 'YOUR PROMPT' : 'RECALLING';
 
     const user = document.createElement('article');
     user.className = 'message message--user';
     const up = document.createElement('p'); user.append(up); stream.append(user);
-    await typeText(up, scenario.user, gen, manual ? 15 : 19);
-    if (gen !== chatGeneration) return;
+    const userComplete = await typeText(up, scenario.user, gen, manual ? 15 : 19);
+    if (!userComplete || gen !== chatGeneration) { user.remove(); return; }
     await sleep(manual ? 280 : 440, gen);
+    if (gen !== chatGeneration) return;
 
     const brace = document.createElement('article');
     brace.className = 'message message--brace';
@@ -146,8 +156,8 @@
     const badge = document.createElement('b'); badge.textContent = scenario.badge;
     foot.append(source,badge); brace.append(bp,foot); stream.append(brace);
     by('[data-chat-state]').textContent = 'ANSWERING';
-    await typeText(bp, scenario.answer, gen, manual ? 17 : 21);
-    if (gen !== chatGeneration) return;
+    const answerComplete = await typeText(bp, scenario.answer, gen, manual ? 17 : 21);
+    if (!answerComplete || gen !== chatGeneration) { brace.remove(); return; }
     trimChat();
     stream.scrollTop = stream.scrollHeight;
     by('[data-chat-state]').textContent = 'READY';

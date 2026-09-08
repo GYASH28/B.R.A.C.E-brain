@@ -15,7 +15,11 @@ async function newPage(viewport, reducedMotion='no-preference', url=base) {
   const failed = [];
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', e => errors.push(e.message));
-  page.on('requestfailed', r => failed.push(`${r.url()} :: ${r.failure()?.errorText || 'failed'}`));
+  page.on('requestfailed', r => {
+    const error = r.failure()?.errorText || 'failed';
+    const intentionalOpeningSeekAbort = /brace-opening(?:-portrait)?\.mp4/i.test(r.url()) && /ERR_ABORTED/i.test(error);
+    if (!intentionalOpeningSeekAbort) failed.push(`${r.url()} :: ${error}`);
+  });
   await page.addInitScript(() => {
     window.__braceVitals = { cls:0, longTasks:0 };
     try { new PerformanceObserver(list => list.getEntries().forEach(e => { if (!e.hadRecentInput) window.__braceVitals.cls += e.value; })).observe({type:'layout-shift',buffered:true}); } catch {}
@@ -57,6 +61,10 @@ try {
     assert(openingHeight > 1700, 'opening film is not a real scroll-scrub sequence');
     const openingSource = await page.locator('[data-opening-video] source').getAttribute('src');
     assert(Boolean(openingSource?.includes('brace-opening')), 'opening film source not selected');
+    await page.waitForFunction(() => {
+      const video = document.querySelector('[data-opening-video]');
+      return Boolean(video && (video.classList.contains('is-ready') || video.readyState >= 1));
+    }, null, {timeout:5000});
     await page.screenshot({path:path.join(out,'01-opening.png')});
 
     await goTo(page,'#hero',0);

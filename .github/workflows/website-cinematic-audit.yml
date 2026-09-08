@@ -1,4 +1,4 @@
-name: BRACE website cinematic audit
+name: BRACE website Scrollcraft audit
 
 on:
   push:
@@ -12,9 +12,9 @@ on:
       - '.github/workflows/website-cinematic-audit.yml'
 
 jobs:
-  playwright-cinematic:
+  scrollcraft-verification:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,6 +25,9 @@ jobs:
       - name: Install website audit dependencies
         working-directory: website/builds/brace
         run: npm ci
+      - name: Check production contract
+        working-directory: website/builds/brace
+        run: node scripts/scrollcraft-contract.mjs
       - name: Install Chrome
         id: setup-chrome
         uses: browser-actions/setup-chrome@v1
@@ -38,15 +41,27 @@ jobs:
           done
           cat /tmp/brace-site.log
           exit 1
-      - name: Run cinematic Playwright audit
+      - name: Run Scrollcraft Playwright visual and interaction audit
         working-directory: website/builds/brace
         env:
           SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: node scripts/cinematic-audit.mjs
-      - name: Upload visual audit frames
+      - name: Run whole-site accessibility audit
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/scrollcraft-a11y.mjs
+      - name: Run performance budgets
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: node scripts/performance.mjs
+      - name: Upload verification artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: brace-cinematic-audit
-          path: website/builds/brace/lab/cinematic
+          name: brace-scrollcraft-verification
+          path: |
+            website/builds/brace/lab/cinematic
+            website/builds/brace/lab/scrollcraft-a11y.json
           if-no-files-found: ignore

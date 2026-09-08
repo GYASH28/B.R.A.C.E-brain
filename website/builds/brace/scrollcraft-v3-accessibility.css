@@ -51,12 +51,14 @@
   .brain-receipt{width:min(320px,38vw)}
 }
 
-/* Mobile polish. The previous flow title began underneath the fixed nav. Give
-   the section a true entrance gutter and keep swipe scenes comfortably framed. */
+/* Mobile polish. The flow needs its own breathing room because the fixed nav is
+   intentionally detached from document flow. Keep the section swipeable, but
+   make the heading enter as a complete composition rather than hiding behind
+   the navigation capsule. */
 @media (max-width:700px){
   .flow-kicker{color:#084f96}
-  .flow-story{padding:calc(var(--nav-h) + 5rem) 0 6.5rem}
-  .flow-header{padding-inline:1.1rem}
+  .flow-story{padding:calc(var(--nav-h) + 5rem) 0 6.5rem;scroll-margin-top:calc(var(--nav-h) + 1.5rem)}
+  .flow-header{padding:3.5rem 1.1rem 0}
   .flow-header h2{max-width:6.8ch;line-height:.9}
   .flow-viewport{margin-top:2rem;padding-left:1rem;scroll-padding-left:1rem}
   .flow-scene{flex-basis:86vw;min-height:68svh}

@@ -1,0 +1,51 @@
+name: BRACE website cinematic audit
+
+on:
+  push:
+    branches:
+      - design/scrollcraft-website-v2
+  pull_request:
+    branches:
+      - codex/unified-second-brain
+    paths:
+      - 'website/builds/brace/**'
+      - '.github/workflows/website-cinematic-audit.yml'
+
+jobs:
+  playwright-cinematic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/builds/brace/package-lock.json
+      - name: Install website audit dependencies
+        working-directory: website/builds/brace
+        run: npm ci
+      - name: Install Chrome
+        uses: browser-actions/setup-chrome@v1
+      - name: Start website
+        working-directory: website/builds/brace
+        run: |
+          nohup npm run serve > /tmp/brace-site.log 2>&1 &
+          for i in {1..30}; do
+            curl -fsS http://127.0.0.1:4517/ >/dev/null && exit 0
+            sleep 1
+          done
+          cat /tmp/brace-site.log
+          exit 1
+      - name: Run cinematic Playwright audit
+        working-directory: website/builds/brace
+        env:
+          SCROLLCRAFT_CHROME: /opt/hostedtoolcache/setup-chrome/chromium/stable/x64/chrome
+        run: node scripts/cinematic-audit.mjs
+      - name: Upload visual audit frames
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: brace-cinematic-audit
+          path: website/builds/brace/lab/cinematic
+          if-no-files-found: ignore

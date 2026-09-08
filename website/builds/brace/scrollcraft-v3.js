@@ -15,7 +15,7 @@
 
   const progressFor = (el, scrollValue, extra=0) => {
     if (!el) return 0;
-    const start = el.offsetTop;
+    const start = el.getBoundingClientRect().top + scrollY;
     const travel = Math.max(1, el.offsetHeight - innerHeight + extra);
     return clamp((scrollValue - start) / travel);
   };
@@ -36,7 +36,8 @@
     }
     const p = progressFor(film, scrollValue);
     stage.style.setProperty('--opening-p', p.toFixed(4));
-    document.body.classList.toggle('opening-active', scrollValue < film.offsetTop + film.offsetHeight - innerHeight * .08);
+    const filmTop = film.getBoundingClientRect().top + scrollY;
+    document.body.classList.toggle('opening-active', scrollValue < filmTop + film.offsetHeight - innerHeight * .08);
     const scene = p < .30 ? 0 : p < .67 ? 1 : 2;
     all('[data-opening-copy]', stage).forEach((node,i) => node.classList.toggle('is-active', i === scene));
     if (video && Number.isFinite(video.duration) && video.duration > 0) {
@@ -49,7 +50,7 @@
 
   function renderScroll() {
     const target = scrollY;
-    visualScroll = reduceMotion.matches ? target : lerp(visualScroll, target, .115);
+    visualScroll = reduceMotion.matches ? target : lerp(visualScroll, target, .22);
     if (Math.abs(target - visualScroll) < .08) visualScroll = target;
     const scrollable = Math.max(1, document.documentElement.scrollHeight - innerHeight);
     root.style.setProperty('--page-p', clamp(visualScroll / scrollable).toFixed(5));

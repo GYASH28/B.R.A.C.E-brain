@@ -169,7 +169,18 @@
     root.dataset.braceGuideRuntime = "ready";
   }
 
-  const boot = () => requestAnimationFrame(() => requestAnimationFrame(init));
+  function loadPolishThenInit() {
+    if (by('link[data-guide-polish]')) return init();
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'polish.css?v=20260908-clean2';
+    link.dataset.guidePolish = '';
+    link.addEventListener('load', init, { once: true });
+    link.addEventListener('error', init, { once: true });
+    document.head.append(link);
+  }
+
+  const boot = () => requestAnimationFrame(() => requestAnimationFrame(loadPolishThenInit));
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
   else boot();
 })();

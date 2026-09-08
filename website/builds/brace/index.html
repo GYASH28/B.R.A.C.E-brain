@@ -1,381 +1,214 @@
 <!doctype html>
-<html lang="en" data-intro="pending">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#edf7ff">
-  <meta name="description" content="BRACE is a local-first memory layer that keeps decisions, sources, and context private, inspectable, and ready for compatible AI tools.">
-  <meta property="og:title" content="BRACE | Your work remembers.">
-  <meta property="og:description" content="A private, source-backed memory layer for every compatible AI tool.">
-  <meta property="og:type" content="website">
-  <meta property="og:url" content="https://b-r-a-c-e-brain.vercel.app/">
-  <meta property="og:image" content="https://b-r-a-c-e-brain.vercel.app/assets/app-overview.png">
-  <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="BRACE | Your work remembers.">
-  <meta name="twitter:description" content="Local by default. Evidence attached. Context moves only when you choose.">
-  <meta name="twitter:image" content="https://b-r-a-c-e-brain.vercel.app/assets/app-overview.png">
+  <meta name="theme-color" content="#eaf6ff">
+  <meta name="description" content="BRACE is a local-first memory layer for source-backed recall across compatible AI tools.">
   <title>BRACE | Your work remembers.</title>
-  <link rel="canonical" href="https://b-r-a-c-e-brain.vercel.app/">
-  <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="favicon.ico">
   <link rel="preload" href="assets/brace-logo.svg" as="image" fetchpriority="high">
-  <link rel="stylesheet" href="site.css?v=20260907-glass">
-  <link rel="stylesheet" href="experience.css?v=20260908-scrollcraft">
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"BRACE","applicationCategory":"ProductivityApplication","operatingSystem":"Windows, Linux","softwareVersion":"0.7.0","description":"Local-first personal AI memory layer with source-backed recall.","license":"https://www.apache.org/licenses/LICENSE-2.0","downloadUrl":"https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0"}</script>
+  <link rel="preload" href="assets/brace-opening-poster.jpg" as="image" fetchpriority="high">
+  <link rel="stylesheet" href="site.css?v=20260908-cinematic-clean">
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="page-progress" aria-hidden="true"><i data-page-progress></i></div>
 
-  <header class="site-bar" data-site-bar>
-    <a class="site-brand" href="#top" aria-label="BRACE home">
-      <img src="assets/brace-logo.svg" width="36" height="36" alt="">
-      <span><strong>BRACE</strong><small>MEMORY ATLAS</small></span>
+  <header class="site-nav" data-site-nav>
+    <a class="brand" href="#hero" aria-label="BRACE home">
+      <img src="assets/brace-logo.svg" width="34" height="34" alt="">
+      <span><strong>BRACE</strong><small>PRIVATE MEMORY</small></span>
     </a>
-    <nav class="atlas-route" aria-label="Primary navigation">
-      <a href="#story" data-route="story"><i></i><span>Why</span></a>
-      <a href="#atlas" data-route="atlas"><i></i><span>Brain</span></a>
-      <a href="#company" data-route="company"><i></i><span>Company</span></a>
-      <a href="#product" data-route="product"><i></i><span>Product</span></a>
-      <a href="#trust" data-route="trust"><i></i><span>Trust</span></a>
+    <nav aria-label="Primary navigation">
+      <a href="#flow">How it works</a>
+      <a href="#brain">Brain</a>
+      <a href="guide/">Guide</a>
     </nav>
-    <div class="bar-actions">
-      <button type="button" class="icon-button replay-button" data-replay-opening aria-label="Replay memory ignition">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 1-2.3-5.7L20 7.6M20 3v4.6h-4.6"/></svg>
-      </button>
-      <a class="bar-download" href="#download">Get BRACE</a>
+    <div class="nav-actions">
+      <button type="button" class="nav-icon" data-replay-opening aria-label="Replay opening animation">↺</button>
+      <a class="nav-cta" href="#download">Get BRACE</a>
     </div>
   </header>
 
   <main id="main">
-    <section id="top" class="hero" data-act="hero" aria-labelledby="hero-title">
-      <div class="hero-coordinate hero-coordinate--top" aria-hidden="true">LOCAL / 28.6139° N</div>
-      <div class="hero-copy">
-        <p class="signal-label"><i></i> PRIVATE MEMORY, WITH RECEIPTS</p>
-        <h1 id="hero-title">Your work<br>remembers.</h1>
-        <p class="hero-lede">BRACE keeps decisions, sources, and context private, then carries only what you choose into compatible AI.</p>
-        <div class="hero-actions">
-          <a class="button button--primary" href="#atlas">Enter your Brain <span aria-hidden="true">↘</span></a>
-          <a class="button button--text" href="#download">Get BRACE <span aria-hidden="true">↓</span></a>
+    <section class="opening-film" data-opening-film aria-label="BRACE opening film">
+      <div class="opening-stage" data-opening-stage>
+        <picture class="opening-poster" aria-hidden="true">
+          <source media="(max-width: 700px)" srcset="assets/brace-opening-portrait-poster.jpg">
+          <img src="assets/brace-opening-poster.jpg" alt="" width="1440" height="810">
+        </picture>
+        <video class="opening-video" data-opening-video muted playsinline preload="metadata" poster="assets/brace-opening-poster.jpg" aria-hidden="true">
+          <source data-desktop-src="assets/brace-opening.mp4" data-mobile-src="assets/brace-opening-portrait.mp4" type="video/mp4">
+        </video>
+        <div class="opening-wash" aria-hidden="true"></div>
+        <div class="opening-grid" aria-hidden="true"></div>
+        <div class="opening-brand">
+          <img src="assets/brace-logo.svg" width="58" height="58" alt="">
+          <span>BRACE</span>
+        </div>
+        <div class="opening-copy" data-opening-copy="0">
+          <p>LOCAL-FIRST MEMORY</p>
+          <h1>One memory.</h1>
+        </div>
+        <div class="opening-copy" data-opening-copy="1">
+          <p>FOR COMPATIBLE AI</p>
+          <h2>Every tool can pick up the thread.</h2>
+        </div>
+        <div class="opening-copy" data-opening-copy="2">
+          <p>SOURCE ATTACHED · PERMISSIONED · PRIVATE</p>
+          <h2>Your work remembers.</h2>
+        </div>
+        <div class="opening-bottom" aria-hidden="true"><span>SCROLL TO SCRUB</span><i></i><b>LOCAL</b></div>
+      </div>
+    </section>
+
+    <section id="hero" class="hero-clean" data-hero>
+      <div class="hero-bg" aria-hidden="true"></div>
+      <div class="hero-vignette" aria-hidden="true"></div>
+      <div class="hero-orb hero-orb--one" aria-hidden="true"></div>
+      <div class="hero-orb hero-orb--two" aria-hidden="true"></div>
+
+      <div class="hero-shell">
+        <div class="hero-copy">
+          <p class="eyebrow"><i></i> YOUR PRIVATE MEMORY LAYER</p>
+          <h1>Your work<br>remembers.</h1>
+          <p class="hero-lede">BRACE keeps decisions, sources, and context close — then hands only the right memory to the AI you choose.</p>
+          <div class="hero-actions">
+            <a class="button button--primary" href="#brain">See your Brain <span>↘</span></a>
+            <a class="button button--quiet" href="guide/">Beginner guide</a>
+          </div>
+          <div class="hero-proof" aria-label="BRACE principles">
+            <span><i></i> Local by default</span>
+            <span><i></i> Evidence attached</span>
+            <span><i></i> Explicit handoff</span>
+          </div>
+        </div>
+
+        <section class="live-chat" data-live-chat aria-labelledby="chat-title">
+          <header class="chat-head">
+            <div class="chat-identity">
+              <span class="chat-mark"><img src="assets/brace-logo.svg" width="30" height="30" alt=""></span>
+              <div><strong id="chat-title">BRACE Live</strong><small><i></i> LOCAL MEMORY · DEMO</small></div>
+            </div>
+            <span class="chat-state" data-chat-state>RECALLING</span>
+          </header>
+          <div class="chat-stream" data-chat-stream role="log" aria-live="off" aria-label="Continuous BRACE memory demo">
+            <div class="chat-day"><span>TODAY</span></div>
+            <article class="message message--user"><p>What did we decide about provider access?</p></article>
+            <article class="message message--brace"><p>Keep provider handoff explicit and preview the context first.</p><footer><span>Architecture Decisions.md</span><b>verified</b></footer></article>
+          </div>
+          <div class="chat-prompts" aria-label="Try a prompt">
+            <button type="button" data-chat-prompt="decision">Recall a decision</button>
+            <button type="button" data-chat-prompt="source">Show the source</button>
+            <button type="button" data-chat-prompt="scope">What can AI see?</button>
+          </div>
+          <form class="chat-compose" data-chat-form>
+            <label class="visually-hidden" for="hero-chat-input">Ask BRACE</label>
+            <input id="hero-chat-input" data-chat-input autocomplete="off" maxlength="120" placeholder="Ask your memory…">
+            <button type="submit" aria-label="Send prompt">↑</button>
+          </form>
+          <p class="visually-hidden" data-chat-announcer aria-live="polite"></p>
+        </section>
+      </div>
+      <div class="hero-scroll" aria-hidden="true"><span>SCROLL</span><i></i></div>
+    </section>
+
+    <section id="flow" class="side-story" data-side-scroll aria-labelledby="flow-title">
+      <div class="side-stage">
+        <header class="side-intro">
+          <p class="eyebrow"><i></i> MEMORY IN MOTION</p>
+          <h2 id="flow-title">One thread.<br>Four moments.</h2>
+          <p>The page moves sideways because your context does too — from capture, to recall, to AI, to control.</p>
+          <div class="side-meter"><i data-side-meter></i></div>
+        </header>
+        <div class="side-viewport">
+          <div class="side-rail" data-side-rail>
+            <article class="side-panel" data-side-panel>
+              <div class="side-copy"><span>01 / CAPTURE</span><h3>Keep the outcome,<br>not the noise.</h3><p>Save a decision, lesson, warning, or procedure with the source still attached.</p></div>
+              <figure><img src="assets/app-inbox.png" width="1440" height="960" alt="BRACE Inbox capture screen"><figcaption>QUICK CAPTURE · LOCAL</figcaption></figure>
+            </article>
+            <article class="side-panel" data-side-panel>
+              <div class="side-copy"><span>02 / RECALL</span><h3>Ask once.<br>Inspect the receipt.</h3><p>Memory and source evidence stay visually separate so a useful answer never becomes a mystery.</p></div>
+              <figure><img src="assets/app-recall.png" width="1440" height="960" alt="BRACE recall screen with source evidence"><figcaption>RECALL · EVIDENCE ATTACHED</figcaption></figure>
+            </article>
+            <article class="side-panel" data-side-panel>
+              <div class="side-copy"><span>03 / CONNECT</span><h3>Give AI context.<br>Not your whole life.</h3><p>Start read-only, choose the client, preview the boundary, and expand permission deliberately.</p></div>
+              <figure><img src="assets/app-connections.png" width="1440" height="960" alt="BRACE Connections screen"><figcaption>CONNECTIONS · READ-ONLY FIRST</figcaption></figure>
+            </article>
+            <article class="side-panel" data-side-panel>
+              <div class="side-copy"><span>04 / CONTROL</span><h3>Your memory.<br>Your exit button.</h3><p>Back up, export, forget one item, or remove all local state. The originals remain yours.</p></div>
+              <figure><img src="assets/app-settings.png" width="1440" height="960" alt="BRACE settings and privacy controls"><figcaption>CONTROL · RECOVERABLE</figcaption></figure>
+            </article>
+          </div>
         </div>
       </div>
-
-      <figure class="hero-atlas" data-hero-atlas aria-labelledby="atlas-caption">
-        <div class="atlas-depth atlas-depth--far" aria-hidden="true"></div>
-        <div class="atlas-depth atlas-depth--mid" aria-hidden="true"></div>
-        <svg class="atlas-map" viewBox="0 0 900 760" role="img" aria-labelledby="hero-atlas-title hero-atlas-desc">
-          <title id="hero-atlas-title">A source-backed BRACE memory graph</title>
-          <desc id="hero-atlas-desc">Project files and meeting notes connect through a local BRACE memory to a selected compatible AI context.</desc>
-          <defs>
-            <radialGradient id="seed-fill" cx="50%" cy="42%" r="64%">
-              <stop offset="0" stop-color="#ffffff"/>
-              <stop offset=".46" stop-color="#dceeff"/>
-              <stop offset="1" stop-color="#79aff8"/>
-            </radialGradient>
-          </defs>
-          <g class="contours" aria-hidden="true">
-            <path d="M93 368C104 172 274 60 453 76c186 16 342 153 347 330 5 168-135 284-311 282C267 686 79 572 93 368Z"/>
-            <path d="M137 367c13-160 148-255 305-246 164 10 299 119 310 270 11 146-104 245-263 250-188 6-364-99-352-274Z"/>
-            <path d="M192 368c8-119 111-199 243-200 139-1 254 84 268 205 15 119-73 207-212 219-153 13-309-74-299-224Z"/>
-          </g>
-          <g class="atlas-edges" aria-hidden="true">
-            <path class="edge edge--quiet" d="M155 198C263 176 326 233 407 340"/>
-            <path class="edge edge--quiet" d="M123 474C240 484 302 441 407 368"/>
-            <path class="edge edge--quiet" d="M278 624C327 531 357 452 420 382"/>
-            <path class="edge edge--quiet" d="M739 207C652 226 597 277 493 346"/>
-            <path class="edge edge--quiet" d="M759 492C651 486 590 426 493 380"/>
-            <path class="edge edge--quiet" d="M617 636C577 534 545 450 481 389"/>
-            <path class="edge edge--active" data-route-path="document" d="M155 198C263 176 326 233 407 340C436 372 460 367 493 346C597 277 652 226 739 207"/>
-            <path class="edge edge--active" data-route-path="meeting" d="M123 474C240 484 302 441 407 368C439 346 461 353 493 380C590 426 651 486 759 492"/>
-            <path class="edge edge--active" data-route-path="decision" d="M278 624C327 531 357 452 420 382C445 355 460 361 481 389C545 450 577 534 617 636"/>
-          </g>
-          <g class="atlas-nodes" aria-hidden="true">
-            <circle class="node node--source" cx="155" cy="198" r="11"/>
-            <circle class="node node--source" cx="123" cy="474" r="11"/>
-            <circle class="node node--source" cx="278" cy="624" r="11"/>
-            <circle class="node node--destination" cx="739" cy="207" r="12"/>
-            <circle class="node node--destination" cx="759" cy="492" r="12"/>
-            <circle class="node node--destination" cx="617" cy="636" r="12"/>
-            <circle class="seed-ring seed-ring--outer" cx="450" cy="365" r="82"/>
-            <circle class="seed-ring seed-ring--inner" cx="450" cy="365" r="58"/>
-            <circle class="seed-core" cx="450" cy="365" r="42" fill="url(#seed-fill)"/>
-          </g>
-        </svg>
-
-        <button class="atlas-node atlas-node--document is-active" type="button" data-source="document" aria-pressed="true">
-          <span>Architecture Decisions.md</span><small>Source</small>
-        </button>
-        <button class="atlas-node atlas-node--meeting" type="button" data-source="meeting" aria-pressed="false">
-          <span>Launch review</span><small>Meeting</small>
-        </button>
-        <button class="atlas-node atlas-node--decision" type="button" data-source="decision" aria-pressed="false">
-          <span>API boundary</span><small>Decision</small>
-        </button>
-        <div class="atlas-label atlas-label--brace" aria-hidden="true"><strong>BRACE</strong><span>LOCAL MEMORY</span></div>
-        <div class="atlas-label atlas-label--ai" aria-hidden="true"><strong>SELECTED AI</strong><span>EXPLICIT CONTEXT</span></div>
-
-        <figcaption id="atlas-caption" class="evidence-receipt" data-evidence-receipt aria-live="polite">
-          <div class="receipt-head"><span>PROVENANCE / VERIFIED</span><i aria-hidden="true"></i></div>
-          <strong data-receipt-title>Architecture decision recovered</strong>
-          <dl>
-            <div><dt>Source</dt><dd data-receipt-source>Architecture Decisions.md</dd></div>
-            <div><dt>Memory</dt><dd data-receipt-memory>Keep the source adapter read-only</dd></div>
-            <div><dt>Scope</dt><dd data-receipt-scope>Private · selected context only</dd></div>
-          </dl>
-        </figcaption>
-      </figure>
-
-      <p class="route-summary visually-hidden" data-route-summary>Architecture Decisions.md connects to a local BRACE memory, then to explicitly selected AI context.</p>
-      <button class="replay-pulse" type="button" data-replay-pulse>Replay provenance pulse</button>
-      <div class="hero-coordinate hero-coordinate--bottom" aria-hidden="true">SOURCE → MEMORY → PERMISSION</div>
     </section>
 
-    <section id="story" class="story section-shell" data-act="story" aria-labelledby="story-title">
-      <div class="story-lead reveal">
-        <p class="signal-label"><i></i> CONTEXT BREAKS QUIETLY</p>
-        <h2 id="story-title">Your work is already connected.<br>Your tools just cannot see the thread.</h2>
-      </div>
-      <div class="fragment-field" aria-label="Disconnected work before BRACE">
-        <article class="fragment fragment--document reveal">
-          <span>DOCUMENT</span><strong>Architecture Decisions.md</strong><p>Source adapters remain read-only.</p><small>Edited Tuesday · 09:42</small>
-        </article>
-        <article class="fragment fragment--meeting reveal">
-          <span>MEETING</span><strong>Launch review</strong><p>Ship the graph before expanding connectors.</p><small>Three decisions · two owners</small>
-        </article>
-        <article class="fragment fragment--task reveal">
-          <span>TASK</span><strong>Validate data boundary</strong><p>Confirm what leaves the device.</p><small>Open · security review</small>
-        </article>
-        <article class="fragment fragment--chat reveal">
-          <span>AI CHAT</span><strong>Context missing</strong><p>“Can you remind me what we decided?”</p><small>Another explanation starts</small>
-        </article>
-        <svg class="fragment-lines" viewBox="0 0 1200 650" aria-hidden="true">
-          <path d="M112 127C324 168 409 223 588 323"/>
-          <path d="M1081 151C890 184 768 238 613 323"/>
-          <path d="M169 532C340 482 438 414 588 339"/>
-          <path d="M1050 526C852 489 760 420 613 339"/>
-          <circle cx="600" cy="332" r="14"/>
-        </svg>
-      </div>
-      <p class="story-turn reveal">BRACE does not create another copy of your work. It preserves the outcome, keeps the evidence attached, and lets you inspect the relationship.</p>
-    </section>
-
-    <section id="provenance" class="provenance section-shell" data-act="provenance" aria-labelledby="provenance-title">
-      <div class="provenance-copy reveal">
-        <p class="signal-label"><i></i> A MEMORY WITH A RECEIPT</p>
-        <h2 id="provenance-title">An answer is only useful when you can walk back to the source.</h2>
-        <p>Every relationship has a type. Every retrieved memory can expose its evidence. Inferred links are marked as inferred.</p>
-      </div>
-      <div class="provenance-strip reveal" aria-label="Source to memory to AI data flow">
-        <article><small>CANONICAL SOURCE</small><strong>Architecture Decisions.md</strong><span>Read in place</span></article>
-        <div class="provenance-bridge" aria-hidden="true"><i></i><b>PROVENANCE</b></div>
-        <article class="provenance-memory"><small>LOCAL MEMORY</small><strong>Read-only adapter boundary</strong><span>Evidence linked</span></article>
-        <div class="provenance-bridge provenance-bridge--permission" aria-hidden="true"><i></i><b>PERMISSION</b></div>
-        <article><small>COMPATIBLE AI</small><strong>Selected context</strong><span>Explicit handoff</span></article>
-      </div>
-    </section>
-
-    <section id="atlas" class="brain-act" data-act="atlas" aria-labelledby="brain-title">
-      <div class="brain-stage" data-brain-stage data-sc-verify-state="brain:all:decision">
-        <header class="brain-header">
-          <div>
-            <p class="signal-label"><i></i> SYNTHETIC NORTHSTAR WORKSPACE</p>
-            <h2 id="brain-title">The graph is the workspace.</h2>
-          </div>
-          <div class="brain-actions">
-            <label class="brain-search"><span class="visually-hidden">Search graph</span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/></svg><input type="search" data-brain-search placeholder="Find a memory" autocomplete="off"></label>
-            <button type="button" data-brain-fit>Fit</button>
-            <button type="button" data-brain-reset>Reset</button>
-            <button type="button" data-brain-fullscreen><span>Full screen</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5"/></svg></button>
-          </div>
+    <section id="brain" class="brain-peak" data-brain-peak aria-labelledby="brain-title">
+      <div class="brain-glow" aria-hidden="true"></div>
+      <div class="brain-shell">
+        <header class="brain-copy">
+          <p class="eyebrow eyebrow--dark"><i></i> THIS IS THE MEMORY</p>
+          <h2 id="brain-title">Not a chatbot history.<br>A living graph.</h2>
+          <p>Sources, decisions, people, projects, and memories stay connected to the evidence that made them matter.</p>
         </header>
 
-        <div class="brain-workspace">
-          <nav class="brain-filters" aria-label="Graph filters">
-            <button type="button" data-brain-filter="all" aria-pressed="true"><i></i>Everything <span>7</span></button>
-            <button type="button" data-brain-filter="source" aria-pressed="false"><i></i>Sources <span>3</span></button>
-            <button type="button" data-brain-filter="memory" aria-pressed="false"><i></i>Memories <span>2</span></button>
-            <button type="button" data-brain-filter="decision" aria-pressed="false"><i></i>Decisions <span>1</span></button>
-            <button type="button" data-brain-filter="person" aria-pressed="false"><i></i>People <span>1</span></button>
-          </nav>
-
-          <div class="brain-canvas" data-brain-canvas tabindex="0" aria-label="Interactive graph. Use Tab to move among visible nodes.">
-            <div class="brain-grid" aria-hidden="true"></div>
-            <svg class="brain-links" viewBox="0 0 1000 650" aria-hidden="true">
-              <path data-link="source memory" d="M103 162C205 185 246 250 353 285"/>
-              <path data-link="source decision" d="M125 459C228 441 289 387 388 352"/>
-              <path data-link="memory decision" d="M353 285C438 241 505 221 584 197"/>
-              <path data-link="memory person" d="M353 285C449 341 500 389 588 416"/>
-              <path data-link="decision person" d="M388 352C486 366 526 391 588 416"/>
-              <path data-link="decision memory" d="M584 197C678 218 720 278 795 319"/>
-              <path data-link="person memory" d="M588 416C686 438 746 402 795 319"/>
-              <path data-link="memory source" d="M795 319C845 383 864 452 902 507"/>
-              <path data-link="person source" d="M588 416C675 500 758 518 902 507"/>
-              <path data-link="memory decision" d="M353 285C360 324 365 336 388 352"/>
-            </svg>
-            <button class="brain-node brain-node--source" style="--x:10%;--y:25%" data-node="roadmap" data-kind="source"><i></i><strong>Product roadmap</strong><span>Source</span></button>
-            <button class="brain-node brain-node--source" style="--x:12%;--y:70%" data-node="architecture" data-kind="source"><i></i><strong>Architecture Decisions.md</strong><span>Source</span></button>
-            <button class="brain-node brain-node--memory is-selected" style="--x:35%;--y:44%" data-node="decision" data-kind="memory"><i></i><strong>Graph-first workspace</strong><span>Memory · selected</span></button>
-            <button class="brain-node brain-node--decision" style="--x:58%;--y:30%" data-node="launch" data-kind="decision"><i></i><strong>Launch decision</strong><span>Decision</span></button>
-            <button class="brain-node brain-node--person" style="--x:59%;--y:64%" data-node="maya" data-kind="person"><i></i><strong>Maya Chen</strong><span>Owner</span></button>
-            <button class="brain-node brain-node--memory" style="--x:79%;--y:49%" data-node="boundary" data-kind="memory"><i></i><strong>Provider boundary</strong><span>Memory</span></button>
-            <button class="brain-node brain-node--source" style="--x:90%;--y:77%" data-node="review" data-kind="source"><i></i><strong>Launch review</strong><span>Meeting</span></button>
-            <div class="brain-empty" data-brain-empty hidden><strong>No matching memory</strong><span>Clear the search or choose another filter.</span></div>
-          </div>
-
-          <aside class="brain-inspector" data-brain-inspector aria-live="polite">
-            <div class="inspector-state"><i></i><span>EXPLICIT LINK</span></div>
-            <p>MEMORY DOSSIER</p>
+        <div class="brain-product" data-brain-product>
+          <figure class="brain-frame">
+            <div class="window-bar"><span><i></i><i></i><i></i></span><b>YOUR BRAIN</b><em>LOCAL</em></div>
+            <img src="assets/app-graph.png" width="1440" height="960" alt="BRACE Brain workspace showing a connected memory graph">
+            <div class="brain-sheen" aria-hidden="true"></div>
+            <button type="button" class="brain-hotspot brain-hotspot--source" data-brain-hotspot="source" aria-label="Inspect source relationship"><i></i><span>Source</span></button>
+            <button type="button" class="brain-hotspot brain-hotspot--memory is-active" data-brain-hotspot="memory" aria-label="Inspect memory relationship"><i></i><span>Memory</span></button>
+            <button type="button" class="brain-hotspot brain-hotspot--evidence" data-brain-hotspot="evidence" aria-label="Inspect evidence relationship"><i></i><span>Evidence</span></button>
+          </figure>
+          <aside class="brain-receipt" data-brain-receipt aria-live="polite">
+            <div><span>RELATIONSHIP</span><b data-brain-kind>MEMORY</b></div>
             <h3 data-brain-title>Graph-first workspace</h3>
-            <span class="inspector-type" data-brain-kind>Memory</span>
-            <blockquote data-brain-summary>Make the graph the central workspace and keep evidence visible beside every relationship.</blockquote>
-            <dl>
-              <div><dt>Source</dt><dd data-brain-source>Architecture Decisions.md</dd></div>
-              <div><dt>Owner</dt><dd data-brain-owner>Maya Chen</dd></div>
-              <div><dt>Scope</dt><dd data-brain-scope>Private workspace</dd></div>
-              <div><dt>Updated</dt><dd data-brain-updated>Today, 09:42</dd></div>
-            </dl>
-            <button type="button" data-brain-follow>Follow evidence path</button>
+            <p data-brain-copy>Make the graph the central workspace and keep evidence visible beside every relationship.</p>
+            <dl><div><dt>Source</dt><dd data-brain-source>Architecture Decisions.md</dd></div><div><dt>Scope</dt><dd data-brain-scope>Private workspace</dd></div></dl>
           </aside>
         </div>
-
-        <div class="brain-status" aria-live="polite"><span><i></i> LOCAL GRAPH</span><output data-brain-status>7 items · Graph-first workspace selected</output><small>Demo data · nothing persists</small></div>
       </div>
     </section>
 
-    <section id="company" class="company section-shell" data-act="company" aria-labelledby="company-title">
-      <div class="company-heading reveal">
-        <div>
-          <p class="signal-label"><i></i> BUSINESS MEMORY, WITHOUT SURVEILLANCE</p>
-          <h2 id="company-title">One knowledge fabric.<br>Four ways to see it.</h2>
-        </div>
-        <p>BRACE is expanding from personal memory into governed team and organization spaces. Private memory never changes scope silently.</p>
-      </div>
-      <div class="company-surface reveal" data-company-surface>
-        <div class="role-lenses" role="tablist" aria-label="Business role lenses">
-          <button type="button" role="tab" id="role-employee" aria-controls="role-panel" aria-selected="true" data-role="employee">Employee</button>
-          <button type="button" role="tab" id="role-manager" aria-controls="role-panel" aria-selected="false" data-role="manager" tabindex="-1">Manager</button>
-          <button type="button" role="tab" id="role-executive" aria-controls="role-panel" aria-selected="false" data-role="executive" tabindex="-1">Executive</button>
-          <button type="button" role="tab" id="role-admin" aria-controls="role-panel" aria-selected="false" data-role="admin" tabindex="-1">Administrator</button>
-        </div>
-        <div class="role-panel" id="role-panel" role="tabpanel" aria-labelledby="role-employee" tabindex="0">
-          <div class="role-copy">
-            <span>IN DEVELOPMENT · BUSINESS WORKSPACE</span>
-            <h3 data-role-title>Your work, decisions, and learning stay connected.</h3>
-            <p data-role-copy>Capture project outcomes, retrieve them with citations, and choose what becomes team knowledge.</p>
-            <ul data-role-list><li>Private and assigned work memory</li><li>Permission-aware project recall</li><li>Review before any external action</li></ul>
-          </div>
-          <div class="role-map" aria-hidden="true">
-            <svg viewBox="0 0 580 420"><path d="M86 207C166 106 241 116 293 206S421 300 500 202"/><path d="M95 290C181 332 241 288 293 206S421 109 494 126"/><circle cx="86" cy="207" r="20"/><circle cx="95" cy="290" r="12"/><circle cx="293" cy="206" r="34"/><circle cx="500" cy="202" r="18"/><circle cx="494" cy="126" r="12"/></svg>
-            <span class="role-scope role-scope--private">PRIVATE</span><span class="role-scope role-scope--team">TEAM</span><span class="role-scope role-scope--org">ORG</span>
-          </div>
-        </div>
-        <p class="roadmap-note">The personal graph and Company surface exist today. Shared organization memory, enterprise identity, and governance remain roadmap work until their production gates pass.</p>
-      </div>
-    </section>
-
-    <section id="product" class="product section-shell" data-act="product" aria-labelledby="product-title">
-      <header class="product-heading reveal">
-        <p class="signal-label"><i></i> PRODUCT PROOF / CURRENT BUILD</p>
-        <h2 id="product-title">The real application.<br>No concept dashboard.</h2>
-        <p>Captured from the packaged BRACE application with the fictional Northstar workspace.</p>
-      </header>
-      <div class="proof-sequence">
-        <figure class="proof proof--graph reveal" data-proof="graph" data-proof-title="Brain graph" data-proof-image="assets/app-graph.png">
-          <button type="button" class="proof-media" data-proof-expand aria-label="Open Brain graph screenshot">
-            <img src="assets/app-graph.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE graph workspace with connected synthetic memories and sources">
-            <span>Open full view <b aria-hidden="true">↗</b></span>
-          </button>
-          <figcaption><span>THE BRAIN</span><strong>Explore the whole memory system.</strong><p>Search, focus, cluster, fit, and inspect evidence without leaving the graph.</p></figcaption>
-        </figure>
-        <figure class="proof proof--recall reveal" data-proof="recall" data-proof-title="Source-backed recall" data-proof-image="assets/app-recall.png">
-          <button type="button" class="proof-media" data-proof-expand aria-label="Open source-backed recall screenshot">
-            <img src="assets/app-recall.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE recall showing a memory beside its source evidence">
-            <span>Open full view <b aria-hidden="true">↗</b></span>
-          </button>
-          <figcaption><span>RECALL</span><strong>Answers keep their receipts.</strong><p>Durable memory, source evidence, retrieval mode, and confidence remain visibly distinct.</p></figcaption>
-        </figure>
-        <figure class="proof proof--automation reveal" data-proof="automation" data-proof-title="Guarded automations" data-proof-image="assets/app-automations.png">
-          <button type="button" class="proof-media" data-proof-expand aria-label="Open automation workspace screenshot">
-            <img src="assets/app-automations.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE automation workspace using synthetic data">
-            <span>Open full view <b aria-hidden="true">↗</b></span>
-          </button>
-          <figcaption><span>AUTOMATIONS</span><strong>Repeat work, keep the boundary.</strong><p>Preview permissions, dry run, inspect traces, and stop local automation from one place.</p></figcaption>
-        </figure>
-        <figure class="proof proof--company reveal" data-proof="company" data-proof-title="Company brief" data-proof-image="assets/app-company.png">
-          <button type="button" class="proof-media" data-proof-expand aria-label="Open Company brief screenshot">
-            <img src="assets/app-company.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Company brief showing synthetic shared decisions and presentation lenses">
-            <span>Open full view <b aria-hidden="true">↗</b></span>
-          </button>
-          <figcaption><span>COMPANY BRIEF</span><strong>See what needs attention without surveillance.</strong><p>Role lenses organize approved shared knowledge while personal memory remains outside the company view.</p></figcaption>
-        </figure>
-      </div>
-    </section>
-
-    <section id="trust" class="trust" data-act="trust" aria-labelledby="trust-title">
-      <div class="section-shell trust-layout">
-        <div class="trust-copy reveal">
-          <p class="signal-label"><i></i> PRIVACY IS THE TOPOLOGY</p>
-          <h2 id="trust-title">You can see every boundary.</h2>
-          <p>Files remain canonical. Memory is durable and local by default. An AI receives only context selected through an explicit handoff.</p>
-          <a class="text-link" href="guide/#privacy">Read the complete privacy model <span aria-hidden="true">→</span></a>
-        </div>
-        <div class="custody-map reveal" aria-label="BRACE custody model">
-          <article><span>YOUR FILES</span><strong>Canonical source</strong><small>Read in place · never rewritten</small></article>
-          <i class="custody-line" aria-hidden="true"></i>
-          <article class="custody-local"><span>YOUR DEVICE</span><strong>Local memory</strong><small>Evidence attached · exportable</small></article>
-          <i class="custody-line" aria-hidden="true"></i>
-          <article><span>YOUR PERMISSION</span><strong>Selected handoff</strong><small>Compatible client · explicit scope</small></article>
-          <div class="custody-seal" aria-hidden="true"><img src="assets/brace-logo.svg" width="42" height="42" alt=""><span>LOCAL<br>FIRST</span></div>
+    <section class="principles" aria-labelledby="principles-title">
+      <div class="principles-shell">
+        <header><p class="eyebrow"><i></i> NO MYSTERY LAYER</p><h2 id="principles-title">Simple rules.<br>Visible boundaries.</h2></header>
+        <div class="principle-lines">
+          <article><span>01</span><h3>Local first.</h3><p>Your BRACE database starts on your device. Cloud is not the default assumption.</p></article>
+          <article><span>02</span><h3>Source attached.</h3><p>Recall can show where the memory came from instead of asking you to trust a generated summary.</p></article>
+          <article><span>03</span><h3>Permissioned context.</h3><p>Compatible AI gets selected context through explicit connection boundaries.</p></article>
         </div>
       </div>
     </section>
 
-    <section id="download" class="download section-shell" data-act="download" aria-labelledby="download-title">
-      <div class="download-seed" aria-hidden="true"><i></i><img src="assets/brace-logo.svg" width="66" height="66" alt=""></div>
-      <div class="download-copy reveal">
-        <p class="signal-label"><i></i> BRACE 0.7.0 / PUBLIC PREVIEW</p>
-        <h2 id="download-title">Bring the context home.</h2>
-        <p>Start with an empty local database. Add only the sources you choose.</p>
-        <div class="preview-warning"><strong>Unsigned preview</strong><span>Verify the published SHA-256 before installing.</span></div>
+    <section id="download" class="download" aria-labelledby="download-title">
+      <div class="download-bg" aria-hidden="true"></div>
+      <div class="download-shell">
+        <div class="download-copy">
+          <img src="assets/brace-logo.svg" width="76" height="76" alt="">
+          <p class="eyebrow"><i></i> BRACE 0.7.0 PUBLIC PREVIEW</p>
+          <h2 id="download-title">Bring the context home.</h2>
+          <p>Windows and Linux. Empty local database on first run. No account required.</p>
+        </div>
+        <div class="download-actions">
+          <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/BRACE-Setup-0.7.0.exe"><strong>Windows</strong><span>Installer · x64</span><b>↓</b></a>
+          <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/BRACE-0.7.0.AppImage"><strong>Linux</strong><span>AppImage · x86_64</span><b>↓</b></a>
+          <a class="download-guide" href="guide/"><strong>New here?</strong><span>Open the beginner guide</span><b>↗</b></a>
+        </div>
+        <p class="download-note">Unsigned public preview. Verify release checksums before installation.</p>
       </div>
-      <div class="download-platforms reveal">
-        <article data-platform-card="windows">
-          <header><span>WIN</span><div><small>WINDOWS 10 / 11 · X64</small><h3>Windows installer</h3></div><b data-device-badge>THIS DEVICE</b></header>
-          <p>Guided installation and a standard uninstall path.</p>
-          <a class="platform-primary" data-download="windows" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/BRACE-Setup-0.7.0.exe"><strong>Download .exe</strong><small>Version 0.7.0 · preview</small></a>
-          <a class="platform-guide" href="guide/#install">Installation steps <span aria-hidden="true">→</span></a>
-        </article>
-        <article data-platform-card="linux">
-          <header><span>LNX</span><div><small>LINUX · X86_64</small><h3>Linux packages</h3></div><b data-device-badge>THIS DEVICE</b></header>
-          <p>Choose portable AppImage or Debian/Ubuntu package.</p>
-          <div class="linux-actions">
-            <a class="platform-primary" data-download="linux" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/BRACE-0.7.0.AppImage"><strong>AppImage</strong><small>Portable</small></a>
-            <a class="platform-secondary" data-download="deb" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/download/v0.7.0/brace-brain_0.7.0_amd64.deb"><strong>.deb</strong><small>Debian / Ubuntu</small></a>
-          </div>
-          <a class="platform-guide" href="guide/#install">Installation steps <span aria-hidden="true">→</span></a>
-        </article>
-      </div>
-      <div class="release-line reveal"><span><i></i>Versioned assets</span><span><i></i>SHA-256 manifest</span><span><i></i>CycloneDX SBOM</span><span><i></i>Apache-2.0 source</span><a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Release details <span aria-hidden="true">↗</span></a></div>
     </section>
   </main>
 
-  <dialog class="proof-dialog" id="proof-dialog" aria-labelledby="proof-dialog-title">
-    <div class="dialog-surface">
-      <header><span>PACKAGED APPLICATION / SYNTHETIC DATA</span><button type="button" data-dialog-close aria-label="Close product view">×</button></header>
-      <h2 id="proof-dialog-title">BRACE product view</h2>
-      <figure><img id="proof-dialog-image" src="assets/app-graph.png" width="1440" height="960" loading="lazy" decoding="async" alt="Expanded BRACE product screenshot using synthetic Northstar data"></figure>
-      <div><button type="button" data-lightbox-prev>← Previous</button><button type="button" data-lightbox-next>Next →</button></div>
-    </div>
-  </dialog>
-
-  <footer class="site-footer">
-    <a class="footer-brand" href="#top"><img src="assets/brace-logo.svg" width="38" height="38" alt=""><span><strong>BRACE</strong><small>ONE MEMORY · EVERY AI</small></span></a>
-    <p>Local-first. Source-backed. Yours.</p>
-    <nav aria-label="Project links"><a href="guide/">Beginner guide</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain">Source</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain/security">Security</a></nav>
+  <footer class="footer">
+    <a class="brand" href="#hero"><img src="assets/brace-logo.svg" width="30" height="30" alt=""><span><strong>BRACE</strong><small>ONE MEMORY · EVERY AI</small></span></a>
+    <p>Local-first · Open source · Apache-2.0</p>
+    <nav aria-label="Footer"><a href="guide/">Guide</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain">GitHub</a></nav>
   </footer>
 
-  <noscript><p class="noscript">BRACE remains readable and downloadable without JavaScript. Interactive graph controls are optional enhancements.</p></noscript>
-  <script src="site.js?v=20260907-glass" defer></script>
-  <script src="experience.js?v=20260908-scrollcraft" defer></script>
+  <script src="site.js?v=20260908-cinematic-clean" defer></script>
 </body>
 </html>

@@ -1,0 +1,127 @@
+/* Final visual-polish layer after Playwright frame review. */
+
+/* Keep the hero cinematic, but quieter: the product image is atmosphere, not wallpaper. */
+.hero-clean{scroll-margin-top:0}
+.hero-bg{
+  background-image:
+    linear-gradient(90deg,rgba(240,249,255,.995) 0%,rgba(232,246,255,.97) 32%,rgba(215,237,253,.82) 62%,rgba(199,226,248,.72)),
+    url('assets/brace-opening-poster.jpg');
+  background-position:center 48%;
+  filter:saturate(.68) contrast(.88) brightness(1.08) blur(1px);
+  transform:translate3d(calc((var(--pointer-x) - .5) * -14px),calc(var(--hero-p) * -22px),0) scale(1.065)
+}
+.hero-vignette{
+  background:
+    radial-gradient(circle at 76% 45%,rgba(255,255,255,.08),rgba(224,241,254,.3) 34%,rgba(231,245,255,.83) 74%,rgba(242,251,255,.96)),
+    linear-gradient(180deg,rgba(255,255,255,.18),rgba(202,230,251,.24))
+}
+.live-chat{box-shadow:inset 0 1px #fff,0 34px 90px rgba(11,63,123,.16)}
+
+/* Horizontal story: make each scene a cinematic viewport instead of a nested SaaS card. */
+.side-stage{grid-template-columns:minmax(285px,31vw) minmax(0,1fr)}
+.side-intro{z-index:20}
+.side-viewport{position:relative;z-index:2;overflow:hidden}
+.side-rail{gap:clamp(1.2rem,2vw,2rem)}
+.side-panel{
+  position:relative;
+  width:min(64vw,960px);
+  height:min(70vh,700px);
+  display:block;
+  padding:0;
+  overflow:hidden;
+  border-radius:30px;
+  background:#dbeefa;
+  box-shadow:0 34px 92px rgba(10,60,118,.14)
+}
+.side-panel::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(180deg,transparent 42%,rgba(7,29,54,.08) 68%,rgba(7,29,54,.42) 100%)
+}
+.side-panel figure{
+  position:absolute;
+  inset:0;
+  display:block;
+  margin:0;
+  border:0;
+  border-radius:inherit;
+  box-shadow:none;
+  transform:none
+}
+.side-panel figure img{width:100%;height:100%;object-fit:cover;object-position:center}
+.side-panel figcaption{
+  position:absolute;
+  z-index:3;
+  top:16px;
+  right:16px;
+  padding:8px 10px;
+  border:1px solid rgba(255,255,255,.5);
+  border-radius:999px;
+  color:#eaf7ff;
+  background:rgba(7,27,50,.38);
+  backdrop-filter:blur(10px);
+  font-size:.48rem
+}
+.side-copy{
+  position:absolute;
+  z-index:4;
+  left:22px;
+  bottom:22px;
+  width:min(410px,calc(100% - 44px));
+  padding:18px 19px 17px;
+  border:1px solid rgba(255,255,255,.62);
+  border-radius:20px;
+  color:#102b45;
+  background:linear-gradient(145deg,rgba(250,254,255,.84),rgba(220,239,253,.7));
+  box-shadow:inset 0 1px rgba(255,255,255,.95),0 16px 44px rgba(5,38,78,.13);
+  backdrop-filter:blur(18px) saturate(125%)
+}
+.side-copy span{font-size:.5rem}
+.side-copy h3{margin:.8rem 0 0;font-size:clamp(2rem,3vw,3.45rem);line-height:.92}
+.side-copy p{margin:.8rem 0 0;font-size:.76rem;line-height:1.55}
+
+/* Give the graph peak room before its headline so fixed navigation never collides with it. */
+.brain-peak{scroll-margin-top:80px}
+
+@media(max-width:1000px) and (min-width:701px){
+  .side-stage{grid-template-columns:1fr}
+  .side-panel{width:min(76vw,900px)}
+}
+
+@media(max-width:700px){
+  .hero-clean{padding-top:150px!important;align-items:start}
+  .hero-shell{padding-top:0!important}
+  .hero-copy{transform:none}
+  .hero-copy .eyebrow{margin-bottom:.9rem}
+  .hero-copy h1{margin-top:0!important;line-height:.84}
+  .hero-bg{
+    inset:-3%;
+    background-image:
+      linear-gradient(180deg,rgba(238,249,255,.96) 0%,rgba(226,243,255,.9) 44%,rgba(208,233,251,.8) 100%),
+      url('assets/brace-opening-portrait-poster.jpg');
+    background-position:center top;
+    filter:saturate(.65) contrast(.9) brightness(1.08) blur(1px);
+    transform:scale(1.045)
+  }
+  .live-chat{margin-top:1rem;transform:none;min-height:560px}
+  .side-story{padding-top:6rem}
+  .side-viewport{overflow-x:auto}
+  .side-panel{
+    width:88vw;
+    min-height:560px;
+    height:68svh;
+    flex:0 0 88vw;
+    scroll-snap-align:center
+  }
+  .side-copy{left:14px;right:14px;bottom:14px;width:auto;padding:15px}
+  .side-copy h3{font-size:clamp(2rem,10vw,3rem)}
+  .side-copy p{font-size:.75rem}
+  .side-panel figcaption{top:12px;right:12px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .hero-bg,.live-chat{transform:none!important}
+}

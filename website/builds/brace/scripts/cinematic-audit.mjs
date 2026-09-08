@@ -20,6 +20,16 @@ async function open(viewport, reducedMotion = 'no-preference') {
   return { page, errors };
 }
 
+async function openGuide(viewport) {
+  const page = await browser.newPage({ viewport });
+  const errors = [];
+  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto(`${base}/guide/`, { waitUntil: 'networkidle' });
+  await page.waitForFunction(() => document.documentElement.dataset.braceGuideRuntime === 'ready');
+  return { page, errors };
+}
+
 async function goToTopOf(page, selector) {
   await page.locator(selector).evaluate(el => window.scrollTo({ top: el.offsetTop, behavior: 'instant' }));
   await page.waitForTimeout(180);
@@ -108,6 +118,37 @@ try {
     const position = await page.locator('[data-opening-stage]').evaluate(el => getComputedStyle(el).position);
     assert(position !== 'sticky', 'reduced-motion opening should not scrub');
     assert(errors.length === 0, `reduced-motion errors: ${errors.join(' | ')}`);
+    await page.close();
+  }
+
+  {
+    const { page, errors } = await openGuide({ width: 1440, height: 900 });
+    const overflow = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth);
+    assert(overflow <= 2, `guide desktop horizontal overflow ${overflow}px`);
+    assert(await page.locator('.launchpad').isVisible(), 'guide launchpad missing');
+    const bar = await page.locator('[data-guide-bar]').boundingBox();
+    const title = await page.locator('#guide-title').boundingBox();
+    assert(bar && title && title.y > bar.y + bar.height + 24, 'guide hero title collides with navigation');
+    await page.locator('[data-platform-choice="windows"]').click();
+    assert((await page.locator('[data-platform-title]').innerText()).toLowerCase().includes('windows'), 'guide platform picker did not react');
+    await page.screenshot({ path: path.join(out, '06-guide-hero.png') });
+
+    await page.locator('#first-memory').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(220);
+    assert(await page.locator('#first-memory img').isVisible(), 'guide memory screenshot missing');
+    await page.screenshot({ path: path.join(out, '07-guide-memory.png') });
+    assert(errors.length === 0, `guide desktop errors: ${errors.join(' | ')}`);
+    await page.close();
+  }
+
+  {
+    const { page, errors } = await openGuide({ width: 390, height: 844 });
+    const overflow = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth);
+    assert(overflow <= 2, `guide mobile horizontal overflow ${overflow}px`);
+    assert(await page.locator('#guide-title').isVisible(), 'guide mobile title missing');
+    assert(await page.locator('.launchpad').isVisible(), 'guide mobile launchpad missing');
+    await page.screenshot({ path: path.join(out, '08-guide-mobile.png') });
+    assert(errors.length === 0, `guide mobile errors: ${errors.join(' | ')}`);
     await page.close();
   }
 

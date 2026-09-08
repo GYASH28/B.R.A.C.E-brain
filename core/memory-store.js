@@ -4,9 +4,14 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { createHash, randomUUID } = require("node:crypto");
 const { DatabaseSync, backup: backupSqlite } = require("node:sqlite");
+const { PublicationPreviewCache } = require("./publication-preview-cache");
+const { CompanySyncRepository } = require("./repositories/company-sync-repository");
+const { ApprovalRepository } = require("./repositories/approval-repository");
+const { IdentitySessionRepository } = require("./repositories/identity-session-repository");
 const { OrganizationRepository } = require("./repositories/organization-repository");
+const { SharedMemoryRepository } = require("./repositories/shared-memory-repository");
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 12;
 const MEMORY_KINDS = new Set([
   "project",
   "decision",
@@ -158,6 +163,7 @@ function hydrateMemory(row) {
   return {
     id: row.id,
     workspaceId: row.workspace_id || null,
+    ownerSubjectId: row.owner_subject_id || null,
     kind: row.kind,
     scope: row.scope,
     title: row.title,
@@ -302,6 +308,32 @@ class MemoryStore {
     }
     this.migrate();
     this.organizations = new OrganizationRepository(this.db, (callback) => this.transaction(callback));
+    this.identitySessions = new IdentitySessionRepository(this.db, {
+      transaction: (callback) => this.transaction(callback),
+      trustConfig: options.identityTrust,
+      clock: options.clock,
+    });
+    this.companySync = new CompanySyncRepository(this.db, {
+      transaction: (callback) => this.transaction(callback),
+      organizationRepository: this.organizations,
+      keyProvider: options.companySyncKeyProvider,
+      clock: options.clock,
+    });
+    this.approvals = new ApprovalRepository(this.db, {
+      transaction: (callback) => this.transaction(callback),
+      organizationRepository: this.organizations,
+      clock: options.clock,
+    });
+    this.publicationPreviews = options.publicationPreviewCache || new PublicationPreviewCache({
+      ...(options.publicationPreviewCacheOptions || {}),
+      clock: options.publicationPreviewCacheOptions?.clock || options.clock,
+    });
+    this.sharedMemories = new SharedMemoryRepository(this.db, {
+      transaction: (callback) => this.transaction(callback),
+      organizationRepository: this.organizations,
+      previewCache: this.publicationPreviews,
+      clock: options.clock,
+    });
   }
 
   createPreMigrationBackup(currentSchema) {
@@ -348,6 +380,35 @@ class MemoryStore {
     if (current === 0) {
       this.db.exec(`
         BEGIN IMMEDIATE;
+        CREATE TABLE authorization_subjects (
+          id TEXT PRIMARY KEY,
+          kind TEXT NOT NULL CHECK(kind IN ('human', 'service')),
+          issuer TEXT NOT NULL,
+          provider_subject TEXT NOT NULL,
+          verified_at TEXT,
+          status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'suspended', 'revoked')),
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          UNIQUE(issuer, provider_subject)
+        );
+        CREATE TABLE identity_sessions (
+          id TEXT PRIMARY KEY,
+          subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          issuer TEXT NOT NULL,
+          provider_session_id TEXT NOT NULL,
+          assertion_jti TEXT NOT NULL UNIQUE,
+          assertion_hash TEXT NOT NULL UNIQUE,
+          audience TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'revoked', 'expired')),
+          started_at TEXT NOT NULL,
+          expires_at TEXT NOT NULL,
+          last_verified_at TEXT NOT NULL,
+          revoked_at TEXT,
+          revocation_reason TEXT,
+          UNIQUE(issuer, provider_session_id),
+          CHECK((status='revoked' AND revoked_at IS NOT NULL) OR (status IN ('active','expired') AND revoked_at IS NULL))
+        );
+        CREATE INDEX identity_sessions_subject_status_idx ON identity_sessions(subject_id, status, expires_at);
         CREATE TABLE organizations (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
@@ -355,6 +416,7 @@ class MemoryStore {
           edition TEXT NOT NULL DEFAULT 'team' CHECK(edition IN ('personal', 'team', 'enterprise')),
           data_residency TEXT NOT NULL DEFAULT 'local',
           ownership_boundary TEXT NOT NULL DEFAULT 'Company workspaces are governed; personal memory remains private.',
+          status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'suspended', 'archived')),
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         );
@@ -375,13 +437,16 @@ class MemoryStore {
           workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
           display_name TEXT NOT NULL,
           email TEXT,
+          subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
           role TEXT NOT NULL CHECK(role IN ('owner', 'admin', 'manager', 'member', 'guest', 'auditor')),
           status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'invited', 'suspended')),
+          capabilities_json TEXT NOT NULL DEFAULT '[]',
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL,
           UNIQUE(workspace_id, email)
         );
         CREATE INDEX workspace_members_workspace_idx ON workspace_members(workspace_id, status);
+        CREATE UNIQUE INDEX workspace_members_workspace_subject_unique ON workspace_members(workspace_id, subject_id) WHERE subject_id IS NOT NULL;
         CREATE TABLE organization_audit_events (
           id TEXT PRIMARY KEY,
           organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -454,6 +519,7 @@ class MemoryStore {
         CREATE TABLE memories (
           id TEXT PRIMARY KEY,
           workspace_id TEXT REFERENCES workspaces(id) ON DELETE SET NULL,
+          owner_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
           kind TEXT NOT NULL,
           scope TEXT NOT NULL,
           title TEXT NOT NULL,
@@ -626,7 +692,176 @@ class MemoryStore {
         );
         CREATE INDEX automation_runs_time_idx ON automation_runs(started_at DESC);
         CREATE INDEX automation_runs_status_idx ON automation_runs(status, started_at DESC);
-        PRAGMA user_version = 6;
+        CREATE TABLE shared_publications (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+          ownership_scope TEXT NOT NULL CHECK(ownership_scope IN ('team','organization')),
+          origin_memory_id TEXT NOT NULL,
+          publisher_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          status TEXT NOT NULL CHECK(status IN ('active','revoked')),
+          current_revision INTEGER NOT NULL CHECK(current_revision>0),
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          revoked_at TEXT,
+          revoked_by_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          CHECK((status='active' AND revoked_at IS NULL AND revoked_by_subject_id IS NULL) OR (status='revoked' AND revoked_at IS NOT NULL AND revoked_by_subject_id IS NOT NULL)),
+          UNIQUE(origin_memory_id,workspace_id,ownership_scope)
+        );
+        CREATE TABLE shared_memory_revisions (
+          publication_id TEXT NOT NULL REFERENCES shared_publications(id) ON DELETE RESTRICT,
+          revision INTEGER NOT NULL CHECK(revision>0),
+          kind TEXT NOT NULL,
+          title TEXT NOT NULL,
+          summary TEXT NOT NULL,
+          content TEXT NOT NULL,
+          payload_hash TEXT NOT NULL,
+          source_fingerprint TEXT NOT NULL,
+          published_by_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          published_at TEXT NOT NULL,
+          PRIMARY KEY(publication_id,revision)
+        );
+        CREATE INDEX shared_publications_scope_status_idx ON shared_publications(organization_id,workspace_id,status);
+        CREATE TABLE company_sync_workspaces (
+          workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id) ON DELETE RESTRICT,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          key_reference TEXT,
+          key_id TEXT NOT NULL,
+          policy_version INTEGER NOT NULL CHECK(policy_version>0),
+          offline_allowed INTEGER NOT NULL DEFAULT 1 CHECK(offline_allowed IN (0,1)),
+          lease_expires_at TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','revoked')),
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          last_sync_at TEXT
+        );
+        CREATE INDEX company_sync_workspaces_org_status_idx ON company_sync_workspaces(organization_id,status);
+        CREATE TABLE company_sync_devices (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+          subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          label TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','revoked')),
+          created_at TEXT NOT NULL,
+          last_seen_at TEXT NOT NULL,
+          revoked_at TEXT,
+          CHECK((status='active' AND revoked_at IS NULL) OR (status='revoked' AND revoked_at IS NOT NULL))
+        );
+        CREATE INDEX company_sync_devices_scope_status_idx ON company_sync_devices(organization_id,workspace_id,status);
+        CREATE TABLE company_sync_operations (
+          id TEXT PRIMARY KEY,
+          direction TEXT NOT NULL CHECK(direction IN ('outbox','inbound')),
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+          actor_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          device_id TEXT NOT NULL REFERENCES company_sync_devices(id) ON DELETE RESTRICT,
+          record_type TEXT NOT NULL CHECK(record_type='shared-memory'),
+          record_id TEXT NOT NULL,
+          operation_kind TEXT NOT NULL CHECK(operation_kind IN ('upsert','tombstone')),
+          base_revision INTEGER NOT NULL CHECK(base_revision>=0),
+          result_revision INTEGER NOT NULL CHECK(result_revision=base_revision+1),
+          key_id TEXT NOT NULL,
+          payload_nonce BLOB NOT NULL,
+          payload_ciphertext BLOB NOT NULL,
+          payload_auth_tag BLOB NOT NULL,
+          payload_hash TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('pending','acknowledged','accepted','duplicate','conflict','rejected')),
+          remote_sequence INTEGER,
+          created_at TEXT NOT NULL,
+          terminal_at TEXT
+        );
+        CREATE INDEX company_sync_operations_outbox_idx ON company_sync_operations(workspace_id,direction,status,created_at);
+        CREATE INDEX company_sync_operations_record_idx ON company_sync_operations(workspace_id,record_type,record_id,result_revision);
+        CREATE TABLE company_sync_records (
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+          record_type TEXT NOT NULL CHECK(record_type='shared-memory'),
+          record_id TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('active','tombstoned')),
+          current_revision INTEGER NOT NULL CHECK(current_revision>0),
+          current_operation_id TEXT NOT NULL REFERENCES company_sync_operations(id) ON DELETE RESTRICT,
+          updated_at TEXT NOT NULL,
+          PRIMARY KEY(workspace_id,record_type,record_id)
+        );
+        CREATE INDEX company_sync_records_scope_status_idx ON company_sync_records(organization_id,workspace_id,status);
+        CREATE TABLE company_sync_conflicts (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+          record_type TEXT NOT NULL CHECK(record_type='shared-memory'),
+          record_id TEXT NOT NULL,
+          local_operation_id TEXT REFERENCES company_sync_operations(id) ON DELETE RESTRICT,
+          remote_operation_id TEXT NOT NULL REFERENCES company_sync_operations(id) ON DELETE RESTRICT,
+          base_revision INTEGER NOT NULL CHECK(base_revision>=0),
+          local_revision INTEGER NOT NULL CHECK(local_revision>=0),
+          remote_revision INTEGER NOT NULL CHECK(remote_revision>0),
+          status TEXT NOT NULL CHECK(status IN ('unresolved','resolved')),
+          created_at TEXT NOT NULL,
+          resolved_at TEXT,
+          resolution TEXT,
+          UNIQUE(remote_operation_id)
+        );
+        CREATE INDEX company_sync_conflicts_scope_status_idx ON company_sync_conflicts(organization_id,workspace_id,status,created_at);
+        CREATE TABLE agent_approval_requests (
+          id TEXT PRIMARY KEY,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+          requester_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          automation_id TEXT,
+          automation_run_id TEXT,
+          action TEXT NOT NULL,
+          target_label TEXT NOT NULL,
+          risk_level TEXT NOT NULL CHECK(risk_level IN ('low','medium','high','critical')),
+          plan_json TEXT NOT NULL,
+          plan_hash TEXT NOT NULL,
+          correlation_id TEXT NOT NULL,
+          status TEXT NOT NULL CHECK(status IN ('pending','approved','denied','expired','consumed','invalidated')),
+          expires_at TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          decided_at TEXT,
+          decided_by_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          decision_note TEXT,
+          consumed_at TEXT,
+          invalidated_at TEXT,
+          CHECK((status='pending' AND decided_at IS NULL AND consumed_at IS NULL AND invalidated_at IS NULL)
+            OR (status IN ('approved','denied') AND decided_at IS NOT NULL)
+            OR (status='expired') OR (status='consumed' AND consumed_at IS NOT NULL)
+            OR (status='invalidated' AND invalidated_at IS NOT NULL))
+        );
+        CREATE INDEX agent_approval_requests_workspace_status_idx ON agent_approval_requests(workspace_id,status,created_at DESC);
+        CREATE TABLE governance_audit_events (
+          id TEXT PRIMARY KEY,
+          sequence INTEGER NOT NULL,
+          organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+          workspace_id TEXT REFERENCES workspaces(id) ON DELETE RESTRICT,
+          actor_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          service_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          event_type TEXT NOT NULL,
+          resource_type TEXT NOT NULL,
+          resource_id TEXT NOT NULL,
+          outcome TEXT NOT NULL,
+          policy_decision TEXT NOT NULL,
+          correlation_id TEXT NOT NULL,
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          previous_digest TEXT,
+          event_digest TEXT NOT NULL,
+          occurred_at TEXT NOT NULL,
+          UNIQUE(organization_id,sequence),
+          UNIQUE(event_digest)
+        );
+        CREATE INDEX governance_audit_events_workspace_time_idx ON governance_audit_events(workspace_id,occurred_at DESC);
+        CREATE TABLE workspace_data_policies (
+          workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+          classification TEXT NOT NULL DEFAULT 'internal' CHECK(classification IN ('internal','confidential','restricted')),
+          retention_review_days INTEGER CHECK(retention_review_days IS NULL OR retention_review_days BETWEEN 1 AND 3650),
+          legal_hold INTEGER NOT NULL DEFAULT 0 CHECK(legal_hold IN (0,1)),
+          policy_version INTEGER NOT NULL DEFAULT 1 CHECK(policy_version > 0),
+          updated_by_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+          updated_at TEXT NOT NULL
+        );
+        CREATE INDEX workspace_data_policies_classification_idx ON workspace_data_policies(classification, legal_hold);
+        PRAGMA user_version = 12;
         COMMIT;
       `);
     }
@@ -818,10 +1053,302 @@ class MemoryStore {
         throw error;
       }
     }
+    if (current > 0 && current < 7) {
+      const organizationColumns = this.db.prepare("PRAGMA table_info(organizations)").all();
+      const memberColumns = this.db.prepare("PRAGMA table_info(workspace_members)").all();
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS authorization_subjects (
+            id TEXT PRIMARY KEY,
+            kind TEXT NOT NULL CHECK(kind IN ('human', 'service')),
+            issuer TEXT NOT NULL,
+            provider_subject TEXT NOT NULL,
+            verified_at TEXT,
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'suspended', 'revoked')),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(issuer, provider_subject)
+          );
+        `);
+        if (!organizationColumns.some((column) => column.name === "status")) {
+          this.db.exec("ALTER TABLE organizations ADD COLUMN status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'suspended', 'archived'))");
+        }
+        if (!memberColumns.some((column) => column.name === "subject_id")) {
+          this.db.exec("ALTER TABLE workspace_members ADD COLUMN subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT");
+        }
+        if (!memberColumns.some((column) => column.name === "capabilities_json")) {
+          this.db.exec("ALTER TABLE workspace_members ADD COLUMN capabilities_json TEXT NOT NULL DEFAULT '[]'");
+        }
+        this.db.exec(`
+          CREATE INDEX IF NOT EXISTS workspace_members_subject_idx ON workspace_members(subject_id, workspace_id, status);
+          CREATE UNIQUE INDEX IF NOT EXISTS workspace_members_workspace_subject_unique ON workspace_members(workspace_id, subject_id) WHERE subject_id IS NOT NULL;
+          PRAGMA user_version = 7;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }
+    if (current > 0 && current < 8) {
+      const memoryColumns = this.db.prepare("PRAGMA table_info(memories)").all();
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        if (!memoryColumns.some((column) => column.name === "owner_subject_id")) {
+          this.db.exec("ALTER TABLE memories ADD COLUMN owner_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT");
+        }
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS shared_publications (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+            ownership_scope TEXT NOT NULL CHECK(ownership_scope IN ('team','organization')),
+            origin_memory_id TEXT NOT NULL,
+            publisher_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            status TEXT NOT NULL CHECK(status IN ('active','revoked')),
+            current_revision INTEGER NOT NULL CHECK(current_revision>0),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            revoked_at TEXT,
+            revoked_by_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            CHECK((status='active' AND revoked_at IS NULL AND revoked_by_subject_id IS NULL) OR (status='revoked' AND revoked_at IS NOT NULL AND revoked_by_subject_id IS NOT NULL)),
+            UNIQUE(origin_memory_id,workspace_id,ownership_scope)
+          );
+          CREATE TABLE IF NOT EXISTS shared_memory_revisions (
+            publication_id TEXT NOT NULL REFERENCES shared_publications(id) ON DELETE RESTRICT,
+            revision INTEGER NOT NULL CHECK(revision>0),
+            kind TEXT NOT NULL,
+            title TEXT NOT NULL,
+            summary TEXT NOT NULL,
+            content TEXT NOT NULL,
+            payload_hash TEXT NOT NULL,
+            source_fingerprint TEXT NOT NULL,
+            published_by_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            published_at TEXT NOT NULL,
+            PRIMARY KEY(publication_id,revision)
+          );
+          CREATE INDEX IF NOT EXISTS shared_publications_scope_status_idx
+            ON shared_publications(organization_id,workspace_id,status);
+          PRAGMA user_version = 8;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }
+    if (current > 0 && current < 9) {
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS identity_sessions (
+            id TEXT PRIMARY KEY,
+            subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            issuer TEXT NOT NULL,
+            provider_session_id TEXT NOT NULL,
+            assertion_jti TEXT NOT NULL UNIQUE,
+            assertion_hash TEXT NOT NULL UNIQUE,
+            audience TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active', 'revoked', 'expired')),
+            started_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL,
+            last_verified_at TEXT NOT NULL,
+            revoked_at TEXT,
+            revocation_reason TEXT,
+            UNIQUE(issuer, provider_session_id),
+            CHECK((status='revoked' AND revoked_at IS NOT NULL) OR (status IN ('active','expired') AND revoked_at IS NULL))
+          );
+          CREATE INDEX IF NOT EXISTS identity_sessions_subject_status_idx
+            ON identity_sessions(subject_id, status, expires_at);
+          PRAGMA user_version = 9;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }
+    if (current > 0 && current < 10) {
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS company_sync_workspaces (
+            workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id) ON DELETE RESTRICT,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            key_reference TEXT,
+            key_id TEXT NOT NULL,
+            policy_version INTEGER NOT NULL CHECK(policy_version>0),
+            offline_allowed INTEGER NOT NULL DEFAULT 1 CHECK(offline_allowed IN (0,1)),
+            lease_expires_at TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','revoked')),
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            last_sync_at TEXT
+          );
+          CREATE INDEX IF NOT EXISTS company_sync_workspaces_org_status_idx ON company_sync_workspaces(organization_id,status);
+          CREATE TABLE IF NOT EXISTS company_sync_devices (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+            subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            label TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','revoked')),
+            created_at TEXT NOT NULL,
+            last_seen_at TEXT NOT NULL,
+            revoked_at TEXT,
+            CHECK((status='active' AND revoked_at IS NULL) OR (status='revoked' AND revoked_at IS NOT NULL))
+          );
+          CREATE INDEX IF NOT EXISTS company_sync_devices_scope_status_idx ON company_sync_devices(organization_id,workspace_id,status);
+          CREATE TABLE IF NOT EXISTS company_sync_operations (
+            id TEXT PRIMARY KEY,
+            direction TEXT NOT NULL CHECK(direction IN ('outbox','inbound')),
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+            actor_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            device_id TEXT NOT NULL REFERENCES company_sync_devices(id) ON DELETE RESTRICT,
+            record_type TEXT NOT NULL CHECK(record_type='shared-memory'),
+            record_id TEXT NOT NULL,
+            operation_kind TEXT NOT NULL CHECK(operation_kind IN ('upsert','tombstone')),
+            base_revision INTEGER NOT NULL CHECK(base_revision>=0),
+            result_revision INTEGER NOT NULL CHECK(result_revision=base_revision+1),
+            key_id TEXT NOT NULL,
+            payload_nonce BLOB NOT NULL,
+            payload_ciphertext BLOB NOT NULL,
+            payload_auth_tag BLOB NOT NULL,
+            payload_hash TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('pending','acknowledged','accepted','duplicate','conflict','rejected')),
+            remote_sequence INTEGER,
+            created_at TEXT NOT NULL,
+            terminal_at TEXT
+          );
+          CREATE INDEX IF NOT EXISTS company_sync_operations_outbox_idx ON company_sync_operations(workspace_id,direction,status,created_at);
+          CREATE INDEX IF NOT EXISTS company_sync_operations_record_idx ON company_sync_operations(workspace_id,record_type,record_id,result_revision);
+          CREATE TABLE IF NOT EXISTS company_sync_records (
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+            record_type TEXT NOT NULL CHECK(record_type='shared-memory'),
+            record_id TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('active','tombstoned')),
+            current_revision INTEGER NOT NULL CHECK(current_revision>0),
+            current_operation_id TEXT NOT NULL REFERENCES company_sync_operations(id) ON DELETE RESTRICT,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY(workspace_id,record_type,record_id)
+          );
+          CREATE INDEX IF NOT EXISTS company_sync_records_scope_status_idx ON company_sync_records(organization_id,workspace_id,status);
+          CREATE TABLE IF NOT EXISTS company_sync_conflicts (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+            record_type TEXT NOT NULL CHECK(record_type='shared-memory'),
+            record_id TEXT NOT NULL,
+            local_operation_id TEXT REFERENCES company_sync_operations(id) ON DELETE RESTRICT,
+            remote_operation_id TEXT NOT NULL REFERENCES company_sync_operations(id) ON DELETE RESTRICT,
+            base_revision INTEGER NOT NULL CHECK(base_revision>=0),
+            local_revision INTEGER NOT NULL CHECK(local_revision>=0),
+            remote_revision INTEGER NOT NULL CHECK(remote_revision>0),
+            status TEXT NOT NULL CHECK(status IN ('unresolved','resolved')),
+            created_at TEXT NOT NULL,
+            resolved_at TEXT,
+            resolution TEXT,
+            UNIQUE(remote_operation_id)
+          );
+          CREATE INDEX IF NOT EXISTS company_sync_conflicts_scope_status_idx ON company_sync_conflicts(organization_id,workspace_id,status,created_at);
+          PRAGMA user_version = 10;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }
+    if (current > 0 && current < 11) {
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS agent_approval_requests (
+            id TEXT PRIMARY KEY,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE RESTRICT,
+            requester_subject_id TEXT NOT NULL REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            automation_id TEXT,
+            automation_run_id TEXT,
+            action TEXT NOT NULL,
+            target_label TEXT NOT NULL,
+            risk_level TEXT NOT NULL CHECK(risk_level IN ('low','medium','high','critical')),
+            plan_json TEXT NOT NULL,
+            plan_hash TEXT NOT NULL,
+            correlation_id TEXT NOT NULL,
+            status TEXT NOT NULL CHECK(status IN ('pending','approved','denied','expired','consumed','invalidated')),
+            expires_at TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            decided_at TEXT,
+            decided_by_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            decision_note TEXT,
+            consumed_at TEXT,
+            invalidated_at TEXT,
+            CHECK((status='pending' AND decided_at IS NULL AND consumed_at IS NULL AND invalidated_at IS NULL)
+              OR (status IN ('approved','denied') AND decided_at IS NOT NULL)
+              OR (status='expired') OR (status='consumed' AND consumed_at IS NOT NULL)
+              OR (status='invalidated' AND invalidated_at IS NOT NULL))
+          );
+          CREATE INDEX IF NOT EXISTS agent_approval_requests_workspace_status_idx ON agent_approval_requests(workspace_id,status,created_at DESC);
+          CREATE TABLE IF NOT EXISTS governance_audit_events (
+            id TEXT PRIMARY KEY,
+            sequence INTEGER NOT NULL,
+            organization_id TEXT NOT NULL REFERENCES organizations(id) ON DELETE RESTRICT,
+            workspace_id TEXT REFERENCES workspaces(id) ON DELETE RESTRICT,
+            actor_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            service_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            event_type TEXT NOT NULL,
+            resource_type TEXT NOT NULL,
+            resource_id TEXT NOT NULL,
+            outcome TEXT NOT NULL,
+            policy_decision TEXT NOT NULL,
+            correlation_id TEXT NOT NULL,
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            previous_digest TEXT,
+            event_digest TEXT NOT NULL,
+            occurred_at TEXT NOT NULL,
+            UNIQUE(organization_id,sequence),
+            UNIQUE(event_digest)
+          );
+          CREATE INDEX IF NOT EXISTS governance_audit_events_workspace_time_idx ON governance_audit_events(workspace_id,occurred_at DESC);
+          PRAGMA user_version = 11;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }
+    if (current > 0 && current < 12) {
+      this.db.exec("BEGIN IMMEDIATE");
+      try {
+        this.db.exec(`
+          CREATE TABLE IF NOT EXISTS workspace_data_policies (
+            workspace_id TEXT PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+            classification TEXT NOT NULL DEFAULT 'internal' CHECK(classification IN ('internal','confidential','restricted')),
+            retention_review_days INTEGER CHECK(retention_review_days IS NULL OR retention_review_days BETWEEN 1 AND 3650),
+            legal_hold INTEGER NOT NULL DEFAULT 0 CHECK(legal_hold IN (0,1)),
+            policy_version INTEGER NOT NULL DEFAULT 1 CHECK(policy_version > 0),
+            updated_by_subject_id TEXT REFERENCES authorization_subjects(id) ON DELETE RESTRICT,
+            updated_at TEXT NOT NULL
+          );
+          CREATE INDEX IF NOT EXISTS workspace_data_policies_classification_idx ON workspace_data_policies(classification, legal_hold);
+          PRAGMA user_version = 12;
+          COMMIT;
+        `);
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+    }
     return { from: current, to: SCHEMA_VERSION };
   }
 
   close() {
+    this.publicationPreviews?.clear();
     this.db.close();
   }
 
@@ -840,9 +1367,50 @@ class MemoryStore {
   createOrganization(input = {}) { return this.organizations.create(input); }
   listOrganizations() { return this.organizations.list(); }
   createWorkspace(input = {}) { return this.organizations.createWorkspace(input); }
-  upsertWorkspaceMember(input = {}) { return this.organizations.upsertMember(input); }
+  // Fixture-only setup seam. Production callers must use the authorized method below.
+  upsertWorkspaceMemberForFixture(input = {}) { return this.organizations.upsertMemberForFixture(input); }
+  upsertWorkspaceMemberAuthorized(input = {}, actorSubjectId) { return this.organizations.upsertMemberAuthorized(input, actorSubjectId); }
+  workspaceMemberManagementDecision(workspaceId, actorSubjectId) { return this.organizations.memberManagementDecision(workspaceId, actorSubjectId); }
+  workspaceGovernanceAuditDecision(workspaceId, actorSubjectId) { return this.organizations.governanceAuditDecision(workspaceId, actorSubjectId); }
+  workspaceGovernanceManagementDecision(workspaceId, actorSubjectId) { return this.organizations.governanceManagementDecision(workspaceId, actorSubjectId); }
+  getWorkspaceDataPolicy(workspaceId) { return this.organizations.workspaceDataPolicy(workspaceId); }
+  setWorkspaceDataPolicyAuthorized(input = {}, actorSubjectId) { return this.organizations.setWorkspaceDataPolicyAuthorized(input, actorSubjectId); }
+  createAuthorizationSubjectForFixture(input = {}) { return this.organizations.createSubjectForFixture(input); }
+  startIdentitySession(compactJws) { return this.identitySessions.startAssertion(compactJws); }
+  resolveActiveIdentitySession(sessionId) { return this.identitySessions.resolveActive(sessionId); }
+  getIdentitySession(sessionId) { return this.identitySessions.get(sessionId); }
+  revokeIdentitySession(sessionId, reason) { return this.identitySessions.revokeSelf(sessionId, reason); }
+  setAuthorizationSubjectStatusForFixture(subjectId, status) { return this.identitySessions.setSubjectStatusForFixture(subjectId, status); }
+  configureCompanySyncWorkspaceForFixture(input = {}) { return this.companySync.configureWorkspaceForFixture(input); }
+  registerCompanySyncDeviceForFixture(input = {}) { return this.companySync.registerDeviceForFixture(input); }
+  enqueueCompanySyncPublication(input = {}, actorSubjectId) { return this.companySync.enqueuePublication(input, actorSubjectId); }
+  enqueueCompanySyncTombstone(input = {}, actorSubjectId) { return this.companySync.enqueueTombstone(input, actorSubjectId); }
+  listCompanySyncOutbox(options = {}, actorSubjectId) { return this.companySync.listOutbox(options, actorSubjectId); }
+  acknowledgeCompanySyncOutbox(input = {}, actorSubjectId) { return this.companySync.acknowledgeOutbox(input, actorSubjectId); }
+  revokeCompanySyncDevice(input = {}, actorSubjectId) { return this.companySync.revokeDevice(input, actorSubjectId); }
+  revokeCompanySyncWorkspace(input = {}, actorSubjectId) { return this.companySync.revokeWorkspaceReplica(input, actorSubjectId); }
+  receiveCompanySyncEnvelope(envelope = {}, actorSubjectId) { return this.companySync.receiveEnvelope(envelope, actorSubjectId); }
+  getCompanySyncReplica(input = {}, actorSubjectId) { return this.companySync.getReplicaRecord(input, actorSubjectId); }
+  listCompanySyncConflicts(options = {}, actorSubjectId) { return this.companySync.listConflicts(options, actorSubjectId); }
+  requestAgentApproval(input = {}, actorSubjectId) { return this.approvals.createRequest(input, actorSubjectId); }
+  approveAgentPlan(input = {}, actorSubjectId) { return this.approvals.approve(input, actorSubjectId); }
+  denyAgentPlan(input = {}, actorSubjectId) { return this.approvals.deny(input, actorSubjectId); }
+  consumeAgentApproval(input = {}, actorSubjectId) { return this.approvals.consume(input, actorSubjectId); }
+  listAgentApprovals(options = {}, actorSubjectId) { return this.approvals.list(options, actorSubjectId); }
+  verifyGovernanceAuditChain(organizationId, actorSubjectId) { return this.approvals.verifyAuditChain(organizationId, actorSubjectId); }
+  exportWorkspaceGovernanceAudit(workspaceId, actorSubjectId) { return this.approvals.exportWorkspaceAudit(workspaceId, actorSubjectId); }
   insertOrganizationAuditEvent(input = {}) { return this.organizations.insertAudit(input); }
   getOrganizationOverview(organizationId) { return this.organizations.overview(organizationId); }
+  bindMemoryOwnerForFixture(memoryId, subjectId) { return this.sharedMemories.bindOwnerForFixture(memoryId, subjectId); }
+  previewSharedPublication(input = {}, actorSubjectId) { return this.sharedMemories.preview(input, actorSubjectId); }
+  commitSharedPublication(previewId, actorSubjectId) { return this.sharedMemories.commit(previewId, actorSubjectId); }
+  revokeSharedPublication(input = {}, actorSubjectId) { return this.sharedMemories.revoke(input, actorSubjectId); }
+  getSharedMemory(publicationId, actorSubjectId) { return this.sharedMemories.get(publicationId, actorSubjectId); }
+  listSharedMemories(options = {}, actorSubjectId) { return this.sharedMemories.list(options, actorSubjectId); }
+  searchSharedMemories(query, options = {}, actorSubjectId) { return this.sharedMemories.search(query, options, actorSubjectId); }
+  getSharedMemoryGraph(options = {}, actorSubjectId) { return this.sharedMemories.graph(options, actorSubjectId); }
+  exportSharedProjection(options = {}, actorSubjectId) { return this.sharedMemories.exportProjection(options, actorSubjectId); }
+  previewSharedContext(options = {}, actorSubjectId) { return this.sharedMemories.previewContext(options, actorSubjectId); }
 
   upsertProject(input) {
     const rootPath = path.resolve(String(input.rootPath || ""));
@@ -1969,6 +2537,11 @@ class MemoryStore {
   forgetMemory(memoryId, options = {}) {
     const memory = this.getMemory(memoryId);
     if (!memory) return false;
+    if (memory.workspaceId && this.organizations.workspaceDataPolicy(memory.workspaceId).legalHold) {
+      const error = new Error("This memory is under an active workspace legal hold and cannot be forgotten.");
+      error.code = "MEMORY_LEGAL_HOLD";
+      throw error;
+    }
     const timestamp = nowIso();
     this.transaction(() => {
       this.db.prepare("DELETE FROM evidence WHERE memory_id = ?").run(memoryId);
@@ -2387,6 +2960,8 @@ class MemoryStore {
   deleteAll() {
     this.transaction(() => {
       for (const table of [
+        "governance_audit_events",
+        "agent_approval_requests",
         "automation_runs",
         "automations",
         "relations",
@@ -2395,14 +2970,24 @@ class MemoryStore {
         "decisions",
         "evidence",
         "memory_reviews",
+        "company_sync_conflicts",
+        "company_sync_records",
+        "company_sync_operations",
+        "company_sync_devices",
+        "company_sync_workspaces",
+        "shared_memory_revisions",
+        "shared_publications",
         "memories",
         "source_chunks",
         "sources",
         "projects",
         "organization_audit_events",
+        "workspace_data_policies",
         "workspace_members",
         "workspaces",
         "organizations",
+        "identity_sessions",
+        "authorization_subjects",
         "skills",
         "settings",
       ]) {
@@ -2421,6 +3006,11 @@ class MemoryStore {
       organizations: count("organizations"),
       workspaces: count("workspaces"),
       workspaceMembers: count("workspace_members", "WHERE status='active'"),
+      identitySessions: count("identity_sessions", "WHERE status='active'"),
+      sharedPublications: count("shared_publications", "WHERE status='active'"),
+      syncPendingOperations: count("company_sync_operations", "WHERE direction='outbox' AND status='pending'"),
+      syncUnresolvedConflicts: count("company_sync_conflicts", "WHERE status='unresolved'"),
+      pendingAgentApprovals: count("agent_approval_requests", "WHERE status='pending'"),
       projects: count("projects"),
       sources: count("sources"),
       sourceChunks: count("source_chunks"),

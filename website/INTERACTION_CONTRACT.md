@@ -1,34 +1,37 @@
-# Launch-site interaction contract
+# BRACE website interaction contract
 
-The BRACE site is an explorable explanation of a local memory system, not an animation reel. Every effect must help a visitor understand custody, inspect provenance, see the real product, or complete a safe first run.
+The public site is a working explanation of source-backed memory. Every interaction must increase comprehension, agency, trust, or successful setup.
 
 ## Interaction map
 
-| # | System | Product purpose | Inputs | Calm/reduced-motion behavior |
-| --- | --- | --- | --- | --- |
-| 1 | Memory ignition | Form fragments into the BRACE mark and establish the local-memory signal | Automatic, Skip, Replay, `Escape` | Skipped automatically; content is immediately available |
-| 2 | Hero product film | Trace source-to-memory progress over a real packaged-app frame | Native scroll | Static poster; video is not requested |
-| 3 | Context relay | Explain source, local memory, and explicit AI handoff boundaries | Stage buttons, range, keyboard | Immediate state changes |
-| 4 | Product simulation | Demonstrate capture, indexing, recall, graph, handoff, and automation using deterministic synthetic data | Tabs, arrows, Previous/Next | Immediate state changes without entrance animation |
-| 5 | Product proof reel | Browse real packaged-app screenshots from the synthetic Northstar profile | Scroll, Previous/Next | Native horizontal scrolling |
-| 6 | Screenshot inspector | Expand product evidence without losing the gallery position | Open, Previous/Next, `Escape` | Opens without transform animation |
-| 7 | Download advisor | Identify the visitor's platform while keeping Windows and Linux equal | Device hint, direct links | Identical |
-| 8 | Guide launchpad | Adapt install instructions to Windows, Linux, or source builds | Platform buttons | Identical |
-| 9 | Setup checklist | Let a beginner track seven local setup milestones | Checkboxes, Reset | Identical; persists only in browser local storage |
-| 10 | Troubleshooter | Turn a first-run symptom into one safe diagnostic action | Symptom buttons | Identical |
-| 11 | Command copy | Copy install and MCP commands with visible confirmation | Copy buttons | Identical |
-| 12 | Reading progress | Show position in a long operational guide | Native scroll | Immediate progress updates |
+| # | System | Purpose | Inputs | Reduced-motion behavior |
+|---|---|---|---|---|
+| 1 | Hero ignition | Resolve the local seed and immediate atlas without blocking content | Automatic, Replay, Escape or any user interaction to finish | Final state is immediate |
+| 2 | Provenance Pulse | Trace one selected source through memory to a chosen AI context | Source buttons, pointer, touch, Enter, Space | Route and receipt update with a short crossfade |
+| 3 | Atlas route | Show current story position and navigate by normal links | Links, keyboard | Identical without smooth motion |
+| 4 | Working brain | Search, focus, filter, fit, reset, and inspect a synthetic graph | Search, buttons, keyboard, pointer | State changes are immediate |
+| 5 | Graph full screen | Make the graph the primary workspace without losing an exit | Button, Fullscreen API, Escape | Identical |
+| 6 | Role lenses | Explain employee, manager, executive, and admin scopes honestly | Tab-like buttons, arrow keys | Immediate content change |
+| 7 | Product proof | Inspect current packaged-app screenshots | Open, previous, next, Escape | Dialog opens without spatial transform |
+| 8 | Platform advisor | Highlight the likely platform while keeping choices equal | Device hint, explicit links | Identical |
+| 9 | Guide platform path | Adapt commands and downloads | Platform buttons, arrow keys | Identical |
+| 10 | Guide progress | Track local completion without an account | Checkboxes, reset | Identical |
+| 11 | Guide troubleshooter | Route a symptom to one safe diagnostic action | Search, symptom buttons | Identical |
+| 12 | Copy controls | Copy commands with visible confirmation | Button, keyboard | Identical |
+| 13 | Reading progress | Show guide progress without obscuring content | Native scroll | Immediate updates |
 
 ## Non-negotiable behavior
 
-- The opening is never mandatory: Skip and `Escape` work, Replay is optional, and reduced-motion users bypass it.
-- Keyboard users can reach every control, operate the relay and simulation tabs, close dialogs, and see focus.
-- `prefers-reduced-motion: reduce` removes the opening, smooth scrolling, scroll transforms, canvas motion, parallax, and nonessential transitions.
-- Mobile uses reflowed controls and a readable single-column guide; it is not a squeezed desktop canvas.
-- Motion never changes the factual meaning of a source, memory, platform, release, or privacy boundary.
-- Product screenshots and examples use only the fictional Northstar workspace.
-- The live demo is labelled as a non-persistent local simulation and cannot imply impossible product behavior.
+- Essential HTML is visible before JavaScript.
+- The opening never locks scroll, marks main content inert, or delays the headline and actions.
+- Every visible control has a real outcome and complete interaction states where applicable.
+- Provenance Pulse has a semantic route summary and is not the sole carrier of information.
+- Graph search never destroys the prior camera/focus state; reset and fit are always available.
+- Escape exits transient surfaces in expected order.
+- Sticky navigation and mobile controls never obscure focused content.
+- Motion uses transform, opacity, clip-path, SVG stroke, or canvas drawing rather than layout properties.
+- Reduced motion removes travel, parallax, autoplay, and scrubbing while preserving all state and content.
+- Mobile is intentionally recomposed, not a squeezed desktop atlas.
+- All data is fictional Northstar data and remains in-browser on the public site.
+- Marketing copy distinguishes shipped behavior from business-roadmap behavior.
 - Imported sources remain canonical, local memory remains distinct, and an AI handoff remains an explicit permission boundary.
-- The public site must make the unsigned-preview status visible near downloads.
-
-Run `npm run audit:interactions`, `npm run audit:layout`, `npm run audit:focus`, and `npm run audit:a11y` from `website/builds/brace` after changing HTML, CSS, JavaScript, or public assets.

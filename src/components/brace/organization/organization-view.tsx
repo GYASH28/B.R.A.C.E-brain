@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Activity, ArrowRight, Box, Brain, Check, ChevronRight, Database, FolderInput, Info, KeyRound, Plus, ServerCog, ShieldCheck } from "lucide-react";
+import { ArrowRight, Box, Brain, Check, ChevronRight, Database, Download, FolderInput, Info, KeyRound, Plus, ServerCog, ShieldCheck } from "lucide-react";
 import { useBrace } from "@/lib/brace/store";
 import { Page } from "@/components/brace/primitives/page";
+import { CompanyBrief } from "./company-brief";
+import { CompanyOperations } from "./company-operations";
 
 function formatDate(value?: string | null) {
   if (!value) return "Never";
@@ -13,7 +15,7 @@ function formatDate(value?: string | null) {
 }
 
 export function OrganizationView() {
-  const { snapshot, createOrganization, createWorkspace, upsertWorkspaceMember } = useBrace();
+  const { snapshot, createOrganization, createWorkspace, upsertWorkspaceMember, exportGovernanceAudit } = useBrace();
   const [organizationId, setOrganizationId] = useState(snapshot?.organizations[0]?.organization.id || "");
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState(snapshot?.organizations[0]?.workspaces[0]?.id || "");
   const [showWorkspaceForm, setShowWorkspaceForm] = useState(false);
@@ -24,6 +26,8 @@ export function OrganizationView() {
   const selectedWorkspace = overview?.workspaces.find((workspace) => workspace.id === selectedWorkspaceId)
     || overview?.workspaces[0];
   const desktopOnly = snapshot.environment !== "desktop";
+  const canManageMembers = Boolean(selectedWorkspace && snapshot.businessAuthorization?.memberManagementByWorkspace[selectedWorkspace.id]);
+  const canExportAudit = Boolean(selectedWorkspace && snapshot.businessAuthorization?.governanceAuditByWorkspace[selectedWorkspace.id]);
 
   if (!overview) return (
     <Page eyebrow="Business memory control plane" title="Create a company brain" description="Define who owns company knowledge before adding team workspaces. Personal memory remains outside this governance boundary.">
@@ -57,6 +61,9 @@ export function OrganizationView() {
         {[{ label: "Workspaces", value: overview.totals.workspaces, icon: Box }, { label: "Active roles", value: overview.totals.members, icon: KeyRound }, { label: "Projects", value: overview.totals.projects, icon: FolderInput }, { label: "Knowledge", value: overview.totals.memories, icon: Database }].map((metric) => { const MetricIcon = metric.icon; return <article key={metric.label}><MetricIcon /><span>{metric.label}</span><strong>{metric.value.toLocaleString()}</strong></article>; })}
       </div>
 
+      <CompanyBrief key={overview.organization.id} overview={overview} snapshot={snapshot} />
+      <CompanyOperations key={`${overview.organization.id}-operations`} overview={overview} snapshot={snapshot} />
+
       {showWorkspaceForm && <form className="company-inline-form" onSubmit={(event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
@@ -70,8 +77,9 @@ export function OrganizationView() {
         </section>
 
         <section className="company-workspace-detail">
-          {selectedWorkspace && <><header><div><span>{selectedWorkspace.kind.toUpperCase()} WORKSPACE</span><h2>{selectedWorkspace.name}</h2><p>{selectedWorkspace.visibility === "personal" ? "Visible only within its personal boundary." : selectedWorkspace.visibility === "organization" ? "Visible to organization-authorized roles." : "Visible to roles assigned to this workspace."}</p></div><button type="button" className="brace-secondary h-9 px-3" disabled={desktopOnly} onClick={() => setShowMemberForm((value) => !value)}><Plus className="h-3.5 w-3.5" />Role</button></header>
+          {selectedWorkspace && <><header><div><span>{selectedWorkspace.kind.toUpperCase()} WORKSPACE</span><h2>{selectedWorkspace.name}</h2><p>{selectedWorkspace.visibility === "personal" ? "Visible only within its personal boundary." : selectedWorkspace.visibility === "organization" ? "Visible to organization-authorized roles." : "Visible to roles assigned to this workspace."}</p></div><button type="button" className="brace-secondary h-9 px-3" disabled={desktopOnly || !canManageMembers} title={canManageMembers ? "Manage workspace roles" : "Verified company enrollment is required before roles can change."} onClick={() => setShowMemberForm((value) => !value)}><Plus className="h-3.5 w-3.5" />Role</button></header>
             <div className="workspace-vitals"><span><strong>{selectedWorkspace.memberCount}</strong> active roles</span><span><strong>{selectedWorkspace.projectCount}</strong> projects</span><span><strong>{selectedWorkspace.memoryCount}</strong> memories</span></div>
+            {!canManageMembers && <div className="company-authorization-lock"><ShieldCheck /><p><strong>Role changes are locked.</strong><span>Verified company enrollment is required. Existing people and roles are local preview records, not authenticated identities.</span></p></div>}
             {showMemberForm && <form className="member-inline-form" onSubmit={(event) => {
               event.preventDefault();
               const data = new FormData(event.currentTarget);
@@ -83,11 +91,10 @@ export function OrganizationView() {
       </div>
 
       <div className="company-lower-grid">
-        <section className="company-audit"><header><div><span>LOCAL AUDIT TRAIL</span><h2>Governance events</h2></div><Activity /></header><div>{overview.audit.slice(0, 8).map((event) => <article key={event.id}><i /><div><strong>{event.summary}</strong><small>{event.actorLabel} · {formatDate(event.occurredAt)}</small></div><span>{event.eventType.replaceAll(".", " ")}</span></article>)}</div></section>
+        <section className="company-audit"><header><div><span>LOCAL WORKSPACE ACTIVITY</span><h2>Recorded activity</h2></div><button type="button" className="brace-secondary h-9 px-3" disabled={desktopOnly || !canExportAudit} title={canExportAudit ? "Verify and export workspace governance evidence" : "A verified owner, admin, or auditor enrollment is required before evidence can export."} onClick={() => selectedWorkspace && void exportGovernanceAudit(selectedWorkspace.id)}><Download className="h-3.5 w-3.5" />Evidence</button></header><div>{overview.audit.filter((event) => event.workspaceId === selectedWorkspace?.id).slice(0, 8).map((event) => <article key={event.id}><i /><div><strong>{event.summary}</strong><small>{event.actorLabel} · {formatDate(event.occurredAt)}</small></div><span>{event.eventType.replaceAll(".", " ")}</span></article>)}{!overview.audit.some((event) => event.workspaceId === selectedWorkspace?.id) && <div className="company-empty-row"><ShieldCheck /><p>No recorded activity for this workspace yet.</p></div>}</div></section>
         <section className="company-boundary"><ShieldCheck /><span>PRIVACY CONTRACT</span><h2>Management without surveillance.</h2><p>BRACE records explicit workspace changes and knowledge ownership. It does not score employees, infer productivity, capture private activity, or upload this control plane.</p><ul><li><Check />Personal memory stays outside company workspaces</li><li><Check />Every role change is inspectable</li><li><Check />Local SQLite remains authoritative</li></ul></section>
       </div>
       {desktopOnly && <div className="company-preview-note"><Info />This synthetic preview demonstrates the management UX. Role and workspace changes require the desktop app.</div>}
     </Page>
   );
 }
-

@@ -3,313 +3,408 @@
 
   const root = document.documentElement;
   const body = document.body;
-  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const finePointer = matchMedia("(hover: hover) and (pointer: fine)").matches;
-  const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
-  let openingTimeline = null;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+  const finePointer = matchMedia("(hover: hover) and (pointer: fine)");
 
-  const opening = document.querySelector("[data-opening]");
-  const status = document.querySelector("[data-opening-status]");
-  const mainSurfaces = [document.querySelector(".site-bar"), document.querySelector("main"), document.querySelector("footer")].filter(Boolean);
-
-  const finishOpening = () => {
-    openingTimeline?.pause?.();
-    if (opening) opening.hidden = true;
-    body.classList.remove("is-opening");
-    mainSurfaces.forEach((surface) => surface.removeAttribute("inert"));
-    root.dataset.braceRuntime = "ready";
+  const sourceStories = {
+    document: {
+      title: "Architecture decision recovered",
+      source: "Architecture Decisions.md",
+      memory: "Keep the source adapter read-only",
+      scope: "Private · selected context only",
+      summary: "Architecture Decisions.md connects to a local BRACE memory, then to explicitly selected AI context.",
+    },
+    meeting: {
+      title: "Launch decision recovered",
+      source: "Launch review · Tuesday",
+      memory: "Ship the graph before expanding connectors",
+      scope: "Project · selected context only",
+      summary: "The Launch review connects to a project decision in local BRACE memory, then to explicitly selected AI context.",
+    },
+    decision: {
+      title: "Provider boundary recovered",
+      source: "API boundary decision",
+      memory: "Preview context before provider handoff",
+      scope: "Private · approved provider",
+      summary: "The API boundary decision connects to a provider-scope memory, then to explicitly selected AI context.",
+    },
   };
 
-  const playOpening = () => {
-    if (!opening || reduce || typeof window.anime !== "function") {
-      finishOpening();
-      return;
-    }
-    opening.hidden = false;
-    body.classList.add("is-opening");
-    mainSurfaces.forEach((surface) => surface.setAttribute("inert", ""));
-    if (status) status.textContent = "Recovering context";
-    window.anime.set(".opening,.opening-core", {opacity: 1, scale: 1});
-    window.anime.set(".opening-orbit", {opacity: 0});
-    window.anime.set(".opening-signal i", {opacity: 0, scale: 0});
-    window.anime.set(".opening-fragment,.opening-wordmark span,.opening-mark img", {opacity: 0});
-    window.anime.set(".opening-meter i", {scaleX: 0});
-    openingTimeline = window.anime.timeline({easing: "easeOutExpo"})
-      .add({targets: ".opening-signal i", opacity: [0, .9], scale: [0, 1], delay: window.anime.stagger(45, {from: "center"}), duration: 500})
-      .add({targets: ".opening-orbit--one", rotate: [0, 34], scale: [.72, 1], opacity: [0, 1], duration: 900}, "-=480")
-      .add({targets: ".opening-orbit--two", rotate: [20, -24], scale: [.55, 1], opacity: [0, 1], duration: 850}, "-=850")
-      .add({targets: ".opening-fragment", translateX: (_, index) => [-90, 90, -82, 82][index], translateY: (_, index) => [-82, -78, 82, 78][index], rotate: (_, index) => [-80, 110, 95, -115][index], opacity: [0, .9], scale: [.55, 1], delay: window.anime.stagger(55), duration: 650}, "-=610")
-      .add({targets: ".opening-fragment", translateX: 0, translateY: 0, rotate: 0, scale: [.9, .12], opacity: [.9, 0], delay: window.anime.stagger(35, {from: "center"}), duration: 520})
-      .add({targets: ".opening-mark img", opacity: [0, 1], scale: [.72, 1], rotate: [-10, 0], duration: 620}, "-=430")
-      .add({targets: ".opening-wordmark span", opacity: [0, 1], translateY: [24, 0], rotateX: [-80, 0], delay: window.anime.stagger(58), duration: 580}, "-=400")
-      .add({targets: ".opening-meter i", scaleX: [0, 1], easing: "easeInOutQuart", duration: 680, begin: () => { if (status) status.textContent = "Source attached · memory ready"; }}, "-=420")
-      .add({targets: ".opening-core", scale: [1, 1.04], opacity: [1, 0], duration: 420, easing: "easeInQuart"}, "+=140")
-      .add({targets: ".opening", opacity: [1, 0], duration: 520, easing: "easeInOutQuad", complete: finishOpening}, "-=360");
+  const brainStories = {
+    roadmap: { title: "Product roadmap", kind: "Source", summary: "The working plan for graph scale, local retrieval, connectors, and business governance.", source: "Northstar roadmap.md", owner: "Product team", scope: "Project", updated: "Today, 08:15" },
+    architecture: { title: "Architecture Decisions.md", kind: "Source", summary: "Canonical source for local-first storage, adapter boundaries, and explicit provider handoff.", source: "Selected project file", owner: "Maya Chen", scope: "Private workspace", updated: "Today, 09:42" },
+    decision: { title: "Graph-first workspace", kind: "Memory", summary: "Make the graph the central workspace and keep evidence visible beside every relationship.", source: "Architecture Decisions.md", owner: "Maya Chen", scope: "Private workspace", updated: "Today, 09:42" },
+    launch: { title: "Launch decision", kind: "Decision", summary: "Qualify the graph and website experience before broadening the connector surface.", source: "Launch review", owner: "Maya Chen", scope: "Northstar team", updated: "Yesterday, 16:20" },
+    maya: { title: "Maya Chen", kind: "Person", summary: "Owner of the graph-first launch decision and the corresponding verification work.", source: "Project directory", owner: "Northstar", scope: "Organization", updated: "Yesterday, 16:20" },
+    boundary: { title: "Provider boundary", kind: "Memory", summary: "Only selected context crosses from local memory into a configured compatible AI client.", source: "Provider data flow.md", owner: "Security team", scope: "Organization policy", updated: "Monday, 11:05" },
+    review: { title: "Launch review", kind: "Source", summary: "Meeting record containing the release decision, owners, constraints, and follow-up work.", source: "Meeting note", owner: "Maya Chen", scope: "Northstar team", updated: "Yesterday, 16:20" },
   };
 
-  document.querySelector("[data-opening-skip]")?.addEventListener("click", finishOpening);
-  document.querySelector("[data-replay-opening]")?.addEventListener("click", () => {
-    if (opening) opening.style.opacity = "1";
-    playOpening();
-  });
-  addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !opening?.hidden) finishOpening();
-  });
-  playOpening();
+  const roleStories = {
+    employee: {
+      title: "Your work, decisions, and learning stay connected.",
+      copy: "Capture project outcomes, retrieve them with citations, and choose what becomes team knowledge.",
+      items: ["Private and assigned work memory", "Permission-aware project recall", "Review before any external action"],
+    },
+    manager: {
+      title: "Decisions, blockers, and ownership share one trace.",
+      copy: "See team commitments and stale decisions through declared work context, never covert activity monitoring.",
+      items: ["Decision and meeting follow-through", "Evidence-backed blocker context", "Approval gates for automations"],
+    },
+    executive: {
+      title: "Strategy stays connected to the evidence beneath it.",
+      copy: "Trace initiatives, risks, assumptions, and decisions back to current sources before acting on a roll-up.",
+      items: ["What changed since the last review", "Cited strategic and risk briefs", "Owners, assumptions, and confidence"],
+    },
+    admin: {
+      title: "Govern the boundary without reading private memory.",
+      copy: "Manage identity, policy, connectors, retention, recovery, and audit controls with least-privilege defaults.",
+      items: ["Workspace and role administration", "Provider and connector boundaries", "Recovery and audit operations"],
+    },
+  };
 
-  const filmAct = document.querySelector(".film-act");
-  const filmStage = document.querySelector(".film-stage");
-  const filmVideo = document.querySelector("[data-sc-scrub]");
-  const productAct = document.querySelector(".product-act");
-  const productRail = document.querySelector(".product-rail");
-  let videoReady = false;
-  let proofControlLockUntil = 0;
+  const by = (selector, scope = document) => scope.querySelector(selector);
+  const all = (selector, scope = document) => [...scope.querySelectorAll(selector)];
+  let introTimer = 0;
+  let introGeneration = 0;
 
-  if (filmVideo && !reduce && !navigator.connection?.saveData) {
-    let videoRequested = false;
-    const requestFilm = () => {
-      if (videoRequested) return;
-      videoRequested = true;
-      const mobile = matchMedia("(max-width: 700px)").matches;
-      filmVideo.src = mobile ? filmVideo.dataset.scSrcMobile : filmVideo.dataset.scSrc;
-      filmVideo.load();
-      filmVideo.addEventListener("loadedmetadata", () => { videoReady = true; }, { once: true });
-    };
-    addEventListener("scroll", requestFilm, { once: true, passive: true });
-    addEventListener("pointerdown", requestFilm, { once: true, passive: true });
-    const scheduleFilm = () => setTimeout(requestFilm, 1_800);
-    if ("requestIdleCallback" in window) window.requestIdleCallback(scheduleFilm, { timeout: 2_500 });
-    else setTimeout(scheduleFilm, 1_500);
+  function finishIntro(generation = introGeneration) {
+    if (generation !== introGeneration) return;
+    if (introTimer) window.clearTimeout(introTimer);
+    introTimer = 0;
+    root.dataset.intro = "complete";
   }
 
-  let scrollTick = false;
-  const syncScroll = () => {
-    const scrollTop = scrollY || document.documentElement.scrollTop;
-    const maxScroll = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-    root.style.setProperty("--page-progress", String(clamp(scrollTop / maxScroll)));
-
-    if (filmAct && filmStage) {
-      const start = filmAct.offsetTop;
-      const range = Math.max(1, filmAct.offsetHeight - innerHeight);
-      const progress = clamp((scrollTop - start) / range);
-      filmStage.style.setProperty("--hero-p", progress.toFixed(3));
-      filmStage.style.setProperty("--video-opacity", progress > .08 ? String(clamp((progress - .08) * 2.8)) : "0");
-      filmStage.dataset.scVerifyState = `hero:${Math.round(progress * 10)}`;
-      if (videoReady && Number.isFinite(filmVideo.duration)) filmVideo.currentTime = filmVideo.duration * progress;
-    }
-
-    if (productAct && productRail && !reduce) {
-      const start = productAct.offsetTop;
-      const range = Math.max(1, productAct.offsetHeight - innerHeight);
-      const progress = clamp((scrollTop - start) / range);
-      const overflow = Math.max(0, productRail.scrollWidth - innerWidth);
-      productRail.style.transform = `translate3d(${-overflow * progress}px,0,0)`;
-      productAct.style.setProperty("--rail-p", progress.toFixed(3));
-      const frames = Array.from(document.querySelectorAll("[data-proof]"));
-      if (frames.length) {
-        const index = Math.min(frames.length - 1, Math.floor(progress * frames.length));
-        if (performance.now() >= proofControlLockUntil) setActiveProof(index, false);
-      }
-    }
-    scrollTick = false;
-  };
-  const requestScrollSync = () => {
-    if (scrollTick) return;
-    scrollTick = true;
-    requestAnimationFrame(syncScroll);
-  };
-  addEventListener("scroll", requestScrollSync, {passive: true});
-  addEventListener("resize", requestScrollSync, {passive: true});
-
-  const revealTargets = Array.from(document.querySelectorAll(".reveal"));
-  if (reduce || !("IntersectionObserver" in window)) revealTargets.forEach((item) => item.classList.add("is-visible"));
-  else {
-    const observer = new IntersectionObserver((entries, current) => entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      entry.target.classList.add("is-visible");
-      current.unobserve(entry.target);
-    }), {rootMargin: "0px 0px -9%", threshold: .08});
-    revealTargets.forEach((item) => observer.observe(item));
+  function runIntro() {
+    const generation = ++introGeneration;
+    if (introTimer) window.clearTimeout(introTimer);
+    introTimer = 0;
+    root.dataset.intro = reduceMotion.matches ? "complete" : "running";
+    if (reduceMotion.matches) return;
+    introTimer = window.setTimeout(() => finishIntro(generation), 1450);
   }
 
-  const relay = document.querySelector("[data-memory-relay]");
-  const relayInput = document.querySelector("[data-relay-input]");
-  const relayNodes = Array.from(document.querySelectorAll("[data-relay-step]"));
-  const relayOutput = document.querySelector("[data-relay-output]");
-  const relayPosition = document.querySelector("[data-relay-position]");
-  const relayStates = [
-    {position: "Source", message: "Your source remains the canonical record."},
-    {position: "BRACE", message: "A local memory keeps the outcome and its provenance together."},
-    {position: "AI handoff", message: "Only the context you choose crosses into a compatible AI client."},
-  ];
-  const setRelay = (next) => {
-    const index = clamp(Number(next), 0, 2);
-    relay?.style.setProperty("--relay-progress", String(index / 2));
-    if (relay) relay.dataset.scVerifyState = `relay:${index}`;
-    if (relayInput) relayInput.value = String(index);
-    relayNodes.forEach((node, nodeIndex) => {
-      const active = nodeIndex === index;
-      node.classList.toggle("is-active", active);
-      node.setAttribute("aria-pressed", String(active));
+  function replayIntro() {
+    if (reduceMotion.matches) return finishIntro();
+    if (introTimer) window.clearTimeout(introTimer);
+    introTimer = 0;
+    ++introGeneration;
+    root.dataset.intro = "pending";
+    requestAnimationFrame(() => requestAnimationFrame(runIntro));
+    selectSource(all("[data-source]").find((button) => button.classList.contains("is-active"))?.dataset.source || "document", true);
+  }
+
+  function selectSource(key, replay = false) {
+    const story = sourceStories[key];
+    const atlas = by("[data-hero-atlas]");
+    const receipt = by("[data-evidence-receipt]");
+    if (!story || !atlas || !receipt) return;
+
+    all("[data-source]").forEach((button) => {
+      const active = button.dataset.source === key;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
     });
-    if (relayOutput) relayOutput.textContent = relayStates[index].message;
-    if (relayPosition) relayPosition.textContent = relayStates[index].position;
-  };
-  relayInput?.addEventListener("input", (event) => setRelay(event.currentTarget.value));
-  relayNodes.forEach((node) => node.addEventListener("click", () => setRelay(node.dataset.relayStep)));
 
-  const demoStates = [
-    {
-      id: "capture", kicker: "QUICK CAPTURE", title: "Turn an outcome into durable memory.", status: "READY",
-      scene: `<div class="scene-card"><div class="scene-card__bar"><span>NEW DURABLE MEMORY</span><b>⌘ ⇧ M</b></div><div class="scene-card__body"><small>Decision · Northstar</small><strong>Keep imported files canonical.</strong><p>BRACE indexes source material but never rewrites the original project.</p><div class="scene-card__action"><span>Remember with evidence</span><b>→</b></div></div></div>`,
-      receipt: [["TYPE","Decision","Durable outcome"],["PROJECT","Northstar","Synthetic workspace"],["EVIDENCE","Architecture Decisions.md","Line 18 · attached"]],
-    },
-    {
-      id: "index", kicker: "PROJECT INDEX", title: "Read one focused folder, safely.", status: "INDEXING",
-      scene: `<div class="scene-index"><div><span><strong>Supported source files</strong><b>18 / 18</b></span><i style="--w:100%"></i></div><div><span><strong>Content safety scan</strong><b>Complete</b></span><i style="--w:100%"></i></div><div><span><strong>Evidence relationships</strong><b>12 / 14</b></span><i style="--w:86%"></i></div><div><span><strong>Private local index</strong><b>Ready</b></span><i style="--w:100%"></i></div></div>`,
-      receipt: [["ROOT","northstar://project","Private path removed"],["IGNORED","7 items","Dependencies and secrets"],["NETWORK","No request","Local index only"]],
-    },
-    {
-      id: "recall", kicker: "SOURCE-BACKED RECALL", title: "Ask the memory. Inspect the receipt.", status: "12 MS",
-      scene: `<div class="scene-search"><div class="scene-search__query">⌕ What did we decide about source files?</div><div class="scene-result"><span>DECISION · 98% SIGNAL</span><strong>Keep imported files canonical.</strong><p>Use read-only indexing. Store memory beside the project, never by rewriting it.</p><small>↳ Architecture Decisions.md · line 18 · Open evidence</small></div></div>`,
-      receipt: [["RANKING","Lexical + graph","Honest mode label"],["SOURCE","Architecture Decisions.md","Canonical evidence"],["MEMORY","mem_01H9…","Durable record"]],
-    },
-    {
-      id: "graph", kicker: "KNOWLEDGE MAP", title: "See how the decision connects.", status: "FOCUS MODE",
-      scene: `<div class="scene-graph"><svg viewBox="0 0 640 330" aria-hidden="true"><path d="M72 170C160 70 235 100 318 164"/><path d="M72 170C172 265 236 228 318 164"/><path d="M318 164C413 84 493 93 566 106"/><path d="M318 164C414 241 495 224 566 106"/><circle cx="72" cy="170" r="24"/><circle cx="318" cy="164" r="34"/><circle cx="566" cy="106" r="24"/></svg><span>SOURCE</span><span>DECISION</span><span>PROJECT</span></div>`,
-      receipt: [["FOCUS","Decision","1 selected node"],["RELATIONS","8 visible","Typed edges"],["ALTERNATIVE","List view","Keyboard readable"]],
-    },
-    {
-      id: "handoff", kicker: "AI HANDOFF", title: "Share selected context, not your whole brain.", status: "READ-ONLY",
-      scene: `<div class="scene-handoff"><div><i>01</i><span><strong>Select memory</strong><small>Decision + one source receipt</small></span><b>DONE</b></div><div><i>02</i><span><strong>Preview boundary</strong><small>634 characters · no provider key copied</small></span><b>DONE</b></div><div><i>03</i><span><strong>Hand off to compatible client</strong><small>Read-only MCP permission</small></span><b>READY</b></div></div>`,
-      receipt: [["CLIENT","Codex CLI","Detected locally"],["PERMISSION","Recall only","No writes"],["PAYLOAD","634 characters","Previewed first"]],
-    },
-    {
-      id: "automation", kicker: "AUTOMATION TRACE", title: "Repeat the routine. Keep the boundary.", status: "DRY RUN",
-      scene: `<div class="scene-trace"><div><i>✓</i><span><strong>Trigger matched</strong><small>Project index completed</small></span><b>2 MS</b></div><div><i>✓</i><span><strong>Permission checked</strong><small>Read timeline · write summary</small></span><b>1 MS</b></div><div><i>→</i><span><strong>Weekly project digest</strong><small>Dry run · no write committed</small></span><b>PREVIEW</b></div></div>`,
-      receipt: [["RECIPE","Weekly digest","Bundled example"],["SAFETY","Dry run","No data changed"],["TRACE","3 steps","Fully inspectable"]],
-    },
-  ];
-  const demoShell = document.querySelector("[data-demo-shell]");
-  const demoScene = document.querySelector("[data-demo-scene]");
-  const demoReceipt = document.querySelector("[data-demo-receipt]");
-  const demoTabs = Array.from(document.querySelectorAll("[data-demo-tab]"));
-  let demoIndex = 0;
-  const renderDemo = (next, focus = false) => {
-    demoIndex = (next + demoStates.length) % demoStates.length;
-    const state = demoStates[demoIndex];
-    demoShell.dataset.demoState = state.id;
-    document.querySelector("[data-demo-kicker]").textContent = state.kicker;
-    document.querySelector("[data-demo-title]").textContent = state.title;
-    document.querySelector("[data-demo-status]").textContent = state.status;
-    demoScene.innerHTML = state.scene;
-    demoReceipt.innerHTML = state.receipt.map(([label, value, note]) => `<div class="receipt-item"><small>${label}</small><strong>${value}</strong><span>${note}</span></div>`).join("");
-    demoTabs.forEach((tab, index) => tab.setAttribute("aria-pressed", String(index === demoIndex)));
-    demoShell.style.setProperty("--demo-progress", String(demoIndex + 1));
-    if (focus) demoTabs[demoIndex]?.focus();
-    if (!reduce && typeof window.anime === "function") {
-      window.anime({targets: ".demo-scene>*", opacity: [0, 1], translateY: [18, 0], scale: [.985, 1], duration: 520, easing: "easeOutExpo"});
-      window.anime({targets: ".receipt-item", opacity: [0, 1], translateX: [12, 0], delay: window.anime.stagger(45), duration: 430, easing: "easeOutCubic"});
-    }
-  };
-  demoTabs.forEach((tab, index) => {
-    tab.addEventListener("click", () => renderDemo(index));
-    tab.addEventListener("keydown", (event) => {
-      if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) return;
-      event.preventDefault();
-      const next = event.key === "Home" ? 0 : event.key === "End" ? demoStates.length - 1 : index + (["ArrowRight", "ArrowDown"].includes(event.key) ? 1 : -1);
-      renderDemo((next + demoStates.length) % demoStates.length, true);
+    receipt.classList.add("is-updating");
+    atlas.removeAttribute("data-active");
+    requestAnimationFrame(() => {
+      atlas.dataset.active = key;
+      by("[data-receipt-title]").textContent = story.title;
+      by("[data-receipt-source]").textContent = story.source;
+      by("[data-receipt-memory]").textContent = story.memory;
+      by("[data-receipt-scope]").textContent = story.scope;
+      by("[data-route-summary]").textContent = story.summary;
+      window.setTimeout(() => receipt.classList.remove("is-updating"), reduceMotion.matches ? 0 : 180);
     });
-  });
-  document.querySelector("[data-demo-prev]")?.addEventListener("click", () => renderDemo(demoIndex - 1));
-  document.querySelector("[data-demo-next]")?.addEventListener("click", () => renderDemo(demoIndex + 1));
-  renderDemo(0);
 
-  const proofFrames = Array.from(document.querySelectorAll("[data-proof]"));
-  const proofPosition = document.querySelector("#proof-position");
-  let activeProof = 0;
-  function setActiveProof(next, scroll = true) {
-    if (!proofFrames.length) return;
-    activeProof = (next + proofFrames.length) % proofFrames.length;
-    if (proofPosition) proofPosition.textContent = proofFrames[activeProof].dataset.proofTitle;
-    if (scroll && productAct) {
-      // Keep the chosen label stable while the page performs its smooth seek.
-      // Scroll-linked updates resume as soon as the control transition settles.
-      proofControlLockUntil = performance.now() + 900;
-      if (reduce) proofFrames[activeProof].scrollIntoView({behavior: "auto", inline: "center", block: "nearest"});
-      else {
-        const progress = proofFrames.length === 1 ? 0 : (activeProof + .5) / proofFrames.length;
-        const target = productAct.offsetTop + progress * Math.max(1, productAct.offsetHeight - innerHeight);
-        scrollTo({top: target, behavior: "smooth"});
-      }
+    if (!replay) atlas.dataset.lastInput = "manual";
+  }
+
+  function setupHero() {
+    all("[data-source]").forEach((button) => button.addEventListener("click", () => selectSource(button.dataset.source)));
+    by("[data-replay-pulse]")?.addEventListener("click", () => {
+      const key = by("[data-source].is-active")?.dataset.source || "document";
+      selectSource(key, true);
+    });
+    by("[data-replay-opening]")?.addEventListener("click", replayIntro);
+
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && root.dataset.intro === "running") finishIntro();
+    });
+    document.addEventListener("pointerdown", () => {
+      if (root.dataset.intro === "running") finishIntro();
+    }, { once: true, passive: true });
+    document.addEventListener("wheel", () => {
+      if (root.dataset.intro === "running") finishIntro();
+    }, { once: true, passive: true });
+
+    const atlas = by("[data-hero-atlas]");
+    if (atlas && finePointer.matches && !reduceMotion.matches) {
+      let frame = 0;
+      atlas.addEventListener("pointermove", (event) => {
+        if (frame) cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => {
+          const rect = atlas.getBoundingClientRect();
+          const x = (event.clientX - rect.left) / rect.width - .5;
+          const y = (event.clientY - rect.top) / rect.height - .5;
+          const layers = all(".atlas-depth", atlas);
+          if (layers[0]) { layers[0].style.setProperty("--px", `${x * 5}px`); layers[0].style.setProperty("--py", `${y * 4}px`); }
+          if (layers[1]) { layers[1].style.setProperty("--px", `${x * 11}px`); layers[1].style.setProperty("--py", `${y * 8}px`); }
+        });
+      });
+      atlas.addEventListener("pointerleave", () => all(".atlas-depth", atlas).forEach((layer) => {
+        layer.style.setProperty("--px", "0px");
+        layer.style.setProperty("--py", "0px");
+      }));
     }
   }
-  document.querySelector("[data-proof-prev]")?.addEventListener("click", () => setActiveProof(activeProof - 1));
-  document.querySelector("[data-proof-next]")?.addEventListener("click", () => setActiveProof(activeProof + 1));
-  productRail?.addEventListener("focusin", (event) => {
-    if (reduce && event.target instanceof HTMLElement) event.target.scrollIntoView({behavior: "auto", block: "nearest", inline: "center"});
-  });
 
-  const dialog = document.querySelector("#proof-dialog");
-  const dialogImage = document.querySelector("#proof-dialog-image");
-  const dialogTitle = document.querySelector("#proof-dialog-title");
-  let returnFocus = null;
-  const renderDialog = () => {
-    const frame = proofFrames[activeProof];
-    dialogImage.src = frame.dataset.proofImage;
-    dialogImage.alt = frame.querySelector("img")?.alt || "Expanded BRACE product screenshot";
-    dialogTitle.textContent = frame.dataset.proofTitle;
-  };
-  proofFrames.forEach((frame, index) => frame.querySelector("[data-proof-expand]")?.addEventListener("click", (event) => {
-    activeProof = index;
-    returnFocus = event.currentTarget;
-    renderDialog();
-    dialog?.showModal();
-  }));
-  const closeDialog = () => {
-    if (!dialog?.open) return;
-    dialog.close();
-    returnFocus?.focus();
-  };
-  dialog?.querySelector("[data-dialog-close]")?.addEventListener("click", closeDialog);
-  dialog?.addEventListener("click", (event) => { if (event.target === dialog) closeDialog(); });
-  document.querySelector("[data-lightbox-prev]")?.addEventListener("click", () => { activeProof = (activeProof - 1 + proofFrames.length) % proofFrames.length; renderDialog(); });
-  document.querySelector("[data-lightbox-next]")?.addEventListener("click", () => { activeProof = (activeProof + 1) % proofFrames.length; renderDialog(); });
+  function setupScrollSystems() {
+    const bar = by("[data-site-bar]");
+    const progress = by("[data-page-progress]");
+    const routeLinks = all("[data-route]");
+    const sections = all("[data-act]");
+    let ticking = false;
 
-  const platform = /Windows/i.test(navigator.userAgent) ? "windows" : /Linux/i.test(navigator.userAgent) ? "linux" : "";
-  if (platform) document.querySelector(`[data-platform-card="${platform}"]`)?.classList.add("is-device");
+    const update = () => {
+      ticking = false;
+      const scrollable = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      const pageProgress = Math.min(1, Math.max(0, scrollY / scrollable));
+      progress?.style.setProperty("--progress", pageProgress.toFixed(4));
+      bar?.classList.toggle("is-scrolled", scrollY > 22);
 
-  const canvas = document.querySelector("[data-signal-field]");
-  const context = canvas?.getContext("2d");
-  if (canvas && context && !reduce) {
-    let width = 0, height = 0, frame = 0, pointerX = -1000, pointerY = -1000;
-    const points = Array.from({length: innerWidth < 700 ? 24 : 48}, (_, index) => ({x: ((index * 73) % 997) / 997, y: ((index * 193) % 991) / 991, r: 1 + (index % 3), speed: .00002 + (index % 7) * .000004}));
-    const size = () => {
-      const dpr = Math.min(devicePixelRatio || 1, 1.4);
-      width = innerWidth; height = innerHeight;
-      canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
-      canvas.style.width = `${width}px`; canvas.style.height = `${height}px`;
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const probe = innerHeight * .43;
+      let active = "";
+      for (const section of sections) {
+        const rect = section.getBoundingClientRect();
+        if (rect.top <= probe && rect.bottom > probe) active = section.id;
+      }
+      routeLinks.forEach((link) => {
+        const selected = link.dataset.route === active;
+        link.classList.toggle("is-active", selected);
+        if (selected) link.setAttribute("aria-current", "location");
+        else link.removeAttribute("aria-current");
+      });
+
+      const brain = by("[data-brain-stage]");
+      const brainAct = by("#atlas");
+      if (brain && brainAct) {
+        const rect = brainAct.getBoundingClientRect();
+        const travel = Math.max(1, rect.height - innerHeight);
+        const state = Math.min(1, Math.max(0, -rect.top / travel));
+        brain.style.setProperty("--brain-p", state.toFixed(3));
+        brain.dataset.scVerifyState = `brain:${by('[data-brain-filter][aria-pressed="true"]')?.dataset.brainFilter || "all"}:${by(".brain-node.is-selected")?.dataset.node || "none"}:${Math.round(state * 10)}`;
+      }
     };
-    let lastFrameAt = 0;
-    const draw = (frameAt = 0) => {
-      frame = requestAnimationFrame(draw);
-      if (frameAt - lastFrameAt < 32) return;
-      lastFrameAt = frameAt;
-      context.clearRect(0, 0, width, height);
-      points.forEach((point) => {
-        point.y = (point.y + point.speed) % 1.05;
-        const x = point.x * width, y = point.y * height;
-        const proximity = clamp(1 - Math.hypot(x - pointerX, y - pointerY) / 220);
-        context.beginPath(); context.arc(x, y, point.r + proximity * 2, 0, Math.PI * 2);
-        context.fillStyle = `rgba(255,255,255,${.18 + proximity * .32})`; context.fill();
+
+    const requestUpdate = () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(update); }
+    };
+    addEventListener("scroll", requestUpdate, { passive: true });
+    addEventListener("resize", requestUpdate, { passive: true });
+    update();
+
+    if ("IntersectionObserver" in window && !reduceMotion.matches) {
+      body.classList.add("motion-ready");
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { rootMargin: "0px 0px -9%", threshold: .08 });
+      all(".reveal").forEach((node) => observer.observe(node));
+    } else {
+      all(".reveal").forEach((node) => node.classList.add("is-visible"));
+    }
+  }
+
+  function setupBrain() {
+    const stage = by("[data-brain-stage]");
+    const nodes = all("[data-node]");
+    const search = by("[data-brain-search]");
+    const empty = by("[data-brain-empty]");
+    if (!stage || !nodes.length) return;
+
+    let activeFilter = "all";
+    let selectedNode = "decision";
+
+    const updateInspector = (key) => {
+      const story = brainStories[key];
+      if (!story) return;
+      selectedNode = key;
+      nodes.forEach((node) => node.classList.toggle("is-selected", node.dataset.node === key));
+      by("[data-brain-title]").textContent = story.title;
+      by("[data-brain-kind]").textContent = story.kind;
+      by("[data-brain-summary]").textContent = story.summary;
+      by("[data-brain-source]").textContent = story.source;
+      by("[data-brain-owner]").textContent = story.owner;
+      by("[data-brain-scope]").textContent = story.scope;
+      by("[data-brain-updated]").textContent = story.updated;
+      by("[data-brain-status]").textContent = `${nodes.filter((node) => !node.classList.contains("is-muted")).length} items · ${story.title} selected`;
+      all("[data-link]").forEach((path, index) => {
+        path.classList.toggle("is-active", index === nodes.findIndex((node) => node.dataset.node === key) % all("[data-link]").length);
       });
     };
-    size(); draw();
-    addEventListener("resize", size, {passive: true});
-    if (finePointer) addEventListener("pointermove", (event) => { pointerX = event.clientX; pointerY = event.clientY; }, {passive: true});
-    document.addEventListener("visibilitychange", () => { if (document.hidden) cancelAnimationFrame(frame); else draw(); });
+
+    const applyVisibility = () => {
+      const query = (search?.value || "").trim().toLowerCase();
+      let visible = 0;
+      nodes.forEach((node) => {
+        const story = brainStories[node.dataset.node];
+        const matchesFilter = activeFilter === "all" || node.dataset.kind === activeFilter;
+        const matchesQuery = !query || `${story.title} ${story.kind} ${story.summary} ${story.source} ${story.owner}`.toLowerCase().includes(query);
+        const muted = !matchesFilter || !matchesQuery;
+        node.classList.toggle("is-muted", muted);
+        node.tabIndex = muted ? -1 : 0;
+        if (!muted) visible += 1;
+      });
+      empty.hidden = visible > 0;
+      all("[data-link]").forEach((path) => path.classList.toggle("is-muted", visible < nodes.length));
+      by("[data-brain-status]").textContent = visible ? `${visible} items · ${brainStories[selectedNode].title} selected` : "No matching items";
+      stage.dataset.scVerifyState = `brain:${activeFilter}:${selectedNode}:${query || "none"}`;
+    };
+
+    nodes.forEach((node) => node.addEventListener("click", () => updateInspector(node.dataset.node)));
+    all("[data-brain-filter]").forEach((button) => button.addEventListener("click", () => {
+      activeFilter = button.dataset.brainFilter;
+      all("[data-brain-filter]").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+      applyVisibility();
+    }));
+    search?.addEventListener("input", applyVisibility);
+    by("[data-brain-fit]")?.addEventListener("click", () => {
+      all("[data-brain-filter]").find((button) => button.dataset.brainFilter === "all")?.click();
+      if (search) search.value = "";
+      applyVisibility();
+      by("[data-brain-status]").textContent = "7 items · Graph fitted to the visible workspace";
+    });
+    by("[data-brain-reset]")?.addEventListener("click", () => {
+      if (search) search.value = "";
+      all("[data-brain-filter]").find((button) => button.dataset.brainFilter === "all")?.click();
+      updateInspector("decision");
+    });
+    by("[data-brain-follow]")?.addEventListener("click", () => {
+      const links = all("[data-link]");
+      links.forEach((path) => path.classList.remove("is-active"));
+      const indexes = selectedNode === "decision" ? [0, 2, 5] : [1, 4, 6];
+      indexes.forEach((index) => links[index]?.classList.add("is-active"));
+      by("[data-brain-status]").textContent = `Evidence path highlighted for ${brainStories[selectedNode].title}`;
+    });
+
+    const fullscreenButton = by("[data-brain-fullscreen]");
+    const syncFullscreen = () => {
+      const open = document.fullscreenElement === stage || stage.classList.contains("is-fullscreen-fallback");
+      fullscreenButton?.setAttribute("aria-pressed", String(open));
+      const label = fullscreenButton && by("span", fullscreenButton);
+      if (label) label.textContent = open ? "Exit full screen" : "Full screen";
+    };
+    fullscreenButton?.addEventListener("click", async () => {
+      try {
+        if (stage.classList.contains("is-fullscreen-fallback")) stage.classList.remove("is-fullscreen-fallback");
+        else if (document.fullscreenElement) await document.exitFullscreen();
+        else if (stage.requestFullscreen) await stage.requestFullscreen();
+        else stage.classList.toggle("is-fullscreen-fallback");
+      } catch {
+        stage.classList.toggle("is-fullscreen-fallback");
+      }
+      syncFullscreen();
+    });
+    document.addEventListener("fullscreenchange", syncFullscreen);
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && stage.classList.contains("is-fullscreen-fallback")) {
+        stage.classList.remove("is-fullscreen-fallback");
+        syncFullscreen();
+        fullscreenButton?.focus();
+      }
+    });
   }
 
-  syncScroll();
+  function setupRoles() {
+    const surface = by("[data-company-surface]");
+    const tabs = all("[data-role]");
+    if (!surface || !tabs.length) return;
+
+    const selectRole = (tab, focus = false) => {
+      const story = roleStories[tab.dataset.role];
+      tabs.forEach((item) => {
+        const active = item === tab;
+        item.setAttribute("aria-selected", String(active));
+        item.tabIndex = active ? 0 : -1;
+      });
+      surface.dataset.role = tab.dataset.role;
+      by("[data-role-title]").textContent = story.title;
+      by("[data-role-copy]").textContent = story.copy;
+      const list = by("[data-role-list]");
+      list.replaceChildren(...story.items.map((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        return li;
+      }));
+      by("#role-panel").setAttribute("aria-labelledby", tab.id);
+      if (focus) tab.focus();
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => selectRole(tab));
+      tab.addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        let next = index;
+        if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+        if (event.key === "Home") next = 0;
+        if (event.key === "End") next = tabs.length - 1;
+        selectRole(tabs[next], true);
+      });
+    });
+    selectRole(tabs[0]);
+  }
+
+  function setupProof() {
+    const dialog = by("#proof-dialog");
+    const frames = all("[data-proof]");
+    if (!dialog || !frames.length) return;
+    let active = 0;
+
+    const render = () => {
+      const frame = frames[active];
+      by("#proof-dialog-title").textContent = frame.dataset.proofTitle;
+      const image = by("#proof-dialog-image");
+      image.src = frame.dataset.proofImage;
+      image.alt = `Expanded ${frame.dataset.proofTitle} screenshot using synthetic Northstar data`;
+    };
+    const open = (index) => {
+      active = index;
+      render();
+      dialog.showModal();
+    };
+    frames.forEach((frame, index) => by("[data-proof-expand]", frame)?.addEventListener("click", () => open(index)));
+    by("[data-dialog-close]")?.addEventListener("click", () => dialog.close());
+    by("[data-lightbox-prev]")?.addEventListener("click", () => { active = (active - 1 + frames.length) % frames.length; render(); });
+    by("[data-lightbox-next]")?.addEventListener("click", () => { active = (active + 1) % frames.length; render(); });
+    dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
+  }
+
+  function setupPlatform() {
+    const platform = /windows/i.test(navigator.userAgent) ? "windows" : /linux/i.test(navigator.userAgent) ? "linux" : "";
+    all("[data-platform-card]").forEach((card) => card.classList.toggle("is-detected", card.dataset.platformCard === platform));
+  }
+
+  function init() {
+    setupHero();
+    setupScrollSystems();
+    setupBrain();
+    setupRoles();
+    setupProof();
+    setupPlatform();
+    selectSource("document", true);
+    runIntro();
+    root.dataset.braceRuntime = "ready";
+  }
+
+  const boot = () => requestAnimationFrame(() => requestAnimationFrame(init));
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot, { once: true });
+  else boot();
 })();

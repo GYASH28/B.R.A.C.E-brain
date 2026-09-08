@@ -3,11 +3,12 @@
 import { type FormEvent, useEffect, useState } from "react";
 import {
   ArrowRight, Brain, CalendarClock, ChevronRight, CloudOff, Download, FileSearch,
-  FolderInput, FolderSync, Info, Pause, Play, Plus, RotateCcw, Save, ShieldCheck,
-  SlidersHorizontal, TimerReset, Trash2, WandSparkles, Workflow, X, Zap,
+  FolderInput, FolderSync, Info, ListChecks, Network, Pause, Play, Plus, RotateCcw, Save, ShieldCheck,
+  SlidersHorizontal, TimerReset, Trash2, UserRoundCog, WandSparkles, Workflow, X, Zap,
   type LucideIcon,
 } from "lucide-react";
 import { useBrace } from "@/lib/brace/store";
+import { classifyAutomationAgent } from "@/lib/brace/agent-control-room";
 import type {
   BraceAutomation, BraceAutomationAction, BraceAutomationCondition, BraceAutomationRun,
   BraceAutomationTemplate, BraceProject, BraceSkill,
@@ -88,10 +89,16 @@ export function AutomationsView() {
   } | null>(null);
   const [runFilter, setRunFilter] = useState("all");
   const [expandedRun, setExpandedRun] = useState<string | null>(runs[0]?.id || null);
+  const [studioMode, setStudioMode] = useState<"assignments" | "canvas">("assignments");
   const selected = definitions.find((automation) => automation.id === selectedId) || definitions[0] || null;
   const visibleRuns = runs.filter((run) => runFilter === "all" || run.status === runFilter).slice(0, 30);
   const successful = runs.filter((run) => run.status === "success").length;
   const failed = runs.filter((run) => run.status === "failed").length;
+  const assignments = definitions.map((automation) => {
+    const lastRun = runs.find((run) => run.automationId === automation.id) || null;
+    return { automation, lastRun, state: classifyAutomationAgent({ automation, lastRun, runtimePaused: automations?.paused }) };
+  });
+  const assignmentCounts = assignments.reduce((counts, item) => ({ ...counts, [item.state.id]: (counts[item.state.id] || 0) + 1 }), {} as Record<string, number>);
 
   useEffect(() => {
     if (selectedId && definitions.some((automation) => automation.id === selectedId)) return;
@@ -101,9 +108,9 @@ export function AutomationsView() {
   if (!snapshot || !automations) return null;
   return (
     <Page
-      eyebrow="Let BRACE handle the routine"
-      title="Automations"
-      description="Start with a safe template or build a local workflow. You can preview every action before enabling it and inspect every run afterward."
+      eyebrow="Digital agents · explicit boundaries"
+      title="Agent control room"
+      description="Assign repeatable work in plain language, preview the exact plan, and inspect every local effect. Advanced workflow controls stay one click away."
       actions={
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={() => void importAutomations()} className="brace-secondary h-10 px-4"><FolderInput className="h-4 w-4" />Import recipes</button>
@@ -126,6 +133,32 @@ export function AutomationsView() {
         <div className="automation-warning" role="alert"><Info className="h-4 w-4" /><div><strong>Scheduler needs attention</strong><span>{automations.schedulerError.message}</span></div><small>{formatDate(automations.schedulerError.occurredAt)}</small></div>
       )}
 
+      <section className="agent-control-switcher" aria-labelledby="agent-control-title">
+        <div><span className="brace-label">One system, two levels of control</span><h2 id="agent-control-title">Start with the assignment. Open the canvas only when you need it.</h2><p>Every agent is still a typed local workflow—no hidden tools, shell access, or background cloud service.</p></div>
+        <div role="tablist" aria-label="Agent control room view">
+          <button type="button" role="tab" aria-selected={studioMode === "assignments"} aria-controls="agent-assignments" onClick={() => setStudioMode("assignments")}><ListChecks className="h-4 w-4" />Assignment board</button>
+          <button type="button" role="tab" aria-selected={studioMode === "canvas"} aria-controls="agent-canvas" onClick={() => setStudioMode("canvas")}><Network className="h-4 w-4" />Workflow canvas</button>
+        </div>
+      </section>
+
+      {studioMode === "assignments" && <section id="agent-assignments" role="tabpanel" className="agent-assignment-board" aria-label="Digital agent assignments">
+        <div className="agent-state-rail" aria-label="Agent state summary">
+          <article><span>ASSIGNED</span><strong>{assignmentCounts.assigned || 0}</strong><small>Ready or waiting</small></article>
+          <article><span>RUNNING</span><strong>{assignmentCounts.running || 0}</strong><small>Typed local steps</small></article>
+          <article className={assignmentCounts.attention ? "has-attention" : ""}><span>NEEDS ATTENTION</span><strong>{assignmentCounts.attention || 0}</strong><small>Review before retry</small></article>
+          <article><span>COMPLETED</span><strong>{assignmentCounts.completed || 0}</strong><small>Effects recorded</small></article>
+        </div>
+        <div className="agent-safety-rail"><ShieldCheck className="h-5 w-5" /><div><strong>External actions are locked in this local preview.</strong><span>These agents cannot send messages, change credentials, run shell commands, or call arbitrary networks. A preview never mutates memory.</span></div><em>LOCAL ONLY</em></div>
+        {!assignments.length && <div className="agent-assignment-empty"><UserRoundCog className="h-7 w-7" /><div><strong>No digital agents assigned yet.</strong><p>Choose a safe blueprint below or create an automation from scratch. New agents always start paused.</p></div><button type="button" onClick={() => setBuilder({})}>Assign the first agent</button></div>}
+        <div className="agent-assignment-list">{assignments.map(({ automation, lastRun, state }) => <article key={automation.id} className={`agent-assignment is-${state.tone}`}>
+          <header><span className="agent-avatar"><Brain className="h-4 w-4" /></span><div><small>LOCAL DIGITAL AGENT</small><h3>{automation.name}</h3></div><span className="agent-state"><i />{state.label}</span></header>
+          <p>{automation.description || "No purpose has been written for this agent yet."}</p>
+          <dl><div><dt>Trigger</dt><dd>{automationSchedule(automation)}</dd></div><div><dt>Tools</dt><dd>{automation.actions.length} typed action{automation.actions.length === 1 ? "" : "s"}</dd></div><div><dt>Last result</dt><dd>{lastRun ? `${lastRun.status} · ${formatDate(lastRun.finishedAt || lastRun.startedAt)}` : "Not run yet"}</dd></div></dl>
+          <div className="agent-assignment-boundary"><ShieldCheck className="h-3.5 w-3.5" /><span>{automation.permissions.map((permission) => automationPermissionLabels[permission] || permission).join(" · ") || "No capabilities requested"}</span></div>
+          <footer><span>{state.detail}</span><div><button type="button" onClick={() => void runAutomation(automation.id, true)}><FileSearch className="h-3.5 w-3.5" />Preview plan</button><button type="button" onClick={() => { setSelectedId(automation.id); setStudioMode("canvas"); }}>Open workflow<ArrowRight className="h-3.5 w-3.5" /></button></div></footer>
+        </article>)}</div>
+      </section>}
+
       <section className="mt-5">
         <div className="mb-3 flex items-end justify-between gap-4"><div><span className="brace-label">Start with a template</span><p className="mt-1 text-[11px] text-white/30">Choose one, review what it will do, then decide whether to enable it.</p></div><span className="text-[9px] text-white/22">No code · no cloud</span></div>
         <div className="automation-template-strip">
@@ -137,7 +170,7 @@ export function AutomationsView() {
         </div>
       </section>
 
-      <div className="automation-studio mt-5">
+      {studioMode === "canvas" && <div id="agent-canvas" role="tabpanel" className="automation-studio mt-5">
         <section className="automation-library" aria-label="Saved automations">
           <div className="automation-panel-head"><div><span>SAVED RECIPES</span><strong>{definitions.length}</strong></div><button type="button" onClick={() => setBuilder({})} aria-label="Create automation"><Plus className="h-4 w-4" /></button></div>
           <div className="automation-library-scroll">
@@ -186,7 +219,7 @@ export function AutomationsView() {
             </>
           )}
         </section>
-      </div>
+      </div>}
 
       <section className="automation-runs mt-5">
         <div className="automation-runs-head"><div><span className="brace-label">Execution traces</span><p>Immutable recipe snapshots, step outputs, skips, failures, and retries.</p></div><div role="group" aria-label="Filter automation runs">{["all", "success", "failed", "skipped", "preview"].map((status) => <button key={status} type="button" className={runFilter === status ? "is-active" : ""} aria-pressed={runFilter === status} onClick={() => setRunFilter(status)}>{status}</button>)}</div></div>
@@ -327,5 +360,3 @@ function AutomationActionFields({ action, projects, skills, onChange }: { action
   if (action.type === "skill.run") { const selectedSkill = skills.find((skill) => skill.name === config.name) || skills[0]; return <div className="automation-action-fields"><select value={String(config.name || "")} onChange={(event) => { const skill = skills.find((item) => item.name === event.target.value); onChange({ ...config, name: event.target.value, action: skill?.actions[0]?.id || "" }); }} aria-label="Skill"><option value="">Choose enabled skill</option>{skills.filter((skill) => skill.enabled).map((skill) => <option key={skill.name} value={skill.name}>{skill.displayName}</option>)}</select><select value={String(config.action || "")} onChange={(event) => change("action", event.target.value)} aria-label="Skill action"><option value="">Choose action</option>{selectedSkill?.actions.map((skillAction) => <option key={skillAction.id} value={skillAction.id}>{skillAction.label}</option>)}</select></div>; }
   return null;
 }
-
-

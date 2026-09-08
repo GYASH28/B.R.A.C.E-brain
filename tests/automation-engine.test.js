@@ -52,7 +52,7 @@ test("automation definitions persist with derived permissions and immutable run 
 
   store.close();
   const reopened = new MemoryStore(databasePath);
-  assert.equal(reopened.stats().schemaVersion, 6);
+  assert.equal(reopened.stats().schemaVersion, 11);
   assert.equal(reopened.listAutomations()[0].name, "Decision follow-up");
   assert.equal(reopened.listAutomationRuns()[0].status, "success");
   reopened.close();

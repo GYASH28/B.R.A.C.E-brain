@@ -1770,6 +1770,10 @@ function SettingRow({ icon: Icon, title, text }: { icon: LucideIcon; title: stri
   return <div className="flex items-start gap-3"><span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-white/42"><Icon className="h-4 w-4" /></span><div className="min-w-0"><h3 className="text-xs font-semibold">{title}</h3><p className="mt-1 break-all font-mono text-[9px] leading-4 text-white/28">{text}</p></div></div>;
 }
 
+function SharedPublicationLockedCard() {
+  return <section className="shared-publication-lock" aria-labelledby="shared-publication-title"><header><span><KeyRound className="h-4 w-4" />Company boundary</span><strong id="shared-publication-title">Publish to company</strong></header><p>Verified company enrollment is required. This local memory has no verified owner binding, and a workspaceId label is not a publication.</p><dl><div><dt>Included on publish</dt><dd>Kind, title, summary, and content.</dd></div><div><dt>Never included</dt><dd>Tags, sources, evidence, embeddings, and project metadata.</dd></div><div><dt>Revision & revocation</dt><dd>Shared records use an independent shared revision. Revocation removes local active access but cannot retract exports or copies already sent elsewhere.</dd></div></dl><button type="button" disabled aria-disabled="true"><KeyRound className="h-3.5 w-3.5" />Enrollment required</button></section>;
+}
+
 function MemoryDetail({ memory, onClose }: { memory: BraceMemory; onClose: () => void }) {
   const { forgetMemory, restoreMemory, setEvidenceOutcome, setSearchQuery, search, toggleMemoryPin, setAssistantDraft, setView } = useBrace();
   const [full, setFull] = useState<BraceMemory>(memory);
@@ -1818,6 +1822,7 @@ function MemoryDetail({ memory, onClose }: { memory: BraceMemory; onClose: () =>
         <div className={`memory-forget-bar ${confirmForget ? "is-confirming" : ""}`}>
           {!confirmForget ? <><span>Forgetting removes this content from recall and cannot be undone from the app.</span><button type="button" onClick={() => setConfirmForget(true)}><Trash2 className="h-3.5 w-3.5" />Forget…</button></> : <><span><strong>Forget this memory?</strong> The source file, if any, stays untouched.</span><div><button type="button" onClick={() => setConfirmForget(false)}>Cancel</button><button type="button" className="memory-forget-confirm" onClick={() => void forgetMemory(full.id)}><Trash2 className="h-3.5 w-3.5" />Forget memory</button></div></>}
         </div>
+        <SharedPublicationLockedCard />
       </aside>
     </div>
   );

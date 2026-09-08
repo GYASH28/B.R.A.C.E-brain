@@ -46,6 +46,24 @@ export interface BraceMemory {
   }>;
 }
 
+/** A deliberately limited company projection, never a private BraceMemory. */
+export interface SharedMemoryProjection {
+  id: string; organizationId: string; workspaceId: string; ownershipScope: "team" | "organization";
+  status: "active" | "revoked"; revision: number; kind: MemoryKind; title: string; summary: string; content: string;
+  uri: string; publishedAt: string; updatedAt: string;
+}
+export interface SharedMemoryPublicationPreview {
+  previewId: string; expiresAt: string; expectedRevision: number;
+  destination: Pick<SharedMemoryProjection, "organizationId" | "workspaceId" | "ownershipScope">;
+  projection: Pick<SharedMemoryProjection, "kind" | "title" | "summary" | "content">;
+  disclosure: { included: string[]; omitted: string[]; localRetentionLimitation: string };
+}
+export interface SharedMemorySearchResult extends SharedMemoryProjection { retrieval: { score: number; matchedTokens: string[] }; }
+export interface SharedMemorySearchResponse { mode: "lexical"; query: string; results: SharedMemorySearchResult[]; }
+export interface SharedMemoryGraph { nodes: Array<{ id: string; type: "shared-publication"; label: string; kind: MemoryKind; ownershipScope: "team" | "organization"; uri: string; revision: number; timestamp: string }>; edges: Array<never>; }
+export interface SharedMemoryContextPreview { mode: "shared-projection-preview"; query: string; memories: SharedMemoryProjection[]; context: string; }
+export interface SharedMemoryExport { schemaVersion: 1; exportedAt: string; organizationId: string; workspaceId: string; memories: SharedMemoryProjection[]; }
+
 export interface BraceProject {
   id: string;
   workspace_id?: string | null;
@@ -70,6 +88,7 @@ export interface BraceOrganization {
   edition: "personal" | "team" | "enterprise";
   dataResidency: "local" | string;
   ownershipBoundary: string;
+  status: "active" | "suspended" | "archived";
   createdAt: string;
   updatedAt: string;
 }
@@ -77,10 +96,12 @@ export interface BraceOrganization {
 export interface BraceWorkspaceMember {
   id: string;
   workspaceId: string;
+  subjectId: string | null;
   displayName: string;
   email: string | null;
   role: "owner" | "admin" | "manager" | "member" | "guest" | "auditor";
   status: "active" | "invited" | "suspended";
+  capabilities: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -328,6 +349,11 @@ export interface BraceSnapshot {
     organizations: number;
     workspaces: number;
     workspaceMembers: number;
+    identitySessions: number;
+    sharedPublications: number;
+    syncPendingOperations: number;
+    syncUnresolvedConflicts: number;
+    pendingAgentApprovals: number;
     projects: number;
     sources: number;
     sourceChunks: number;
@@ -344,6 +370,12 @@ export interface BraceSnapshot {
     automationRuns: number;
   };
   organizations: BraceOrganizationOverview[];
+  businessAuthorization?: {
+    /** UI hint only. Every mutation is re-authorized by the desktop service. */
+    memberManagementByWorkspace: Record<string, boolean>;
+    /** UI hint only. Governance evidence is verified again before every export. */
+    governanceAuditByWorkspace: Record<string, boolean>;
+  };
   projects: BraceProject[];
   memories: BraceMemory[];
   supersededMemories?: BraceMemory[];
@@ -520,6 +552,16 @@ export interface BraceElectronApi {
   importBraceAutomations: () => Promise<{ count: number; ids: string[] } | null>;
   deleteBraceAutomation: (id: string) => Promise<boolean>;
   setBraceAutomationsPaused: (paused: boolean) => Promise<BraceAutomationSnapshot>;
+  previewBraceSharedPublication: (input: { memoryId: string; workspaceId: string; ownershipScope: "team" | "organization" }) => Promise<SharedMemoryPublicationPreview>;
+  commitBraceSharedPublication: (input: { previewId: string }) => Promise<SharedMemoryProjection>;
+  revokeBraceSharedPublication: (input: { publicationId: string; expectedRevision: number }) => Promise<SharedMemoryProjection>;
+  getBraceSharedMemory: (publicationId: string) => Promise<SharedMemoryProjection | null>;
+  listBraceSharedMemories: (options: { workspaceId: string; ownershipScope?: "team" | "organization"; limit?: number }) => Promise<SharedMemoryProjection[]>;
+  searchBraceSharedMemories: (query: string, options: { workspaceId: string; ownershipScope?: "team" | "organization"; limit?: number }) => Promise<SharedMemorySearchResponse>;
+  getBraceSharedMemoryGraph: (options: { workspaceId: string; ownershipScope?: "team" | "organization"; limit?: number }) => Promise<SharedMemoryGraph>;
+  exportBraceSharedProjection: (options: { workspaceId: string; ownershipScope?: "team" | "organization"; limit?: number }) => Promise<{ path: string } | false>;
+  exportBraceGovernanceAudit: (workspaceId: string) => Promise<{ path: string; events: number; verified: true } | false>;
+  previewBraceSharedContext: (options: { workspaceId: string; ownershipScope?: "team" | "organization"; limit?: number; query?: string }) => Promise<SharedMemoryContextPreview>;
 }
 
 declare global {

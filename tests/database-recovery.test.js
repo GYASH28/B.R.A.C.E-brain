@@ -55,12 +55,12 @@ test("restore staging leaves the open database untouched until startup applies t
   candidate.createMemory({ title: "Candidate two", content: "A second synthetic record." });
   candidate.close();
 
-  stageRestore(directory, candidatePath, { maximumSchemaVersion: 6 });
+  stageRestore(directory, candidatePath, { maximumSchemaVersion: 11 });
   assert.equal(live.stats().memories, 1);
   assert.equal(fs.existsSync(pendingPaths(directory).staged), true);
   live.close();
 
-  const restored = applyPendingRestore(directory, livePath, { maximumSchemaVersion: 6 });
+  const restored = applyPendingRestore(directory, livePath, { maximumSchemaVersion: 11 });
   assert.equal(restored.restored, true);
   assert.ok(restored.safetyPath);
   const reopened = new MemoryStore(livePath);

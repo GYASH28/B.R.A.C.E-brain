@@ -11,6 +11,7 @@ import dataPathModule from "../core/data-paths";
 import automationModule from "../core/automation-engine";
 import assistantContextModule from "../core/assistant-context-cache";
 import databaseRecoveryModule from "../core/database-recovery";
+import identitySessionModule from "../core/repositories/identity-session-repository";
 import projectWatchModule from "../core/project-watch-service";
 import importModule from "../core/import-adapters";
 import {
@@ -30,6 +31,7 @@ const { defaultDataRoot } = dataPathModule as any;
 const { AutomationEngine } = automationModule as any;
 const { AssistantContextCache } = assistantContextModule as any;
 const { applyPendingRestore, inspectSqliteDatabase, stageRestore } = databaseRecoveryModule as any;
+const { IdentitySessionContext } = identitySessionModule as any;
 const { ProjectWatchService } = projectWatchModule as any;
 const { executeImports, previewImports, publicPreview } = importModule as any;
 
@@ -39,6 +41,9 @@ interface ServiceOptions {
   getWindow: () => BrowserWindow | null;
   dataRoot?: string;
   executablePath?: string;
+  // Authentication is intentionally service-owned. IPC never supplies an actor.
+  authorizationContext?: { getSubjectId: () => string | null };
+  identityTrust?: unknown;
 }
 
 export class BraceMemoryService {
@@ -56,6 +61,8 @@ export class BraceMemoryService {
   private readonly getWindow: () => BrowserWindow | null;
   private readonly executablePath: string;
   private readonly assistantContexts: any;
+  private readonly authorizationContext: { getSubjectId: () => string | null };
+  private readonly identitySessionContext: any | null;
   private automationTimer: ReturnType<typeof setInterval> | null = null;
   private readonly indexControllers = new Map<string, AbortController>();
   private taskHistory: any[] = [];
@@ -76,7 +83,14 @@ export class BraceMemoryService {
     this.lastRestore = applyPendingRestore(this.dataDirectory, this.databasePath, {
       maximumSchemaVersion: SCHEMA_VERSION,
     });
-    this.store = new MemoryStore(this.databasePath);
+    this.store = new MemoryStore(this.databasePath, { identityTrust: options.identityTrust });
+    if (options.authorizationContext) {
+      this.identitySessionContext = null;
+      this.authorizationContext = options.authorizationContext;
+    } else {
+      this.identitySessionContext = new IdentitySessionContext(this.store.identitySessions);
+      this.authorizationContext = this.identitySessionContext;
+    }
     this.connectors = new BraceConnectorService({
       userDataPath: options.userDataPath,
       executablePath: this.executablePath,
@@ -120,6 +134,7 @@ export class BraceMemoryService {
     powerMonitor.removeListener("on-ac", this.resumeWatchersOnPower);
     powerMonitor.removeListener("suspend", this.pauseWatchersOnBattery);
     powerMonitor.removeListener("resume", this.resumeWatchersOnPower);
+    this.identitySessionContext?.signOut();
     this.store.close();
   }
 
@@ -361,6 +376,21 @@ export class BraceMemoryService {
 
   snapshot() {
     const launch = this.connectors.launchDefinition("read-only");
+    const authorizationSubjectId = this.authorizationContext.getSubjectId();
+    const organizations = this.store.listOrganizations()
+      .map((organization: any) => this.store.getOrganizationOverview(organization.id));
+    const memberManagementByWorkspace = Object.fromEntries(
+      organizations.flatMap((overview: any) => overview.workspaces.map((workspace: any) => [
+        workspace.id,
+        this.store.workspaceMemberManagementDecision(workspace.id, authorizationSubjectId).allowed,
+      ])),
+    );
+    const governanceAuditByWorkspace = Object.fromEntries(
+      organizations.flatMap((overview: any) => overview.workspaces.map((workspace: any) => [
+        workspace.id,
+        this.store.workspaceGovernanceAuditDecision(workspace.id, authorizationSubjectId).allowed,
+      ])),
+    );
     return {
       environment: "desktop",
       storage: {
@@ -373,8 +403,11 @@ export class BraceMemoryService {
           "Search BRACE before asking the user to repeat durable project context. Keep memory separate from source evidence, cite brace-project URIs, and retain only explicit credential-free outcomes when write tools are enabled.",
       },
       stats: this.store.stats(),
-      organizations: this.store.listOrganizations()
-        .map((organization: any) => this.store.getOrganizationOverview(organization.id)),
+      organizations,
+      businessAuthorization: {
+        memberManagementByWorkspace,
+        governanceAuditByWorkspace,
+      },
       projects: this.store.listProjects().map((project: any) => ({
         ...project,
         watch: {
@@ -958,6 +991,84 @@ export class BraceMemoryService {
   runSkill(name: string, action: string, input: any) {
     return runSkillAction(this.store, name, action, input);
   }
+
+  upsertWorkspaceMember(input: any) {
+    return this.store.upsertWorkspaceMemberAuthorized(input || {}, this.authorizationContext.getSubjectId());
+  }
+
+  private sharedOperation<T>(operation: (actorId: string | null) => T): T {
+    // Identity comes only from this private context and is read on every call.
+    const actorId = this.authorizationContext.getSubjectId();
+    try { return operation(actorId); }
+    catch (error: any) {
+      const code = String(error?.code || "COMPANY_OPERATION_FAILED");
+      const lifecycleMessages: Record<string, string> = {
+        PREVIEW_EXPIRED: "This publication preview expired. Create a new preview before publishing.",
+        PREVIEW_CONSUMED: "This publication preview was already used. Create a new preview before publishing.",
+        PREVIEW_STALE: "This publication preview is no longer current. Create a new preview before publishing.",
+        REVISION_STALE: "This shared record changed before the operation completed. Refresh and try again.",
+        PUBLICATION_REVOKED: "This shared publication has been revoked and cannot be changed.",
+      };
+      const safe = new Error(code === "AUTHORIZATION_DENIED"
+        ? "This company action is not available for the current signed-in account."
+        : lifecycleMessages[code] || "The company operation could not be completed.");
+      (safe as any).code = code;
+      throw safe;
+    }
+  }
+
+  previewSharedPublication(input: any) { return this.sharedOperation((actorId) => this.store.previewSharedPublication(input, actorId)); }
+  commitSharedPublication(previewId: string) { return this.sharedOperation((actorId) => this.store.commitSharedPublication(previewId, actorId)); }
+  revokeSharedPublication(input: any) { return this.sharedOperation((actorId) => this.store.revokeSharedPublication(input, actorId)); }
+  getSharedMemory(publicationId: string) { return this.sharedOperation((actorId) => this.store.getSharedMemory(publicationId, actorId)); }
+  listSharedMemories(options: any) { return this.sharedOperation((actorId) => this.store.listSharedMemories(options, actorId)); }
+  searchSharedMemories(query: string, options: any) { return this.sharedOperation((actorId) => this.store.searchSharedMemories(query, options, actorId)); }
+  getSharedMemoryGraph(options: any) { return this.sharedOperation((actorId) => this.store.getSharedMemoryGraph(options, actorId)); }
+  previewSharedContext(options: any) {
+    // Preview-only: it never touches assistant caches or connectors.
+    return this.sharedOperation((actorId) => this.store.previewSharedContext(options, actorId));
+  }
+
+  async exportSharedProjection(options: any): Promise<{ path: string } | false> {
+    this.sharedOperation((actorId) => this.store.exportSharedProjection(options, actorId));
+    const window = this.getWindow();
+    if (!window) throw new Error("The BRACE window is unavailable.");
+    const selected = await dialog.showSaveDialog(window, {
+      title: "Export shared BRACE projection",
+      defaultPath: `brace-shared-export-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+    if (selected.canceled || !selected.filePath) return false;
+    // Reauthorize and rebuild after the dialog, immediately before writing.
+    const projection = this.sharedOperation((actorId) => this.store.exportSharedProjection(options, actorId));
+    fs.writeFileSync(selected.filePath, `${JSON.stringify(projection, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
+    return { path: selected.filePath };
+  }
+
+  async exportWorkspaceGovernanceAudit(workspaceId: string): Promise<{ path: string; events: number; verified: true } | false> {
+    const preview = this.sharedOperation((actorId) => this.store.exportWorkspaceGovernanceAudit(workspaceId, actorId));
+    const window = this.getWindow();
+    if (!window) throw new Error("The BRACE window is unavailable.");
+    const approval = await dialog.showMessageBox(window, {
+      type: "info",
+      title: "Export verified governance audit?",
+      message: `${preview.events.length} workspace governance event${preview.events.length === 1 ? "" : "s"} will be saved locally.`,
+      detail: "The report contains event metadata, subject identifiers, plan hashes, and integrity digests. It excludes memory/source content, connector credentials, payload previews, and private records. The audit chain will be rechecked immediately before writing.",
+      buttons: ["Cancel", "Choose save location"],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (approval.response !== 1) return false;
+    const selected = await dialog.showSaveDialog(window, {
+      title: "Save verified BRACE governance audit",
+      defaultPath: `brace-governance-audit-${new Date().toISOString().slice(0, 10)}.json`,
+      filters: [{ name: "JSON", extensions: ["json"] }],
+    });
+    if (selected.canceled || !selected.filePath) return false;
+    const evidence = this.sharedOperation((actorId) => this.store.exportWorkspaceGovernanceAudit(workspaceId, actorId));
+    fs.writeFileSync(selected.filePath, `${JSON.stringify(evidence, null, 2)}\n`, { encoding: "utf8", mode: 0o600 });
+    return { path: selected.filePath, events: evidence.events.length, verified: true };
+  }
 }
 
 export function registerBraceMemoryIpc(service: BraceMemoryService) {
@@ -977,7 +1088,7 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
   });
   trustedHandle("brace:create-organization", (_event, input: any) => service.store.createOrganization(input || {}));
   trustedHandle("brace:create-workspace", (_event, input: any) => service.store.createWorkspace(input || {}));
-  trustedHandle("brace:upsert-workspace-member", (_event, input: any) => service.store.upsertWorkspaceMember(input || {}));
+  trustedHandle("brace:upsert-workspace-member", (_event, input: any) => service.upsertWorkspaceMember(input || {}));
   trustedHandle("brace:cancel-task", (_event, id: string) => service.cancelTask(String(id || "")));
   trustedHandle("brace:search", (_event, input: any) => service.search(input));
   trustedHandle("brace:list-memories", (_event, options: any) => service.store.listMemories(options || {}));
@@ -1058,4 +1169,14 @@ export function registerBraceMemoryIpc(service: BraceMemoryService) {
   trustedHandle("brace:set-automations-paused", (_event, paused: boolean) =>
     service.setAutomationsPaused(Boolean(paused)),
   );
+  trustedHandle("brace:preview-shared-publication", (_event, input: any) => service.previewSharedPublication(input));
+  trustedHandle("brace:commit-shared-publication", (_event, input: any) => service.commitSharedPublication(input.previewId));
+  trustedHandle("brace:revoke-shared-publication", (_event, input: any) => service.revokeSharedPublication(input));
+  trustedHandle("brace:get-shared-memory", (_event, publicationId: string) => service.getSharedMemory(publicationId));
+  trustedHandle("brace:list-shared-memories", (_event, options: any) => service.listSharedMemories(options));
+  trustedHandle("brace:search-shared-memories", (_event, query: string, options: any) => service.searchSharedMemories(query, options));
+  trustedHandle("brace:get-shared-memory-graph", (_event, options: any) => service.getSharedMemoryGraph(options));
+  trustedHandle("brace:export-shared-projection", (_event, options: any) => service.exportSharedProjection(options));
+  trustedHandle("brace:export-governance-audit", (_event, workspaceId: string) => service.exportWorkspaceGovernanceAudit(workspaceId));
+  trustedHandle("brace:preview-shared-context", (_event, options: any) => service.previewSharedContext(options));
 }

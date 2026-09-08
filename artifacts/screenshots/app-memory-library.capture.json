@@ -1,0 +1,11 @@
+{
+  "capturedAt": "2026-09-08T13:31:45.015Z",
+  "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+  "workingTreeDirty": true,
+  "appVersion": "0.7.0",
+  "workspace": "examples/demo-workspace",
+  "state": "memory-library",
+  "width": 1440,
+  "height": 960,
+  "sha256": "7f572bd540ecab7aaf733a72dd6264bc1d642d3bbb628b4d7de03c246538f647"
+}

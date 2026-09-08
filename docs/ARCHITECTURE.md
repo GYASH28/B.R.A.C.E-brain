@@ -113,11 +113,76 @@ The Next.js static export also runs in an ordinary browser for visual developmen
 
 The preview is not a storage implementation and is not used by the packaged desktop when Electron's preload bridge is present.
 
+## Business authorization boundary
+
+`core/business-authorization.js` is a pure authorization kernel. It accepts
+freshly resolved subject, organization, workspace, membership, and resource
+facts and returns an explicit allow/deny decision with a reason; it does not
+read storage, manage sessions, persist policy, or enforce a remote tenant
+boundary. Personal resources are owner-bound, while team and organization
+resources require active workspace membership and a role or explicit
+capability grant.
+
+Schema v7 persists provider-scoped authorization subjects without converting
+legacy labels into identities. Schema v8 adds nullable personal-owner bindings
+and a separate immutable shared-publication/revision store; it performs no
+identity or ownership backfill. Schema v9 adds bounded local identity-session
+records. A compact assertion is accepted only after Ed25519 signature, trusted
+HTTPS issuer, exact audience, key id, human kind, expiry, and maximum-lifetime
+validation. Raw assertions are never stored; replay identifiers and hashes are
+single-use. Active sessions recheck subject status and expiry on every protected
+operation, and the current session identifier exists only in main-process
+memory. Workspace-member mutation resolves fresh facts
+and authorizes inside the same write transaction. Dedicated shared publication,
+read, lexical search, graph, export, and AI-context-preview operations authorize
+from the private Electron identity context on every call and never fall back to
+the personal store. A server-derived UI capability hint only controls an
+affordance; it never replaces service enforcement. The verifier has no default
+trusted issuer and no renderer enrollment seam, so an unprovisioned production
+build remains locked. A complete OIDC/SAML enrollment and administrator trust-
+provisioning flow is not shipped; production role changes and the Publish to
+company control therefore still fail closed.
+
+Schema v10 adds a transport-neutral company-sync replica boundary. Only an
+already-authorized `shared_publications` revision or revocation can be queued.
+Payloads use AES-256-GCM with authenticated tenant, workspace, actor, device,
+record, revision, key-id, and timestamp metadata. SQLite stores ciphertext,
+nonce, tag, ciphertext hash, and an opaque key reference—never key material.
+Workspace keys must be supplied by an external key provider. Incoming delivery
+is idempotent, refuses cross-workspace devices, records out-of-order conflicts,
+reconciles them after predecessors arrive, and materializes tombstones without
+plaintext. Expired leases, device revocation, and workspace revocation fail
+closed; workspace revocation removes the key reference and local materialized
+replica while retaining undecryptable operation evidence.
+
+This is the current local foundation, not a completed business deployment. The
+kernel is not yet wired into organization/workspace creation, a real remote
+sync transport/service, backup authorization, audit reads, connectors,
+automations, or MCP seams.
+The current shared projections are a local security foundation, not a remote
+multi-tenant service. The business role lenses in the UI are presentation-only
+views and never grant access; trusted service layers must authorize every
+underlying projection and action.
+
+The encrypted operation-log and replica core is implemented, but server policy,
+Schema v11 adds a local approval boundary for a future service agent: exact
+typed plan hash, target, bounded data-leaving description, opaque credential
+references, budget declaration, human-only decision, expiration, one-time
+consumption, and a tamper-evident governance audit chain. It grants no
+connector access and does not execute external work.
+
+TLS transport, managed/self-hosted deployment, object attachments, remote key
+management, and cross-tenant infrastructure are not. Connector integrations,
+persistent digital agents, remote audit/checkpointing, and external-effect
+execution remain proposed architecture. They must satisfy the acceptance gates
+in the related ADRs before being described or shipped as multi-tenant
+capabilities.
+
 ## Data ownership
 
 BRACE owns its external SQLite database and installed manifest copies. It does not own imported project originals. The distinction is visible in the UI, export format, provenance URIs, and deletion behavior.
 
-See [ADR-001](architecture/adr-001-local-data-boundary.md), [ADR-002](architecture/adr-002-memory-lifecycle.md), [ADR-003](architecture/adr-003-unified-workspace-and-connectors.md), and [ADR-004](architecture/adr-004-local-automation-runtime.md).
+See [ADR-001](architecture/adr-001-local-data-boundary.md), [ADR-002](architecture/adr-002-memory-lifecycle.md), [ADR-003](architecture/adr-003-unified-workspace-and-connectors.md), [ADR-004](architecture/adr-004-local-automation-runtime.md), [ADR-005](architecture/adr-005-business-scope-and-authorization.md), [ADR-006](architecture/adr-006-encrypted-sync-and-deployment.md), and [ADR-007](architecture/adr-007-connectors-agents-and-audit.md).
 
 ## Failure behavior
 

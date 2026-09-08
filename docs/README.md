@@ -12,6 +12,7 @@ This directory is the maintained documentation hub for BRACE. Start with the rou
 ## Understand the system
 
 - [Architecture](ARCHITECTURE.md) — desktop, core, SQLite, indexing, retrieval, and trust boundaries.
+- [Business-grade roadmap](BUSINESS_GRADE_ROADMAP.md) — role experiences, company graph, digital agents, delivery slices, security boundaries, and qualification gates.
 - [IPC contracts](IPC_CONTRACTS.md) and [threat model](THREAT_MODEL.md) — renderer authority and security assumptions.
 - [Provider data flow](PROVIDER_DATA_FLOW.md) and [indexing privacy](INDEXING_PRIVACY.md) — what can leave the device and how sources are handled.
 - [Data model](DATA_MODEL.md) — records, evidence, lifecycle states, and migrations.

@@ -1,71 +1,122 @@
-# BRACE 0.9 frosted context relay brief
+# BRACE 1.0 Living Memory Atlas brief
 
-> This revision follows the user's explicit direction: “white glass with blue background tint,” “frosty rainlike liquid glass,” less content competing on screen, “a video which appears as I scroll,” and the existing sideways image carousel kept in a new style.
+**Interview status:** Consolidated from the product owner's messages in this task. The answers below preserve the owner's wording where quoted and turn already-approved direction into an implementation contract.
 
-## Design reset
+## Eight answers
 
-The previous six-chapter liquid-lens chamber was visually rich but too busy. Its field ledger, interaction dock, recall simulator, constellation lab, vault assembly, and layered dialogs all competed with the product story. They are removed from the landing page. Product capability remains in the actual application and the beginner guide.
+1. **Vibe and references**
 
-- **Grammar:** Frosted product reel. One scroll-controlled film opens the story; one quiet proof passage hands off to a sideways gallery; a simple installation plate closes it.
-- **World:** High-key cobalt atmosphere, white optical glass, cool silver rain, ink-blue typography, real BRACE screenshots, and the real BRACE mark. No black canvas and no violet-to-blue AI glow.
-- **Navigation:** A single floating white-glass bar with four destinations. No ledger, command palette, or secondary dock.
-- **Hero:** A newly rendered Remotion film whose playhead is controlled by scroll. The film de-fogs from the BRACE mark into the packaged app and then connects files, memory, and compatible AI.
-- **Signature interactions:** A clear lens follows a fine pointer across the hero's frost layer while scroll progressively removes the remaining fog. The custody passage then provides a keyboard-operable context relay from canonical source to local memory to explicit AI handoff. Reduced motion holds a legible poster without fetching the film and makes relay state changes immediate.
-- **Close:** One white-glass installation plate gives Windows and Linux equal visual weight and direct versioned downloads.
+   “Cinematic, really great animations, transitions, motion effects, best optimisations, best typography, best parallax effects.” The aesthetic target is premium minimalism with the existing BRACE theme intact. The research references named by the owner are 21st.dev, Godly/Recent, Framer Motion, and the updated ScrollCraft practice.
+
+2. **Journey**
+
+   The visitor meets the second brain immediately, sees disconnected work become source-backed memory, operates the graph, sees how the system expands to business knowledge without losing permissions, verifies the real application, understands custody, and starts locally through the guide or download.
+
+3. **Energy curve**
+
+   Calm and precise on arrival. Controlled tension as context fragments. Increasing clarity as provenance appears. One intense peak inside the working graph. Quiet confidence through product proof. Relief in the custody passage. A still, resolved close.
+
+4. **Feeling and one remembered moment**
+
+   The owner wants the graph to feel like “a freaking AI second brain” and be “the main centre object.” The remembered moment is selecting a source and watching its evidence route travel through memory to an explicitly chosen AI context.
+
+5. **One thing this site should do that other sites do not**
+
+   Make provenance physically inspectable as the page's signature interaction. The visitor does not watch an abstract neural animation. They select a real source node and create a visible, accessible evidence receipt by tracing its route.
+
+6. **Aesthetic range**
+
+   Premium-minimal at the structural level, cinematic and technically expressive at the graph peak. Preserve BRACE's luminous light-blue glassmorphism as a brand primitive: saturated Arctic atmosphere behind translucent navigation, evidence, graph, and guide surfaces. No generic SaaS card stack, no AI-purple spectacle, no decorative neural blob.
+
+7. **World or scenes**
+
+   One persistent world with distinct narrative states. The atlas remains present as the page changes composition, but the site does not use a fragile unbroken camera flight or repeated pinned scenes.
+
+8. **Existing assets**
+
+   The real BRACE logo, Arctic cobalt/ice theme, synthetic Northstar workspace, current packaged-app screenshots, product graph language, and existing release/download metadata. No generated brand imagery is necessary.
 
 ## Product statement
 
-BRACE is a local-first memory layer for people who use several AI clients and want decisions, sources, and project context to survive between sessions.
+BRACE is a local-first memory layer that keeps decisions, sources, and project context available to compatible AI tools without separating an answer from its evidence.
 
-**Belief installed by the end:** one private memory can keep its evidence and remain available to compatible AI tools without becoming a hosted account.
+## Belief installed by the end
 
-**Primary action:** Download BRACE.
+My work can remain private and source-backed while the context I choose moves between the AI tools I use.
+
+## Primary action
+
+**Enter your Brain** on the homepage. **Begin setup** in the beginner guide. The persistent secondary action is **Get BRACE**.
+
+## Grammar
+
+**Persistent cognitive atlas.** The graph is the page's organizing surface and changes state as the visitor learns. Marketing chrome stays quiet. Copy, navigation, product proof, business scope, and custody all attach to the same atlas logic.
+
+This is a new grammar rather than ScrollCraft's stock live-surface grammar. It permits editorial copy and real product proof outside the graph, but forbids replacing the atlas with unrelated section art.
+
+### Grammar bans
+
+- No full-screen opening overlay.
+- No hero film or scroll-scrubbed video.
+- No generic detached pill navigation that could belong to any SaaS product. The BRACE navigation may float as a wide Arctic-glass instrument bar when its atlas identity, typography, and route marks remain specific.
+- No horizontal screenshot pan driven by vertical scrolling.
+- No bento capability grid.
+- No fake dashboard, fake terminal, literal brain, neural orb, aurora, or particle-cloud hero.
+- No second visual peak.
+- No separate decorative graphic for every section.
 
 ## Feeling curve
 
-| Beat | Feeling | On-screen cause | Device |
-| --- | --- | --- | --- |
-| Frosted memory film | Curiosity → recognition | A rain-softened field clears to the real BRACE mark and packaged product | `scrub` + clear lens |
-| Local proof | Relief | One restrained sentence resolves files, memory, and network authority | `flow` + `in` |
-| Context relay | Understanding → agency | The visitor moves one context packet through source, BRACE, and AI boundaries | buttons + range |
-| Product reel | Confidence → control | Real synthetic-profile screenshots move sideways as one continuous gallery | `pan` |
-| Installation | Resolve | Equal Windows and Linux choices settle in one quiet glass plate | `flow` + `in` |
-
-The film still owns the peak and the most scroll room per visual idea. The context relay lives inside the existing proof passage rather than adding another pinned spectacle.
+| Act | Feeling | On-screen cause | Device family |
+|---|---|---|---|
+| Local seed | Curiosity | A meaningful atlas is visible immediately and one local seed resolves | Hero-local SVG ignition + restrained parallax |
+| Fragments | Recognition | Real synthetic work artifacts sit disconnected at the edge of the atlas | Flow + staggered reveal |
+| Evidence route | Comprehension | A selected source draws a route and assembles its evidence receipt | SVG path draw + clip reveal |
+| Working brain | Agency | The visitor searches, focuses, filters, fits, and opens the graph | One sticky live surface + state transitions |
+| Company scope | Ambition | Role lenses expand the same graph through explicit permission boundaries | Flow + controlled topology morph |
+| Product proof | Confidence | Current packaged surfaces appear as an editorial proof sequence | In-view focus + manual lightbox |
+| Custody | Relief | Device, source, memory, and provider boundaries become unambiguous | Flow + path resolve |
+| Local start | Resolve | The atlas collapses into a quiet local seed beside real install choices | Settle + held close |
 
 ## Peak
 
-“The rain-frost cleared under my hand and the real BRACE memory appeared behind the glass.”
+“I selected one source and watched BRACE prove exactly how that memory reached the AI.”
+
+The peak lives in the working-brain act. It is the only sticky act and owns the largest visual change.
 
 ## Tell-someone sentence
 
-It is the site where you clear frost from a memory film, then walk sideways through the real app.
+It is the site where you touch a source and watch its evidence travel through a living second brain.
 
-## Carousel contract
+## Signature move
 
-The sideways screenshot carousel is retained as requested. It remains a real `pan` act with accessible previous and next controls, real packaged screenshots made only from the synthetic Northstar profile, image expansion, and a native horizontal fallback under reduced motion. The visual treatment changes to white optical frames over the blue atmosphere.
+**Provenance Pulse.** Pointer, touch, or keyboard selection sends one cobalt pulse across an actual graph path, updates an evidence receipt, and exposes the same facts through a semantic route summary. Reduced motion resolves the same state without spatial travel.
 
-## Motion and accessibility
+## Score
 
-- The video uses `data-sc-src`, not `src`, so reduced motion never fetches it.
-- The poster preserves the full story when motion is reduced or bandwidth is constrained.
-- Continuous work changes transform, opacity, clip-path, mask position, or canvas pixels only.
-- Pointer-specific lens and rain response are supplementary and disabled for touch and reduced motion.
-- All controls keep hover, visible focus, pressed, and disabled states.
-- Dark ink sits on opaque-enough white glass; no essential copy is placed directly on a moving bright frame.
+| Beat | Primary device | Why it earns its place |
+|---|---|---|
+| Local seed | SVG ignition + parallax | Establishes place and agency without blocking first paint |
+| Fragments | Flow + in | Quietly reveals the recognizable problem before the peak |
+| Evidence route | Reveal + path draw | A visible change of state explains provenance |
+| Working brain | Sticky live surface | The product itself is the argument and the single peak |
+| Company scope | Flow + topology morph | Expands the idea while lowering energy after the peak |
+| Product proof | Editorial in-view sequence | Lets real screenshots carry confidence without forced scrolling |
+| Custody | Flow + line resolve | Makes boundaries literal and calm |
+| Local start | Settle + held close | Ends with a stable action rather than fading into a footer |
 
-## Fingerprint check
+Four primary device families are present, no family repeats consecutively, there is no video scrub, there is one sticky act, and the target total journey is 9–12 viewport heights.
 
-Against BRACE 0.1, 0.3, and 0.7 this build changes at least four of six dimensions: new frosted-reel grammar, a one-bar navigation treatment, a scrubbed Remotion hero, a four-beat `scrub > flow > pan > flow` shape, a flat installation-plate close, and the frost-clear signature interaction.
+## Art direction
 
-## Verification contract
+**Arctic glass technical cartography.** A visibly light-blue atmospheric field, navy ink, cobalt active signal, cyan depth, topology routes, coordinate ticks, and layered translucent glass are the retained BRACE theme. Glass is structural rather than decorative: it belongs to the navigation instrument, atlas boundary, evidence receipts, working graph, role surface, product proof, guide launchpad, and controls. Geist-style neutral grotesk typography connects the site to the application. Depth comes from refraction, overlap, focus, route intensity, and restrained shadow—never from white cards placed on a white page.
 
-- Inspect desktop, 390×844 mobile, and reduced-motion contact sheets.
-- Verify scrub playhead movement across entry, pin, and exit; manually measure healthy gallery overflow.
-- Run axe WCAG checks, keyboard focus order, viewport overflow, failed request, and console-error checks.
-- Confirm both versioned Windows and Linux links and the beginner guide.
-- Run the repository verification and public privacy/secret scans before publication.
+## Required silence
 
-## Cold-read target
+The fragments act remains comparatively still and open immediately before the working graph. This is authored restraint, not dead scroll.
 
-**curiosity → relief → agency → confidence → resolve**. If the relay, gallery, or download plate competes with the opening, simplify it further.
+## Verification target
+
+Intended curve: curiosity → recognition → comprehension → agency → ambition → confidence → relief → resolve.
+
+The final verification report must include the cold felt curve and any differences corrected after contact-sheet review.

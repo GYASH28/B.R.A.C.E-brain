@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-09-08T13:17:43.941Z",
+  "appVersion": "0.7.0",
+  "synchronizedFromRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+  "workspace": "examples/demo-workspace",
+  "privacy": "Synthetic demo data only. No real user memory is permitted in public captures.",
+  "viewport": {
+    "width": 1440,
+    "height": 960
+  },
+  "captures": [
+    {
+      "file": "app-onboarding.png",
+      "state": "welcome",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:23.668Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "onboarding",
+        "width": 1440,
+        "height": 960,
+        "sha256": "a616b905371566297c6857526a31cefb4d16b1b9e3c455e024103eeb9a47e39a"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 533348,
+      "sha256": "a616b905371566297c6857526a31cefb4d16b1b9e3c455e024103eeb9a47e39a"
+    },
+    {
+      "file": "app-overview.png",
+      "state": "overview",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:28.080Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "overview",
+        "width": 1440,
+        "height": 960,
+        "sha256": "4f88e4e5e7fd89daedaa3faba0bc237f44bb3e5028bea79d65bff0561a197381"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 818605,
+      "sha256": "4f88e4e5e7fd89daedaa3faba0bc237f44bb3e5028bea79d65bff0561a197381"
+    },
+    {
+      "file": "app-memory-review.png",
+      "state": "synthetic-review-queue",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:39.926Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "memory-review",
+        "width": 1440,
+        "height": 960,
+        "sha256": "83f87d46a2e81147829f939c191f64c054c7ebac72a6653d4314e9b66370123c"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 575059,
+      "sha256": "83f87d46a2e81147829f939c191f64c054c7ebac72a6653d4314e9b66370123c"
+    },
+    {
+      "file": "app-recall.png",
+      "state": "source-backed-result",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:46.593Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "recall",
+        "width": 1440,
+        "height": 960,
+        "sha256": "1fd6204f9a3500638822005bd694f4ce5144273368521af66d4b2d102a637965"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 601876,
+      "sha256": "1fd6204f9a3500638822005bd694f4ce5144273368521af66d4b2d102a637965"
+    },
+    {
+      "file": "app-timeline.png",
+      "state": "synthetic-activity",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:49.258Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "timeline",
+        "width": 1440,
+        "height": 960,
+        "sha256": "d6824183b8cd87b24a203fb3b3665ba217f4bf502e23d68033a66465a90efb3a"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 607954,
+      "sha256": "d6824183b8cd87b24a203fb3b3665ba217f4bf502e23d68033a66465a90efb3a"
+    },
+    {
+      "file": "app-graph.png",
+      "state": "synthetic-knowledge-graph",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:53.534Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "graph",
+        "width": 1440,
+        "height": 960,
+        "sha256": "f1b1aeb9898262f59204f8de147e25eb335730ec643936849fad7a0b2be2de72"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 693028,
+      "sha256": "f1b1aeb9898262f59204f8de147e25eb335730ec643936849fad7a0b2be2de72"
+    },
+    {
+      "file": "app-inbox.png",
+      "state": "synthetic-capture-inbox",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:55.885Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "inbox",
+        "width": 1440,
+        "height": 960,
+        "sha256": "2c178754b20da5dbe1e2b194ae82a779256a6826dc0267a71ddbb3dc35ad1a20"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 582162,
+      "sha256": "2c178754b20da5dbe1e2b194ae82a779256a6826dc0267a71ddbb3dc35ad1a20"
+    },
+    {
+      "file": "app-ai-workspace.png",
+      "state": "local-assistant",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:04:57.964Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "ai-workspace",
+        "width": 1440,
+        "height": 960,
+        "sha256": "c00984e7363298e414d814fc7275aaee5b04a577025bf330c1679afbbfd063df"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 489358,
+      "sha256": "c00984e7363298e414d814fc7275aaee5b04a577025bf330c1679afbbfd063df"
+    },
+    {
+      "file": "app-skills.png",
+      "state": "skill-library",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:05:00.418Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "skills",
+        "width": 1440,
+        "height": 960,
+        "sha256": "1f10fbe5e5dfb9c4749d4b8de89ece0defb9d51bebc73289a393cb41d13a9135"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 636634,
+      "sha256": "1f10fbe5e5dfb9c4749d4b8de89ece0defb9d51bebc73289a393cb41d13a9135"
+    },
+    {
+      "file": "app-automations.png",
+      "state": "guarded-workflows",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:05:06.014Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "automations",
+        "width": 1440,
+        "height": 960,
+        "sha256": "e27901a5d1e0bc61aa041e1dbc72f5763e48806ed6cfef4aa5f9ac18f407d5f4"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 733411,
+      "sha256": "e27901a5d1e0bc61aa041e1dbc72f5763e48806ed6cfef4aa5f9ac18f407d5f4"
+    },
+    {
+      "file": "app-company.png",
+      "state": "synthetic-company-brief",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:05:22.467Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "company",
+        "width": 1440,
+        "height": 960,
+        "sha256": "107d61bc2dad2733c043dacd6c3a9abc48f657e16e3225832694dcc472d56019"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 725725,
+      "sha256": "107d61bc2dad2733c043dacd6c3a9abc48f657e16e3225832694dcc472d56019"
+    },
+    {
+      "file": "app-connections.png",
+      "state": "read-only-client-setup",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:05:08.489Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "connections",
+        "width": 1440,
+        "height": 960,
+        "sha256": "c69d7b647005ddbbd8c71310635dc90b75b7af9e52c92e746e64280145a1cb54"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 582099,
+      "sha256": "c69d7b647005ddbbd8c71310635dc90b75b7af9e52c92e746e64280145a1cb54"
+    },
+    {
+      "file": "app-settings.png",
+      "state": "privacy-controls",
+      "provenance": {
+        "capturedAt": "2026-09-08T13:05:11.302Z",
+        "repositoryRevision": "2eca81daca15b4f18d2170bb3e5784199706c7eb",
+        "workingTreeDirty": true,
+        "appVersion": "0.7.0",
+        "workspace": "examples/demo-workspace",
+        "state": "settings",
+        "width": 1440,
+        "height": 960,
+        "sha256": "111ee86c30cb52f11debb985e01026f27457798a569560d3bde8724e531fab27"
+      },
+      "captureVerified": true,
+      "width": 1440,
+      "height": 960,
+      "bytes": 629174,
+      "sha256": "111ee86c30cb52f11debb985e01026f27457798a569560d3bde8724e531fab27"
+    }
+  ]
+}

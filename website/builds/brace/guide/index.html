@@ -3,264 +3,143 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#8abcf7">
-  <meta name="description" content="A beginner-friendly guide to installing, starting, connecting, backing up, and safely using BRACE.">
+  <meta name="theme-color" content="#f5fbff">
+  <meta name="description" content="Install BRACE, add one source, create your first local memory, recall it with evidence, and connect an AI safely.">
   <meta property="og:title" content="BRACE Beginner Guide">
-  <meta property="og:description" content="Install BRACE, build your first local memory, and connect a compatible AI, step by step.">
+  <meta property="og:description" content="A calm, step-by-step path from installation to private, source-backed AI recall.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://b-r-a-c-e-brain.vercel.app/guide/">
   <meta property="og:image" content="https://b-r-a-c-e-brain.vercel.app/assets/app-overview.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="BRACE Beginner Guide">
-  <meta name="twitter:description" content="A step-by-step path from installation to private, source-backed AI recall.">
+  <meta name="twitter:description" content="Your first private, source-backed memory in about ten minutes.">
   <meta name="twitter:image" content="https://b-r-a-c-e-brain.vercel.app/assets/app-overview.png">
-  <title>BRACE Beginner Guide | Start your private AI memory</title>
+  <title>BRACE Beginner Guide | Your first private memory</title>
   <link rel="canonical" href="https://b-r-a-c-e-brain.vercel.app/guide/">
   <link rel="manifest" href="../manifest.webmanifest">
   <link rel="icon" href="../favicon.ico">
-  <link rel="stylesheet" href="guide.css">
+  <link rel="preload" href="../assets/brace-logo.svg" as="image" fetchpriority="high">
+  <link rel="stylesheet" href="guide.css?v=20260907-glass">
 </head>
-<body class="guide-body">
+<body>
   <a class="skip-link" href="#guide-main">Skip to the guide</a>
-  <canvas class="guide-signal" data-guide-signal aria-hidden="true"></canvas>
-  <div class="guide-grain" aria-hidden="true"></div>
-  <div class="guide-reading-progress" aria-hidden="true"><i></i></div>
+  <div class="guide-reading-progress" aria-hidden="true"><i data-guide-progress></i></div>
 
-  <header class="guide-bar">
-    <a class="product-mark" href="../" aria-label="Back to BRACE">
+  <header class="guide-bar" data-guide-bar>
+    <a class="product-mark" href="../" aria-label="Back to BRACE home">
       <img src="../assets/brace-logo.svg" width="34" height="34" alt="">
       <span><strong>BRACE</strong><small>BEGINNER GUIDE</small></span>
     </a>
-    <nav aria-label="Guide actions">
-      <a href="#install">Install</a>
-      <a href="#connect">Connect AI</a>
-      <a href="#privacy">Privacy</a>
-    </nav>
-    <a class="bar-action" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Get BRACE <span>↗</span></a>
+    <nav aria-label="Guide shortcuts"><a href="#install">Install</a><a href="#first-memory">First memory</a><a href="#connect">Connect AI</a><a href="#privacy">Privacy</a></nav>
+    <a class="bar-action" href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Get BRACE <span aria-hidden="true">↗</span></a>
   </header>
 
   <main id="guide-main">
-    <section class="guide-hero">
-      <div class="guide-wrap">
-        <div class="guide-hero-grid">
-          <div class="guide-intro">
-            <p class="surface-kicker"><span></span> START HERE / ABOUT 10 MINUTES</p>
-            <h1>Your first private AI memory, step by step.</h1>
-            <p class="guide-lede">No account. No mystery upload. Start with one focused project, recover one source-backed answer, then connect an AI read-only.</p>
-            <div class="guide-hero-actions"><a href="#install">Begin setup <span>↓</span></a><button type="button" data-reset-progress>Reset progress</button></div>
+    <section class="guide-hero" aria-labelledby="guide-title">
+      <div class="guide-wrap guide-hero-grid">
+        <div class="guide-intro">
+          <p class="surface-kicker"><span></span> ABOUT TEN MINUTES · NO ACCOUNT</p>
+          <h1 id="guide-title">Build your first<br>private memory.</h1>
+          <p class="guide-lede">Install BRACE, choose one focused source, recall an answer with evidence, then connect an AI only if you want to.</p>
+          <div class="guide-hero-actions"><a href="#install">Begin setup <span aria-hidden="true">↓</span></a><button type="button" data-reset-progress>Reset progress</button></div>
+        </div>
+
+        <aside class="launchpad" aria-label="Choose your installation path">
+          <div class="launchpad-head"><span>START WITH YOUR PLATFORM</span><b data-detected-platform>DETECTING</b></div>
+          <div class="platform-picker" role="group" aria-label="Operating system">
+            <button type="button" data-platform-choice="windows" aria-pressed="false">Windows</button>
+            <button type="button" data-platform-choice="linux" aria-pressed="false">Linux</button>
+            <button type="button" data-platform-choice="source" aria-pressed="false">Source</button>
           </div>
-          <aside class="launchpad" aria-label="Choose your installation path">
-            <div class="launchpad-head"><span>YOUR FASTEST PATH</span><b data-detected-platform>DETECTING</b></div>
-            <div class="platform-picker" role="group" aria-label="Operating system">
-              <button type="button" data-platform-choice="windows" aria-pressed="false">Windows</button>
-              <button type="button" data-platform-choice="linux" aria-pressed="false">Linux</button>
-              <button type="button" data-platform-choice="source" aria-pressed="false">Build source</button>
-            </div>
-            <div class="launchpad-command">
-              <small data-platform-label>RECOMMENDED INSTALL</small>
-              <strong data-platform-title>Choose your operating system</strong>
-              <code data-platform-command>BRACE 0.7.0 public preview</code>
-              <a data-platform-download href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Open download <span>↗</span></a>
-            </div>
-            <p><i></i><span><strong>Local-first check</strong>Your database starts empty and stays on this device by default.</span></p>
-          </aside>
-        </div>
-        <div class="guide-route" aria-label="Guide route">
-          <a href="#install"><span>01</span> Install</a>
-          <a href="#first-run"><span>02</span> First run</a>
-          <a href="#import"><span>03</span> Import</a>
-          <a href="#recall"><span>04</span> Search</a>
-          <a href="#structure"><span>05</span> Automate</a>
-          <a href="#connect"><span>06</span> Connect</a>
-          <a href="#privacy"><span>07</span> Protect</a>
-          <a href="#troubleshooting"><span>?</span> Fix issues</a>
-        </div>
+          <div class="launchpad-command">
+            <small data-platform-label>RECOMMENDED INSTALL</small>
+            <strong data-platform-title>Choose your operating system</strong>
+            <code data-platform-command>BRACE 0.7.0 public preview</code>
+            <a data-platform-download href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">Open download <span aria-hidden="true">↗</span></a>
+          </div>
+          <p><i></i><span><strong>Your database starts empty.</strong> It stays on this device by default.</span></p>
+        </aside>
       </div>
+      <div class="guide-atlas" aria-hidden="true"><i></i><i></i><i></i><span></span><b></b></div>
     </section>
 
     <div class="guide-layout guide-wrap">
-      <aside class="guide-toc" aria-label="On this page">
-        <strong>ON THIS PAGE</strong>
+      <aside class="guide-toc" aria-label="Setup route">
+        <div class="toc-head"><strong>YOUR ROUTE</strong><span>7 STEPS</span></div>
         <nav>
-          <a href="#install">1. Install BRACE</a>
-          <a href="#first-run">2. Choose your first run</a>
-          <a href="#import">3. Import one project</a>
-          <a href="#recall">4. Remember and recall</a>
-          <a href="#structure">5. Automations and structure</a>
-          <a href="#connect">6. Connect an AI</a>
-          <a href="#privacy">7. Back up and protect</a>
-          <a href="#troubleshooting">Troubleshooting</a>
+          <a href="#install"><span>01</span><b>Install BRACE</b><small>Choose and verify a package</small></a>
+          <a href="#workspace"><span>02</span><b>Choose a workspace</b><small>Know where data lives</small></a>
+          <a href="#source"><span>03</span><b>Add one source</b><small>Keep the boundary focused</small></a>
+          <a href="#first-memory"><span>04</span><b>Create a memory</b><small>Attach the evidence</small></a>
+          <a href="#recall"><span>05</span><b>Recall it</b><small>Inspect the receipt</small></a>
+          <a href="#connect"><span>06</span><b>Connect an AI</b><small>Start read-only</small></a>
+          <a href="#privacy"><span>07</span><b>Protect it</b><small>Back up and recover</small></a>
+          <a href="#help" class="toc-help"><span>?</span><b>I'm stuck</b><small>Find one safe next check</small></a>
         </nav>
-        <div class="toc-status"><span></span><p><strong>Local-first</strong><small>No telemetry or account</small></p></div>
         <div class="setup-progress" data-setup-progress>
-          <div><strong>YOUR SETUP</strong><b><span data-progress-count>0</span>/7</b></div>
+          <div><strong>LOCAL PROGRESS</strong><b><span data-progress-count>0</span>/7</b></div>
           <i aria-hidden="true"><span></span></i>
-          <label><input type="checkbox" data-setup-check="install"> Installed BRACE</label>
-          <label><input type="checkbox" data-setup-check="first-run"> Chose first-run path</label>
-          <label><input type="checkbox" data-setup-check="import"> Imported one project</label>
-          <label><input type="checkbox" data-setup-check="recall"> Recalled with evidence</label>
-          <label><input type="checkbox" data-setup-check="structure"> Reviewed automations</label>
+          <label><input type="checkbox" data-setup-check="install"> Installed</label>
+          <label><input type="checkbox" data-setup-check="workspace"> Chose workspace</label>
+          <label><input type="checkbox" data-setup-check="source"> Added a source</label>
+          <label><input type="checkbox" data-setup-check="memory"> Created memory</label>
+          <label><input type="checkbox" data-setup-check="recall"> Recalled evidence</label>
           <label><input type="checkbox" data-setup-check="connect"> Connected read-only</label>
-          <label><input type="checkbox" data-setup-check="privacy"> Created a backup</label>
+          <label><input type="checkbox" data-setup-check="privacy"> Created backup</label>
           <small>Saved only in this browser.</small>
         </div>
       </aside>
 
       <article class="guide-article">
         <section id="install" class="guide-step">
-          <header class="step-header">
-            <span>01</span>
-            <div><p>INSTALL</p><h2>Choose the package for your computer.</h2></div>
-          </header>
-          <p>Open the <a href="https://github.com/GYASH28/B.R.A.C.E-brain/releases/tag/v0.7.0">BRACE 0.7.0 GitHub release</a> and download one asset. You do not need the source code unless you want to develop BRACE.</p>
-
-          <div class="platform-grid">
-            <section>
-              <div class="platform-title"><span>WIN</span><h3>Windows 10 or 11</h3></div>
-              <ol>
-                <li>Download <code>BRACE-Setup-0.7.0.exe</code>.</li>
-                <li>Open the installer and choose an install location.</li>
-                <li>Launch BRACE from the Start menu.</li>
-              </ol>
-              <p class="guide-note"><strong>Preview limitation:</strong> the first community build is not code-signed. Windows may show a SmartScreen warning. Verify the SHA-256 value in the release notes before choosing <em>Run anyway</em>.</p>
-            </section>
-            <section>
-              <div class="platform-title"><span>LNX</span><h3>Linux</h3></div>
-              <p>For Debian or Ubuntu, download the <code>amd64.deb</code> package and run:</p>
-              <pre><code>sudo apt install ./brace-brain_0.7.0_amd64.deb</code><button class="copy-code" type="button" aria-label="Copy Debian install command">Copy</button></pre>
-              <p>For other distributions, download the AppImage:</p>
-              <pre><code>chmod +x BRACE-0.7.0.AppImage
-./BRACE-0.7.0.AppImage</code><button class="copy-code" type="button" aria-label="Copy AppImage commands">Copy</button></pre>
-            </section>
+          <header class="step-header"><span>01</span><div><p>INSTALL</p><h2>Choose one package. Verify it before opening.</h2></div></header>
+          <p class="step-lede">BRACE 0.7.0 is a public preview for Windows and Linux. You do not need the source code unless you are developing BRACE.</p>
+          <div class="platform-rows">
+            <section><header><span>WIN</span><div><small>WINDOWS 10 / 11 · X64</small><h3>Guided installer</h3></div></header><ol><li>Download <code>BRACE-Setup-0.7.0.exe</code>.</li><li>Compare its SHA-256 with the release manifest.</li><li>Open the installer and choose a location.</li></ol><p class="guide-note"><strong>Unsigned preview:</strong> Windows may show SmartScreen. Verify the checksum before choosing Run anyway.</p></section>
+            <section><header><span>LNX</span><div><small>LINUX · X86_64</small><h3>AppImage or Debian package</h3></div></header><p>For Debian or Ubuntu:</p><pre><code>sudo apt install ./brace-brain_0.7.0_amd64.deb</code><button class="copy-code" type="button" aria-label="Copy Debian install command">Copy</button></pre><p>For other distributions:</p><pre><code>chmod +x BRACE-0.7.0.AppImage
+./BRACE-0.7.0.AppImage</code><button class="copy-code" type="button" aria-label="Copy AppImage commands">Copy</button></pre></section>
           </div>
-
-          <details>
-            <summary>Build from source instead</summary>
-            <div class="details-body">
-              <p>BRACE currently requires Node.js 24 or newer. Clone the repository, install exact dependencies, run the checks, then start desktop development:</p>
-              <pre><code>git clone https://github.com/GYASH28/B.R.A.C.E-brain.git
+          <details><summary>Build from source with Node.js 24+</summary><div class="details-body"><pre><code>git clone https://github.com/GYASH28/B.R.A.C.E-brain.git
 cd B.R.A.C.E-brain
 npm ci
-npm test
-npm run electron:dev</code><button class="copy-code" type="button" aria-label="Copy source build commands">Copy</button></pre>
-            </div>
-          </details>
+npm run verify
+npm run electron:dev</code><button class="copy-code" type="button" aria-label="Copy source build commands">Copy</button></pre></div></details>
         </section>
 
-        <section id="first-run" class="guide-step">
-          <header class="step-header">
-            <span>02</span>
-            <div><p>FIRST RUN</p><h2>Start empty or explore the synthetic demo.</h2></div>
-          </header>
-          <p>A new installation has no personal memory and no imported files. BRACE offers two explicit choices:</p>
-          <ul class="choice-list">
-            <li><strong>Import a project</strong><span>Choose a specific folder you own. BRACE indexes supported text but never changes the originals.</span></li>
-            <li><strong>Explore synthetic demo</strong><span>Load the fictional Northstar workspace to try recall, decisions, the graph, timeline, and bundled skills.</span></li>
-          </ul>
-          <figure class="guide-shot">
-            <img src="../assets/app-onboarding.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE first-run screen with Import a project and Explore synthetic demo choices">
-            <figcaption><strong>The first-run screen.</strong> The synthetic demo is optional and labelled before it writes anything.</figcaption>
-          </figure>
+        <section id="workspace" class="guide-step">
+          <header class="step-header"><span>02</span><div><p>FIRST RUN</p><h2>Start empty or inspect the synthetic workspace.</h2></div></header>
+          <p class="step-lede">A fresh installation has no personal memory and no imported files. The Northstar demo is fictional and clearly separated from your data.</p>
+          <div class="choice-lines"><p><strong>Start with your work</strong><span>Choose a focused folder you own. BRACE indexes allowlisted text without changing the originals.</span></p><p><strong>Explore Northstar</strong><span>Try recall, decisions, the graph, timeline, and bundled skills with synthetic content.</span></p></div>
+          <figure class="guide-shot"><img src="../assets/app-onboarding.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE first-run screen offering a project import or synthetic demo"><figcaption><strong>Nothing is assumed.</strong> You choose the first source and where BRACE stores its local state.</figcaption></figure>
         </section>
 
-        <section id="import" class="guide-step">
-          <header class="step-header">
-            <span>03</span>
-            <div><p>PROJECT CONTEXT</p><h2>Import one focused project folder.</h2></div>
-          </header>
-          <p>Choose the smallest folder that contains the work you want to recall. A project repository or notes folder is a good boundary. Your home directory or drive root is not.</p>
-          <div class="do-dont">
-            <div><strong>BRACE reads</strong><span>Markdown, plain text, JSON, YAML, source code, and other allowlisted text formats.</span></div>
-            <div><strong>BRACE ignores</strong><span>Credentials, environment files, databases, logs, dependencies, build output, caches, and symlink targets.</span></div>
-            <div><strong>BRACE stores</strong><span>Private-path-free project URIs, content hashes, headings, chunks, entities, and relationships.</span></div>
-          </div>
-          <p class="guide-note">Indexing is incremental. Use <strong>Reindex</strong> after meaningful file changes. Removed source files are removed from the index; durable memories remain until you forget or supersede them.</p>
-          <figure class="guide-shot">
-            <img src="../assets/app-overview.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Command center after the synthetic Northstar project is indexed">
-            <figcaption><strong>Command center after import.</strong> Source coverage and durable memory are counted separately.</figcaption>
-          </figure>
+        <section id="source" class="guide-step">
+          <header class="step-header"><span>03</span><div><p>SOURCE</p><h2>Add the smallest useful project boundary.</h2></div></header>
+          <p class="step-lede">Choose a project repository or notes folder. Never select your home directory or an entire drive.</p>
+          <dl class="boundary-list"><div><dt>BRACE reads</dt><dd>Markdown, plain text, JSON, YAML, source code, and other allowlisted text.</dd></div><div><dt>BRACE ignores</dt><dd>Credentials, environment files, databases, logs, dependencies, build output, caches, and symlink targets.</dd></div><div><dt>BRACE stores</dt><dd>Private-path-free project URIs, hashes, headings, chunks, entities, and relationships.</dd></div></dl>
+          <p class="guide-note">Indexing is incremental. Removed source files leave the index, while durable memories remain until you forget or supersede them.</p>
+          <figure class="guide-shot"><img src="../assets/app-overview.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE command center using the synthetic Northstar workspace"><figcaption><strong>Source coverage and memory are separate.</strong> Importing a project does not turn every file into durable memory.</figcaption></figure>
+        </section>
+
+        <section id="first-memory" class="guide-step">
+          <header class="step-header"><span>04</span><div><p>MEMORY</p><h2>Keep one outcome that deserves to survive.</h2></div></header>
+          <p class="step-lede">Capture a decision, lesson, warning, preference, fact, hypothesis, summary, or procedure. Keep the title specific and the claim focused.</p>
+          <ol class="instruction-list"><li><span>1</span><div><strong>Name the durable point.</strong><p>Use “Keep imported files canonical,” not “Architecture notes.”</p></div></li><li><span>2</span><div><strong>Choose its scope.</strong><p>Use global memory only when the statement applies everywhere.</p></div></li><li><span>3</span><div><strong>Attach provenance.</strong><p>Add the source and excerpt whenever one exists.</p></div></li></ol>
+          <figure class="guide-shot"><img src="../assets/app-inbox.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Inbox with memory and decision capture modes"><figcaption><strong>Capture the outcome.</strong> BRACE does not retain a raw conversation as memory by default.</figcaption></figure>
         </section>
 
         <section id="recall" class="guide-step">
-          <header class="step-header">
-            <span>04</span>
-            <div><p>MEMORY</p><h2>Remember deliberately, then recall with evidence.</h2></div>
-          </header>
-          <p>Use <strong>Quick capture</strong> or <strong>Inbox</strong> for context that should survive a project or conversation: decisions, lessons, warnings, preferences, facts, hypotheses, summaries, and procedures. Keep each memory focused on one claim.</p>
-          <div class="shortcut-deck" aria-label="Fast keyboard routes">
-            <p><kbd>Ctrl / ⌘ K</kbd><span><strong>Command palette</strong>Jump to any workspace without hunting through navigation.</span></p>
-            <p><kbd>Ctrl / ⌘ N</kbd><span><strong>Quick capture</strong>Save a durable memory from whatever view you are using.</span></p>
-            <p><kbd>1 to 9</kbd><span><strong>Direct navigation</strong>Open Command center through Skills in sidebar order.</span></p>
-            <p><kbd>?</kbd><span><strong>Keyboard map</strong>Open the complete shortcut reference.</span></p>
-          </div>
-          <ol class="instruction-list">
-            <li><span>1</span><div><strong>Name the durable point.</strong><p>Use a specific title such as “Keep imported files canonical,” not “Architecture notes.”</p></div></li>
-            <li><span>2</span><div><strong>Choose its scope.</strong><p>Use global memory only when it applies everywhere. Otherwise keep it within a project scope.</p></div></li>
-            <li><span>3</span><div><strong>Attach provenance when available.</strong><p>A source URI and excerpt let future retrieval show why the memory exists.</p></div></li>
-            <li><span>4</span><div><strong>Search your memory.</strong><p>Open <b>Search</b>, then choose Today, 7 days, 30 days, or All time. BRACE reports lexical, semantic, or hybrid mode and keeps memories separate from source evidence.</p></div></li>
-          </ol>
-          <figure class="guide-shot">
-            <img src="../assets/app-inbox.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Inbox with separate memory and decision capture modes">
-            <figcaption><strong>Capture deliberately.</strong> Inbox stores a useful outcome or explicit decision, never a raw transcript by default.</figcaption>
-          </figure>
-          <figure class="guide-shot">
-            <img src="../assets/app-recall.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Search results with Durable memory and Source evidence sections">
-            <figcaption><strong>Search is evidence-aware.</strong> Durable context is not disguised as a source excerpt.</figcaption>
-          </figure>
-          <p>Semantic retrieval is optional. In Settings, enable a loopback Ollama endpoint and choose an embedding model. If the provider is unavailable, BRACE completes lexical search and reports the fallback.</p>
-        </section>
-
-        <section id="structure" class="guide-step">
-          <header class="step-header">
-            <span>05</span>
-            <div><p>AUTOMATE + STRUCTURE</p><h2>Let local memory maintain itself—visibly.</h2></div>
-          </header>
-          <p>Search answers a question. These workspace views show how that answer stays precise, reaches an AI, and fits into the larger history. Every view reads the same local database.</p>
-          <div class="feature-walkthrough">
-            <article>
-              <img src="../assets/app-automations.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Automation Studio with a local recipe, permission envelope, and execution history">
-              <div><strong>Automation Studio</strong><p>Start from a template or create a recipe with one typed trigger, optional AND/OR conditions, and bounded actions. New recipes start paused: inspect the permission envelope, run <b>Preview</b>, then enable only when its trace is correct. The desktop app must remain open for schedules.</p></div>
-            </article>
-            <article>
-              <img src="../assets/app-ai-workspace.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE AI Workspace with Codex CLI detected and a visible context boundary">
-              <div><strong>AI Workspace</strong><p>Ask through a detected Codex CLI or Claude Code client. BRACE retrieves a bounded context capsule locally, previews the provider boundary, and keeps conversation history separate from durable memory until you choose <b>Retain latest answer</b>.</p></div>
-            </article>
-            <article>
-              <img src="../assets/app-memory-review.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE memory review queue comparing two synthetic checksum procedures">
-              <div><strong>Memory review</strong><p>Open <b>Memory</b>, then <b>Review queue</b>, when BRACE flags likely overlap. Inspect both records, keep either one as canonical, or confirm that both are distinct. BRACE never silently merges them.</p></div>
-            </article>
-            <article>
-              <img src="../assets/app-timeline.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Timeline showing synthetic Northstar decisions and indexing events">
-              <div><strong>Timeline</strong><p>Open <b>Timeline</b> to review dated memory, evidence, indexing, and decision events. Choose <b>Record decision</b> to capture the decision, rationale, project scope, and accepted status explicitly.</p></div>
-            </article>
-            <article>
-              <img src="../assets/app-graph.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE knowledge graph using synthetic Northstar projects, sources, memories, decisions, and entities">
-              <div><strong>Knowledge map</strong><p>Open <b>Library → Map</b> and move the same graph through <b>Rings</b>, <b>Living</b>, <b>Orbit</b>, <b>Flow</b>, or <b>Chronicle</b>. Filter by type, select a node, or use the arrow keys to inspect typed relationships and travel back to provenance.</p></div>
-            </article>
-            <article>
-              <img src="../assets/app-skills.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Skills showing synthetic declarative skills and their permissions">
-              <div><strong>Skills</strong><p>Open <b>Skills</b>, choose <b>Install manifest</b>, and select one <code>brace-skill.json</code>. Review the exact permission list. Third-party skills install disabled; use the switch only after the checksum and permissions are acceptable.</p></div>
-            </article>
-          </div>
-          <p class="guide-note"><strong>Automations and Skills are declarative.</strong> They can invoke only approved memory operations. BRACE does not run arbitrary JavaScript, shell commands, HTTP calls, or code from a recipe or manifest.</p>
+          <header class="step-header"><span>05</span><div><p>RECALL</p><h2>Ask once. Inspect the receipt.</h2></div></header>
+          <p class="step-lede">Search reports lexical, semantic, or hybrid mode and keeps durable memory visually separate from source evidence.</p>
+          <div class="shortcut-line"><p><kbd>Ctrl / ⌘ K</kbd><span><strong>Open command palette</strong>Jump to any workspace.</span></p><p><kbd>Ctrl / ⌘ N</kbd><span><strong>Quick capture</strong>Save one durable outcome.</span></p><p><kbd>?</kbd><span><strong>Keyboard map</strong>See every shortcut.</span></p></div>
+          <figure class="guide-shot"><img src="../assets/app-recall.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE recall separating memory from source evidence"><figcaption><strong>Retrieval stays honest.</strong> If no embedding adapter produced vectors, BRACE labels the result lexical.</figcaption></figure>
         </section>
 
         <section id="connect" class="guide-step">
-          <header class="step-header">
-            <span>06</span>
-            <div><p>MCP CONNECTION</p><h2>Connect an AI with explicit memory permission.</h2></div>
-          </header>
-          <p>Open <strong>Connections</strong> inside BRACE. The connection studio detects Codex CLI, Claude Code, and Antigravity, shows their installed version, and gives every client the same local BRACE memory.</p>
-          <ol class="instruction-list">
-            <li><span>1</span><div><strong>Choose a permission.</strong><p>Start with <b>Recall only</b>. Choose <b>Recall + remember</b> only when that client should retain explicit durable outcomes.</p></div></li>
-            <li><span>2</span><div><strong>Select a detected client.</strong><p>Choose Codex CLI, Claude Code, or Antigravity and press <b>Connect</b>. BRACE previews the provider boundary and creates a recoverable configuration backup before changing anything.</p></div></li>
-            <li><span>3</span><div><strong>Start with memory.</strong><p>The client can call <code>brace_session_start</code> before work and <code>brace_session_handoff</code> after work when retention is enabled.</p></div></li>
-          </ol>
-          <figure class="guide-shot">
-            <img src="../assets/app-connections.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Connection studio detecting Codex CLI and offering read-only or remember access">
-            <figcaption><strong>Guided and recoverable.</strong> Forgetting is never enabled by the connection studio, and BRACE never copies a provider API key.</figcaption>
-          </figure>
-          <p>For another MCP-compatible tool, choose <strong>Any MCP client</strong> and copy the generated JSON. Linux uses the compact <code>--mcp</code> form shown below. Windows uses the bundled server in Electron Node mode so redirected stdio remains reliable.</p>
+          <header class="step-header"><span>06</span><div><p>AI CONNECTION</p><h2>Start read-only. Expand permission deliberately.</h2></div></header>
+          <p class="step-lede">Connections detects compatible clients, previews the provider boundary, and creates a recoverable configuration backup before changing anything.</p>
+          <ol class="instruction-list"><li><span>1</span><div><strong>Choose Recall only.</strong><p>Prove local search works before enabling retention.</p></div></li><li><span>2</span><div><strong>Connect a detected client.</strong><p>Use Codex CLI, Claude Code, Antigravity, or the manual MCP configuration.</p></div></li><li><span>3</span><div><strong>Call <code>brace_status</code>.</strong><p>Restart the client and confirm the local server responds.</p></div></li></ol>
+          <figure class="guide-shot"><img src="../assets/app-connections.png" width="1440" height="960" loading="lazy" decoding="async" alt="BRACE Connections with detected clients and permission choices"><figcaption><strong>Read-only first.</strong> Remembering and forgetting are separate permissions.</figcaption></figure>
           <pre><code>{
   "mcpServers": {
     "brace": {
@@ -269,70 +148,38 @@ npm run electron:dev</code><button class="copy-code" type="button" aria-label="C
     }
   }
 }</code><button class="copy-code" type="button" aria-label="Copy MCP configuration">Copy</button></pre>
-          <p>Restart a manually configured client, then ask it to call <code>brace_status</code> or <code>brace_session_start</code>. The default connection can read recall, projects, timeline, graph, and skill metadata.</p>
-          <div class="permission-table" role="table" tabindex="0" aria-label="MCP permission modes. Scroll horizontally on small screens.">
-            <div role="row"><span role="columnheader">Mode</span><span role="columnheader">Environment</span><span role="columnheader">What changes</span></div>
-            <div role="row"><strong role="cell">Read-only</strong><code role="cell">default</code><span role="cell">Search and inspect local memory.</span></div>
-            <div role="row"><strong role="cell">Remember</strong><code role="cell">BRACE_MCP_WRITE=1</code><span role="cell">Remember, record decisions, retain session handoffs, and run approved skills.</span></div>
-            <div role="row"><strong role="cell">Destructive</strong><code role="cell">BRACE_MCP_DESTRUCTIVE=1</code><span role="cell">Adds forgetting only when write mode is also enabled.</span></div>
-          </div>
-          <p class="guide-note"><strong>Start read-only.</strong> Enable writes only for a client you trust. Destructive access is intentionally a second, separate flag.</p>
+          <div class="permission-table" role="table" tabindex="0" aria-label="MCP permission modes. Scroll horizontally on small screens."><div role="row"><span role="columnheader">Mode</span><span role="columnheader">Environment</span><span role="columnheader">Access</span></div><div role="row"><strong role="cell">Read-only</strong><code role="cell">default</code><span role="cell">Search and inspect local memory.</span></div><div role="row"><strong role="cell">Remember</strong><code role="cell">BRACE_MCP_WRITE=1</code><span role="cell">Remember, record decisions, and retain explicit handoffs.</span></div><div role="row"><strong role="cell">Destructive</strong><code role="cell">BRACE_MCP_DESTRUCTIVE=1</code><span role="cell">Adds forgetting only when write mode is also enabled.</span></div></div>
         </section>
 
         <section id="privacy" class="guide-step">
-          <header class="step-header">
-            <span>07</span>
-            <div><p>LOCAL CONTROL</p><h2>Back up, export, forget, or delete.</h2></div>
-          </header>
-          <p>The Settings screen is the control room for your local data. BRACE exposes four different operations because they have different safety and portability properties.</p>
-          <dl class="control-list">
-            <div><dt>Create SQLite backup</dt><dd>Makes a consistent copy of the complete local database. Use this for disaster recovery.</dd></div>
-            <div><dt>Export portable JSON</dt><dd>Exports memory, decisions, evidence, graph relationships, skills metadata, and settings without machine-specific project roots.</dd></div>
-            <div><dt>Forget one memory</dt><dd>Removes its content, evidence, and vector. A non-sensitive tombstone remains for audit integrity.</dd></div>
-            <div><dt>Delete all local data</dt><dd>Requires typing <code>DELETE</code>. Imported project originals remain untouched.</dd></div>
-          </dl>
-          <h3>Default data locations</h3>
-          <div class="location-list">
-            <p><strong>Windows</strong><code>%APPDATA%\BRACE\brace.sqlite3</code></p>
-            <p><strong>Linux</strong><code>$XDG_DATA_HOME/brace/brace.sqlite3</code><span>or <code>~/.local/share/brace/brace.sqlite3</code></span></p>
-            <p><strong>Override</strong><code>BRACE_DATA_DIR</code><span>Use a specific directory, never a drive root.</span></p>
-          </div>
-          <p class="guide-note"><strong>Backups are sensitive.</strong> They contain the memories you chose to store. Keep them in encrypted storage and do not commit them to Git.</p>
+          <header class="step-header"><span>07</span><div><p>LOCAL CONTROL</p><h2>Back up, export, forget, or delete.</h2></div></header>
+          <p class="step-lede">These actions remain separate because recovery, portability, and deletion have different consequences.</p>
+          <dl class="control-list"><div><dt>Create SQLite backup</dt><dd>A consistent copy of the complete local database for recovery.</dd></div><div><dt>Export portable JSON</dt><dd>Memory, decisions, evidence, relationships, skill metadata, and settings without machine-specific roots.</dd></div><div><dt>Forget one memory</dt><dd>Removes its content, evidence, and vector. A non-sensitive tombstone preserves audit integrity.</dd></div><div><dt>Delete all local data</dt><dd>Requires typing <code>DELETE</code>. Imported originals remain untouched.</dd></div></dl>
+          <div class="location-list"><p><strong>Windows</strong><code>%APPDATA%\BRACE\brace.sqlite3</code></p><p><strong>Linux</strong><code>$XDG_DATA_HOME/brace/brace.sqlite3</code><span>or <code>~/.local/share/brace/brace.sqlite3</code></span></p><p><strong>Override</strong><code>BRACE_DATA_DIR</code><span>Use a specific directory, never a drive root.</span></p></div>
+          <p class="guide-note"><strong>Backups are sensitive.</strong> Keep them in encrypted storage and never commit them to Git.</p>
         </section>
 
-        <section id="troubleshooting" class="guide-step guide-step--last">
-          <header class="step-header">
-            <span>?</span>
-            <div><p>TROUBLESHOOTING</p><h2>Common first-run questions.</h2></div>
-          </header>
+        <section id="help" class="guide-step guide-step--last">
+          <header class="step-header"><span>?</span><div><p>TROUBLESHOOTING</p><h2>Find one safe next check.</h2></div></header>
           <div class="trouble-finder" data-trouble-finder>
-            <div><span>QUICK DIAGNOSIS</span><h3>What is getting in your way?</h3><p>Choose the closest symptom. This stays entirely in your browser.</p></div>
-            <div class="trouble-options" role="group" aria-label="Troubleshooting symptoms">
-              <button type="button" data-trouble="launch">BRACE will not launch</button>
-              <button type="button" data-trouble="file">A file is missing</button>
-              <button type="button" data-trouble="recall">Recall looks incomplete</button>
-              <button type="button" data-trouble="connect">AI cannot connect</button>
-            </div>
-            <output data-trouble-output aria-live="polite"><strong>Choose a symptom above.</strong><span>You will get a focused first check and the safest next action.</span></output>
+            <label for="trouble-search"><span>SEARCH HELP</span><strong>What is getting in your way?</strong></label>
+            <input id="trouble-search" type="search" data-trouble-search placeholder="Try “file missing” or “AI cannot connect”" autocomplete="off">
+            <div class="trouble-options" role="group" aria-label="Troubleshooting symptoms"><button type="button" data-trouble="launch">BRACE will not launch</button><button type="button" data-trouble="file">A file is missing</button><button type="button" data-trouble="recall">Recall looks incomplete</button><button type="button" data-trouble="connect">AI cannot connect</button></div>
+            <output data-trouble-output aria-live="polite"><strong>Choose a symptom or search above.</strong><span>You will get a focused first check and the safest next action.</span></output>
           </div>
           <div class="faq-list">
-            <details><summary>Why does Search say “lexical”?</summary><div class="details-body"><p>That is the private default and it is fully functional. Enable a local Ollama embedding model only if you want semantic or hybrid ranking.</p></div></details>
-            <details><summary>Why is an imported file missing?</summary><div class="details-body"><p>BRACE rejects binary, oversized, hidden, credential-like, database, dependency, build, cache, and symlink content. Check that the file is supported and inside the selected folder.</p></div></details>
-            <details><summary>Why can my AI search but not remember?</summary><div class="details-body"><p>MCP is read-only by default. Add <code>BRACE_MCP_WRITE=1</code> to that client's BRACE server environment, then restart the client.</p></div></details>
-            <details><summary>Can I use a cloud embedding endpoint?</summary><div class="details-body"><p>The core adapter permits HTTPS endpoints, but the desktop first-run interface intentionally exposes local Ollama only. Remote embedding configuration is an advanced source-level option and sends indexed text to that provider.</p></div></details>
-            <details><summary>Where can I report a problem?</summary><div class="details-body"><p>Check the <a href="https://github.com/GYASH28/B.R.A.C.E-brain/blob/main/docs/TROUBLESHOOTING.md">full troubleshooting guide</a>, then open a GitHub issue without attaching your database, project files, logs containing paths, or private exports.</p></div></details>
+            <details data-help-text="lexical semantic hybrid search embeddings"><summary>Why does Search say “lexical”?</summary><div><p>That is the private default. Enable a working embedding adapter only when you want semantic or hybrid ranking.</p></div></details>
+            <details data-help-text="import file missing ignored credential binary oversized hidden"><summary>Why is an imported file missing?</summary><div><p>BRACE excludes hidden, credential-like, binary, oversized, database, dependency, build, cache, and symlink content.</p></div></details>
+            <details data-help-text="AI connect MCP remember write read-only brace_status"><summary>Why can my AI search but not remember?</summary><div><p>MCP is read-only by default. Enable write permission only after read-only recall works.</p></div></details>
+            <details data-help-text="cloud embedding endpoint provider privacy"><summary>Can I use a cloud embedding endpoint?</summary><div><p>The core adapter permits HTTPS endpoints, but doing so sends indexed text to that provider. The desktop first-run interface exposes local Ollama only.</p></div></details>
           </div>
+          <section class="glossary" aria-labelledby="glossary-title"><h3 id="glossary-title">Plain-language glossary</h3><dl><div><dt>Source</dt><dd>The canonical file or record BRACE reads without rewriting.</dd></div><div><dt>Memory</dt><dd>A durable outcome you deliberately retain.</dd></div><div><dt>Provenance</dt><dd>The evidence showing where a memory came from.</dd></div><div><dt>Lexical</dt><dd>Retrieval based on words and text structure.</dd></div><div><dt>Semantic</dt><dd>Retrieval based on vectors produced by a configured embedding adapter.</dd></div><div><dt>Provider</dt><dd>An AI or embedding service that may receive selected content.</dd></div></dl></section>
         </section>
       </article>
     </div>
   </main>
 
-  <footer class="guide-footer guide-wrap">
-    <div class="footer-mark"><img src="../assets/brace-logo.svg" width="30" height="30" alt=""><span><strong>BRACE</strong><small>ONE MEMORY · EVERY AI</small></span></div>
-    <p>Local-first, open source, Apache-2.0.</p>
-    <nav aria-label="Footer links"><a href="../">Main website</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain">Source</a></nav>
-  </footer>
-
-  <script src="guide.js"></script>
+  <footer class="guide-footer guide-wrap"><div class="footer-mark"><img src="../assets/brace-logo.svg" width="30" height="30" alt=""><span><strong>BRACE</strong><small>ONE MEMORY · EVERY AI</small></span></div><p>Local-first, open source, Apache-2.0.</p><nav aria-label="Footer links"><a href="../">Main website</a><a href="https://github.com/GYASH28/B.R.A.C.E-brain">Source</a></nav></footer>
+  <script src="guide.js?v=20260907-glass"></script>
 </body>
 </html>

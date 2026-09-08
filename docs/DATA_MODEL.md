@@ -1,6 +1,6 @@
 # Data model and memory lifecycle
 
-Schema version 5 is stored in SQLite and migrated transactionally by `MemoryStore`. WAL mode supports safe concurrent readers from the desktop and MCP processes.
+Schema version 11 is stored in SQLite and migrated transactionally by `MemoryStore`. WAL mode supports safe concurrent readers from the desktop and MCP processes. Before a real profile migrates, BRACE creates and verifies a bounded recovery copy.
 
 ## Tables
 
@@ -22,6 +22,16 @@ Schema version 5 is stored in SQLite and migrated transactionally by `MemoryStor
 | `settings` | Versioned local configuration | User-controlled |
 | `automations` | Typed local recipe, derived permissions, enablement, schedule cursor, and version | User-controlled |
 | `automation_runs` | Redacted trigger, immutable recipe snapshot, step trace, outcome, timing, and retry relationship | Append-oriented; retained if a recipe is deleted |
+| `authorization_subjects` | Provider-scoped verified human/service identity boundary | Never inferred from legacy names or email |
+| `identity_sessions` | Replay-resistant local verified sessions without raw assertions | Expired or explicitly revoked; current session id remains in main-process memory |
+| `organizations`, `workspaces`, `workspace_members` | Local governed company shape, roles, and explicit capability grants | Separate from Personal memory authority |
+| `shared_publications`, `shared_memory_revisions` | Explicit immutable company projection and revision lineage | Revocation hides the active projection; revisions remain auditable |
+| `company_sync_workspaces`, `company_sync_devices` | Opaque key reference, lease/policy state, and exact authorized device binding | Revocation removes the key reference and active device authority |
+| `company_sync_operations` | AES-256-GCM outbox/inbound envelope and append-oriented metadata | Ciphertext only; exact redelivery is idempotent |
+| `company_sync_records` | Materialized replica pointer to the current encrypted operation | Removed on workspace revocation; tombstones prevent resurrection |
+| `company_sync_conflicts` | Explicit out-of-order/base-revision conflict evidence | Resolved only after a valid predecessor arrives |
+| `agent_approval_requests` | Immutable, expiring external-effect plan review record | Human-approved plans are consumed once; plan mismatch invalidates |
+| `governance_audit_events` | Per-organization hash-chained, minimized approval lifecycle evidence | Append-only local evidence; verified workspace-scoped export detects row tampering before writing |
 
 ## Memory fields
 
@@ -70,7 +80,7 @@ Supersession retains the old record with a pointer to the new one. It is appropr
 
 Forgetting removes the memory's content, summary, source excerpt, evidence, FTS record, and vector. BRACE retains only a non-sensitive tombstone with an identifier, forgotten status, and audit timestamps. Search excludes it.
 
-Delete-all is broader: it removes projects, sources, chunks, memories, review outcomes, decisions, events, entities, relations, skills, automations, run history, and settings while leaving a valid empty schema. Imported project originals remain untouched.
+Delete-all is broader: it removes projects, sources, chunks, memories, review outcomes, decisions, events, entities, relations, skills, automations, run history, organization/shared records, identity sessions, encrypted sync replicas/operations, approval and governance-audit records, and settings while leaving a valid empty schema. Imported project originals remain untouched.
 
 ## Retrieval
 

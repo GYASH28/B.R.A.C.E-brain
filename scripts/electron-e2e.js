@@ -5,6 +5,8 @@
 const { app, BrowserWindow, protocol } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
+const { execFileSync } = require("node:child_process");
 const { createSecureAssetResponse } = require("../electron/secure-asset-response");
 
 const root = path.resolve(__dirname, "..");
@@ -116,7 +118,21 @@ async function screenshot(window, name) {
   }
   fs.mkdirSync(screenshotDirectory, { recursive: true });
   const target = path.join(screenshotDirectory, `${name}.png`);
-  fs.writeFileSync(target, image.toPNG());
+  const png = image.toPNG();
+  fs.writeFileSync(target, png);
+  const size = image.getSize();
+  const capture = {
+    capturedAt: new Date().toISOString(),
+    repositoryRevision: execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim(),
+    workingTreeDirty: Boolean(execFileSync("git", ["status", "--porcelain", "--untracked-files=no"], { cwd: root, encoding: "utf8" }).trim()),
+    appVersion: JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version,
+    workspace: "examples/demo-workspace",
+    state: name.replace(/^app-/, ""),
+    width: size.width,
+    height: size.height,
+    sha256: crypto.createHash("sha256").update(png).digest("hex"),
+  };
+  fs.writeFileSync(path.join(screenshotDirectory, `${name}.capture.json`), `${JSON.stringify(capture, null, 2)}\n`);
   return target;
 }
 
@@ -376,21 +392,26 @@ async function run() {
   const skills = await screenshot(window, "app-skills");
 
   await clickText(window, "Automations");
-  await waitFor(window, "document.body.innerText.includes('Automations') && document.body.innerText.includes('No recipes yet')");
+  await waitFor(window, "document.body.innerText.includes('Agent control room') && document.body.innerText.includes('No digital agents assigned yet')");
   await clickText(window, "Create automation");
   await waitFor(window, "document.querySelector('.automation-builder') && document.body.innerText.includes('Make BRACE work while you work.')");
   await setInput(window, ".automation-builder-identity input", "Release memory health check");
   await setInput(window, ".automation-builder-identity textarea", "Inspect local memory quality before a release without changing memory.");
   await clickText(window, "Create paused");
   await waitFor(window, "!document.querySelector('.automation-builder') && document.body.innerText.includes('Release memory health check')");
-  await clickText(window, "Preview");
+  await clickText(window, "Preview plan");
   await waitFor(window, "document.body.innerText.includes('Preview completed without changing memory.') && document.body.innerText.includes('preview')");
+  await clickText(window, "Workflow canvas");
+  await waitFor(window, "document.querySelector('.automation-master-switch') && document.querySelector('#agent-canvas')");
   await window.webContents.executeJavaScript("document.querySelector('.automation-master-switch')?.click()");
   await waitFor(window, "document.querySelector('.automation-master-switch')?.getAttribute('aria-checked') === 'true'");
   await clickText(window, "Run now");
   await waitFor(window, "document.body.innerText.includes('Automation finished with status: success.')");
   await window.webContents.executeJavaScript("document.querySelector('.automation-run-summary')?.click()");
   await waitFor(window, "document.querySelector('.automation-run.is-expanded') && document.body.innerText.includes('RECIPE SNAPSHOT')");
+  await clickText(window, "Assignment board");
+  await waitFor(window, "document.querySelector('.agent-assignment') && document.body.innerText.toLowerCase().includes('completed') && document.body.innerText.includes('External actions are locked')");
+  const agentControlReady = await window.webContents.executeJavaScript("document.querySelector('[role=tab][aria-selected=\"true\"]')?.textContent?.includes('Assignment board') === true && document.querySelector('.agent-assignment .agent-state')?.textContent?.includes('Completed') === true");
   const automations = await screenshot(window, "app-automations");
 
   await clickText(window, "AI connections");
@@ -422,13 +443,67 @@ async function run() {
   const responsive = await screenshot(window, "app-responsive");
   window.setContentSize(1440, 960);
 
+  // Exercise the Company brief with only records created in this temporary, synthetic profile.
+  const company = service.store.createOrganization({
+    name: "Northstar Verification Lab",
+    edition: "team",
+    actorLabel: "Synthetic E2E operator",
+  });
+  const companyWorkspace = company.workspaces.find((workspace) => workspace.name === "Company Brain");
+  const companyDecision = service.store.createMemory({
+    workspaceId: companyWorkspace.id,
+    kind: "decision",
+    title: "Keep release provenance explicit",
+    summary: "Synthetic Company brief decision for the Electron verification journey.",
+    content: "The Company brief must keep the provenance for every release artifact explicit.",
+    tags: ["release", "provenance"],
+  }).memory;
+  await window.reload();
+  await waitFor(window, "document.querySelector('.brace-sidebar') && document.body.innerText.includes('Company')");
+  await clickText(window, "Company");
+  await waitFor(window, "document.body.innerText.includes('What needs your attention?') && document.body.innerText.includes('Keep release provenance explicit')");
+  const companyRoleManagementLocked = await window.webContents.executeJavaScript(
+    "document.body.innerText.includes('Role changes are locked.') && document.querySelector('.company-workspace-detail header button')?.disabled === true",
+  );
+  await clickText(window, "People & teams");
+  await waitFor(window, "document.body.innerText.includes('Local role labels and subject bindings are not proof')");
+  await clickText(window, "Decision room");
+  await waitFor(window, "document.body.innerText.includes('Keep release provenance explicit')");
+  await clickText(window, "Governance");
+  await waitFor(window, "document.body.innerText.includes('Authorization changes are locked pending verified enrollment.')");
+  const companyOperationsReady = await window.webContents.executeJavaScript(
+    "document.querySelector('.company-operations-tabs [role=tab][aria-selected=\"true\"]')?.textContent?.includes('Governance') === true",
+  );
+  const companyCapture = await screenshot(window, "app-company");
+  await clickText(window, "Employee");
+  await waitFor(window, "document.body.innerText.includes('EMPLOYEE LENS')");
+  await clickText(window, "Executive");
+  await waitFor(window, "document.body.innerText.includes('EXECUTIVE LENS')");
+  const companyRoleLensesReady = await window.webContents.executeJavaScript(
+    "document.querySelector('.company-brief-lenses button[aria-pressed=\"true\"]')?.textContent?.trim() === 'Executive' && document.body.innerText.includes('local presentation lens only')",
+  );
+  const decisionsFilterClicked = await window.webContents.executeJavaScript(`
+    (() => {
+      const button = Array.from(document.querySelectorAll('.company-brief-controls button')).find((item) => item.textContent?.trim().startsWith('Decisions'));
+      button?.click();
+      return Boolean(button);
+    })()
+  `);
+  if (!decisionsFilterClicked) throw new Error("Could not find the Company brief Decisions filter.");
+  await setInput(window, ".company-brief-search input", "release provenance");
+  await waitFor(window, "document.querySelector('.company-brief-count')?.textContent?.includes('1 of 1')");
+  const companyBriefFilteringReady = await window.webContents.executeJavaScript("document.querySelector('.company-brief-records button')?.textContent?.includes('Keep release provenance explicit') === true");
+  await clickText(window, companyDecision.title);
+  await waitFor(window, "document.body.innerText.includes('Find related context')");
+  const companyBriefDetailReady = await window.webContents.executeJavaScript("document.body.innerText.includes('Keep release provenance explicit')");
+
   const snapshot = service.snapshot();
   const databaseExists = fs.existsSync(service.databasePath);
   const report = {
     profileIsTemporary: service.databasePath.startsWith(userData),
     databaseExists,
     stats: snapshot.stats,
-    screenshots: [onboarding, overview, help, commands, capture, memoryReview, memoryLibrary, recall, timeline, graph, inbox, aiWorkspace, skills, automations, connections, settings, responsive].map((target) =>
+    screenshots: [onboarding, overview, help, commands, capture, memoryReview, memoryLibrary, recall, timeline, graph, inbox, aiWorkspace, skills, automations, connections, settings, responsive, companyCapture].map((target) =>
       process.env.CI ? path.basename(target) : path.relative(root, target),
     ),
     graphInteraction,
@@ -446,6 +521,12 @@ async function run() {
     navigationReady,
     responsiveMetrics,
     responsiveReady,
+    companyRoleLensesReady,
+    companyRoleManagementLocked,
+    companyOperationsReady,
+    companyBriefFilteringReady,
+    companyBriefDetailReady,
+    agentControlReady,
     reviewBefore,
     reviewResolved,
     automationReady: snapshot.stats.automations === 1 &&
@@ -460,7 +541,7 @@ async function run() {
     !report.profileIsTemporary ||
     !databaseExists ||
     snapshot.stats.projects !== 1 ||
-    snapshot.stats.memories !== 6 ||
+    snapshot.stats.memories !== 7 ||
     snapshot.stats.decisions !== 1 ||
     !graphInteraction.selectedSource ||
     !graphInteraction.zoomed ||
@@ -482,6 +563,12 @@ async function run() {
     !memoryHandoffReady ||
     !navigationReady ||
     !responsiveReady ||
+    !companyRoleLensesReady ||
+    !companyRoleManagementLocked ||
+    !companyOperationsReady ||
+    !companyBriefFilteringReady ||
+    !companyBriefDetailReady ||
+    !agentControlReady ||
     reviewBefore !== 1 ||
     !reviewResolved ||
     !report.automationReady ||

@@ -492,6 +492,8 @@ export function serveBraceStdio(options = {}) {
   const handle = serveStdio(() => {
     active = createBraceMcpServer(options);
     return active.server;
+  }, {
+    onerror: (error) => console.error(`BRACE MCP protocol error: ${error?.message || String(error)}`),
   });
   const close = async () => {
     await handle.close();
@@ -505,6 +507,9 @@ if (
   (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
 ) {
   const running = serveBraceStdio();
+  // Keep the stdio transport alive in Node 24 when launched as a child process;
+  // merely attaching a data listener is not sufficient on every stream shim.
+  process.stdin.resume();
   console.error("BRACE MCP server is listening on stdio.");
   const shutdown = () => {
     void running.close().finally(() => process.exit(0));

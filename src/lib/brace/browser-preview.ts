@@ -10,10 +10,15 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     database: "brace.sqlite3",
   },
   stats: {
-    schemaVersion: 6,
+    schemaVersion: 11,
     organizations: 1,
     workspaces: 3,
     workspaceMembers: 4,
+    identitySessions: 0,
+    sharedPublications: 0,
+    syncPendingOperations: 0,
+    syncUnresolvedConflicts: 0,
+    pendingAgentApprovals: 0,
     projects: 1,
     sources: 3,
     sourceChunks: 11,
@@ -37,6 +42,7 @@ export const browserPreviewSnapshot: BraceSnapshot = {
       edition: "enterprise",
       dataResidency: "local",
       ownershipBoundary: "Company workspaces are governed; personal memory remains private.",
+      status: "active",
       createdAt: timestamp,
       updatedAt: timestamp,
     },
@@ -53,10 +59,10 @@ export const browserPreviewSnapshot: BraceSnapshot = {
       projectCount: 1,
       memoryCount: 3,
       members: [
-        { id: "member-a", workspaceId: "workspace-company", displayName: "Avery Chen", email: "avery@example.invalid", role: "owner", status: "active", createdAt: timestamp, updatedAt: timestamp },
-        { id: "member-b", workspaceId: "workspace-company", displayName: "Mika Rao", email: "mika@example.invalid", role: "manager", status: "active", createdAt: timestamp, updatedAt: timestamp },
-        { id: "member-c", workspaceId: "workspace-company", displayName: "Sam Rivera", email: "sam@example.invalid", role: "member", status: "active", createdAt: timestamp, updatedAt: timestamp },
-        { id: "member-d", workspaceId: "workspace-company", displayName: "Noor Patel", email: "noor@example.invalid", role: "auditor", status: "active", createdAt: timestamp, updatedAt: timestamp },
+        { id: "member-a", workspaceId: "workspace-company", subjectId: null, displayName: "Avery Chen", email: "avery@example.invalid", role: "owner", status: "active", capabilities: [], createdAt: timestamp, updatedAt: timestamp },
+        { id: "member-b", workspaceId: "workspace-company", subjectId: null, displayName: "Mika Rao", email: "mika@example.invalid", role: "manager", status: "active", capabilities: [], createdAt: timestamp, updatedAt: timestamp },
+        { id: "member-c", workspaceId: "workspace-company", subjectId: null, displayName: "Sam Rivera", email: "sam@example.invalid", role: "member", status: "active", capabilities: [], createdAt: timestamp, updatedAt: timestamp },
+        { id: "member-d", workspaceId: "workspace-company", subjectId: null, displayName: "Noor Patel", email: "noor@example.invalid", role: "auditor", status: "active", capabilities: [], createdAt: timestamp, updatedAt: timestamp },
       ],
     }, {
       id: "workspace-executive", organizationId: "organization-northstar", name: "Executive Room", kind: "executive", visibility: "team", status: "active", createdAt: timestamp, updatedAt: timestamp, memberCount: 0, projectCount: 0, memoryCount: 0, members: [],
@@ -66,6 +72,10 @@ export const browserPreviewSnapshot: BraceSnapshot = {
     audit: [{ id: "audit-a", organizationId: "organization-northstar", workspaceId: "workspace-company", eventType: "member.added", actorLabel: "Synthetic owner", summary: "Northstar demo team created", metadata: {}, occurredAt: timestamp }],
     totals: { workspaces: 3, members: 4, projects: 1, memories: 3 },
   }],
+  businessAuthorization: {
+    memberManagementByWorkspace: {},
+    governanceAuditByWorkspace: {},
+  },
   projects: [
     {
       id: projectId,

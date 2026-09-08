@@ -15,6 +15,7 @@ on at least four axes before it is accepted.
 | BRACE 0.7.0 | Liquid lens chamber | Floating refractive rail plus cumulative droplet ledger | Live forget/remember rain divide with real packaged proof | `pin > flow > flow > pin > pan > pin`, 6 sensory chapters, 15.7vh | Equal-platform cinematic installation chamber | Pointer-reflective rain joins chapter stamps and device-local recall pins | Pearl-and-stone Liquid Glass | 4517 |
 | BRACE 0.8.0 | Frosted product reel | Single floating white-glass bar | Scroll-scrubbed Remotion memory film | `scrub > flow > pan > flow`, 4 beats, about 10.5vh | Quiet equal-platform installation plate | Scroll and pointer clear a reversible lens through the hero frost | High-key cobalt rain glass | 4517 |
 | BRACE 0.9.0 | Frosted context relay | Single floating white-glass bar | Scroll-scrubbed Remotion memory film | `scrub > flow+relay > pan > flow`, 4 acts with 5 narrative beats | Quiet equal-platform installation plate | A tactile custody relay moves context from source to local memory to explicit AI handoff | High-key pearl-and-cobalt rain glass | 4517 |
+| BRACE 1.0.0 | Living Memory Atlas | Floating Arctic-glass atlas route with cumulative location marks | Semantic two-line promise beside a live source graph | `ignite > fragment > provenance > pin+inspect > role-lens > editorial-proof > custody > seed`, 8 acts, about 12vh | Local memory seed resolves into equal platform choices | Provenance Pulse reroutes a selected source through local memory to explicit AI context | Arctic glass technical cartography | 4517 |
 
 ## Reserved choices
 
@@ -46,3 +47,9 @@ BRACE 0.9.0 intentionally retains the 0.8 film, navigation, panorama, and close,
 but changes the central interaction and proof rhythm: visitors now manipulate the
 custody boundary itself before seeing the real product. It is an iterative product
 enhancement, not a claim of a wholly unrelated launch-site skeleton.
+
+BRACE 1.0.0 removes the film-led skeleton completely. It keeps the local-memory
+subject and current product evidence, but changes the grammar, navigation, hero,
+act sequence, close, signature interaction, and visual world. The graph becomes
+the principal product object; motion reveals provenance and hierarchy instead of
+operating as an opening gate.

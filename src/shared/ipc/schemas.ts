@@ -47,6 +47,11 @@ const decisionInput = z.object({
 }).strict();
 
 const noArguments = z.tuple([]);
+const sharedWorkspaceOptions = z.object({
+  workspaceId: id,
+  ownershipScope: z.enum(["team", "organization"]).optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+}).strict();
 
 export const ipcArgumentSchemas = {
   "brace:get-snapshot": noArguments,
@@ -66,13 +71,11 @@ export const ipcArgumentSchemas = {
     actorLabel: z.string().trim().max(120).optional(),
   }).strict()]),
   "brace:upsert-workspace-member": z.tuple([z.object({
-    id: id.optional(),
     workspaceId: id,
     displayName: z.string().trim().min(1).max(120),
     email: z.string().email().max(254).optional().or(z.literal("")),
     role: z.enum(["owner", "admin", "manager", "member", "guest", "auditor"]),
     status: z.enum(["active", "invited", "suspended"]).optional(),
-    actorLabel: z.string().trim().max(120).optional(),
   }).strict()]),
   "brace:cancel-task": z.tuple([id]),
   "brace:search": z.tuple([z.object({
@@ -135,6 +138,16 @@ export const ipcArgumentSchemas = {
   "brace:import-automations": noArguments,
   "brace:delete-automation": z.tuple([id]),
   "brace:set-automations-paused": z.tuple([z.boolean()]),
+  "brace:preview-shared-publication": z.tuple([z.object({ memoryId: id, workspaceId: id, ownershipScope: z.enum(["team", "organization"]) }).strict()]),
+  "brace:commit-shared-publication": z.tuple([z.object({ previewId: id }).strict()]),
+  "brace:revoke-shared-publication": z.tuple([z.object({ publicationId: id, expectedRevision: z.number().int().min(1).max(1_000_000) }).strict()]),
+  "brace:get-shared-memory": z.tuple([id]),
+  "brace:list-shared-memories": z.tuple([sharedWorkspaceOptions]),
+  "brace:search-shared-memories": z.tuple([z.string().trim().min(1).max(12_000), sharedWorkspaceOptions]),
+  "brace:get-shared-memory-graph": z.tuple([sharedWorkspaceOptions]),
+  "brace:export-shared-projection": z.tuple([sharedWorkspaceOptions]),
+  "brace:export-governance-audit": z.tuple([id]),
+  "brace:preview-shared-context": z.tuple([sharedWorkspaceOptions.extend({ query: z.string().trim().max(12_000).optional() })]),
 } satisfies Record<string, z.ZodType>;
 
 export type BraceIpcChannel = keyof typeof ipcArgumentSchemas;

@@ -88,6 +88,7 @@ interface BraceState {
   installSkill: () => Promise<void>;
   configureEmbeddings: (input: Record<string, unknown>) => Promise<void>;
   exportData: () => Promise<void>;
+  exportGovernanceAudit: (workspaceId: string) => Promise<void>;
   importContent: () => Promise<void>;
   backupData: () => Promise<void>;
   deleteAll: (confirmation: string) => Promise<void>;
@@ -451,6 +452,13 @@ export const useBrace = create<BraceState>((set, get) => {
         const api = desktop();
         if (!api?.exportBraceData) throw new Error("Export is available in the desktop app.");
         if (await api.exportBraceData()) set({ notice: "Portable JSON export created." });
+      }),
+    exportGovernanceAudit: async (workspaceId) =>
+      perform("Exporting verified governance evidence…", async () => {
+        const api = desktop();
+        if (!api?.exportBraceGovernanceAudit) throw new Error("Governance audit export is available in the desktop app.");
+        const result = await api.exportBraceGovernanceAudit(workspaceId);
+        if (result) set({ notice: `Verified governance evidence exported with ${result.events} workspace event${result.events === 1 ? "" : "s"}.` });
       }),
     importContent: async () =>
       perform("Importing local content…", async () => {

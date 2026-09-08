@@ -87,4 +87,14 @@ contextBridge.exposeInMainWorld("electron", {
     ipcRenderer.invoke("brace:delete-automation", id),
   setBraceAutomationsPaused: (paused: boolean) =>
     ipcRenderer.invoke("brace:set-automations-paused", paused),
+  previewBraceSharedPublication: (input: unknown) => ipcRenderer.invoke("brace:preview-shared-publication", input),
+  commitBraceSharedPublication: (input: { previewId: string }) => ipcRenderer.invoke("brace:commit-shared-publication", input),
+  revokeBraceSharedPublication: (input: unknown) => ipcRenderer.invoke("brace:revoke-shared-publication", input),
+  getBraceSharedMemory: (publicationId: string) => ipcRenderer.invoke("brace:get-shared-memory", publicationId),
+  listBraceSharedMemories: (options: unknown) => ipcRenderer.invoke("brace:list-shared-memories", options),
+  searchBraceSharedMemories: (query: string, options: unknown) => ipcRenderer.invoke("brace:search-shared-memories", query, options),
+  getBraceSharedMemoryGraph: (options: unknown) => ipcRenderer.invoke("brace:get-shared-memory-graph", options),
+  exportBraceSharedProjection: (options: unknown) => ipcRenderer.invoke("brace:export-shared-projection", options),
+  exportBraceGovernanceAudit: (workspaceId: string) => ipcRenderer.invoke("brace:export-governance-audit", workspaceId),
+  previewBraceSharedContext: (options: unknown) => ipcRenderer.invoke("brace:preview-shared-context", options),
 });

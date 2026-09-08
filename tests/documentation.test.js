@@ -48,9 +48,10 @@ test("launch and How-to pages reference existing local assets and fragments", ()
         if (!ids.has(raw.slice(1))) missing.push(`${path.relative(root, page)} -> ${raw}`);
         continue;
       }
-      const target = raw.startsWith("/")
-        ? path.join(siteRoot, raw)
-        : path.resolve(path.dirname(page), raw.split("#")[0]);
+      const localPath = raw.split(/[?#]/)[0];
+      const target = localPath.startsWith("/")
+        ? path.join(siteRoot, localPath)
+        : path.resolve(path.dirname(page), localPath);
       const resolved = target.endsWith(path.sep) ? path.join(target, "index.html") : target;
       if (!fs.existsSync(resolved)) missing.push(`${path.relative(root, page)} -> ${raw}`);
     }

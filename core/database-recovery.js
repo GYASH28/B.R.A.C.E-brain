@@ -7,7 +7,13 @@ const { DatabaseSync } = require("node:sqlite");
 
 const PENDING_NAME = "restore-pending.sqlite3";
 const MANIFEST_NAME = "restore-pending.json";
-const COUNT_TABLES = ["projects", "sources", "source_chunks", "memories", "decisions", "events", "entities", "relations", "automations"];
+const COUNT_TABLES = [
+  "projects", "sources", "source_chunks", "memories", "decisions", "events",
+  "entities", "relations", "automations", "organizations", "workspaces",
+  "workspace_members", "shared_publications", "company_sync_operations",
+  "company_sync_records", "company_sync_conflicts", "agent_approval_requests",
+  "governance_audit_events", "workspace_data_policies",
+];
 
 function safeTimestamp() {
   return new Date().toISOString().replace(/[:.]/g, "-");

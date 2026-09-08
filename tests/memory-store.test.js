@@ -57,7 +57,7 @@ test("structured memories survive restart with provenance and evidence", (contex
   assert.equal(memory.sourceId, source.id);
   assert.equal(memory.evidence.length, 1);
   assert.equal(memory.evidence[0].outcome, "promoted");
-  assert.equal(reopened.stats().schemaVersion, 6);
+  assert.equal(reopened.stats().schemaVersion, 11);
   reopened.close();
 });
 
@@ -102,7 +102,7 @@ test("organization workspaces keep governed knowledge separate from personal mem
   assert.equal(overview.organization.dataResidency, "local");
   assert.equal(overview.workspaces.length, 3);
   const companyBrain = overview.workspaces.find((workspace) => workspace.name === "Company Brain");
-  const member = store.upsertWorkspaceMember({
+  const member = store.upsertWorkspaceMemberForFixture({
     workspaceId: companyBrain.id,
     displayName: "Synthetic Operator",
     email: "operator@example.invalid",
@@ -397,10 +397,15 @@ test("deleteAll removes user content without invalidating the schema", (context)
   store.createMemory({ kind: "fact", title: "Delete me", content: "Synthetic data", projectId: project.id });
   store.deleteAll();
   assert.deepEqual(store.stats(), {
-    schemaVersion: 6,
+    schemaVersion: 11,
     organizations: 0,
     workspaces: 0,
     workspaceMembers: 0,
+    identitySessions: 0,
+    sharedPublications: 0,
+    syncPendingOperations: 0,
+    syncUnresolvedConflicts: 0,
+    pendingAgentApprovals: 0,
     projects: 0,
     sources: 0,
     sourceChunks: 0,
@@ -435,7 +440,7 @@ test("version-one databases migrate source chunks without losing memories", (con
   `);
   store.close();
   const migrated = new MemoryStore(databasePath);
-  assert.equal(migrated.stats().schemaVersion, 6);
+  assert.equal(migrated.stats().schemaVersion, 11);
   assert.deepEqual(migrated.listMemoryReviewCandidates(), []);
   assert.equal(migrated.getMemory(memory.id).title, "Migration fixture");
   assert.deepEqual(migrated.searchSources("anything").results, []);
@@ -456,13 +461,13 @@ test("version-three desktop profiles migrate to automation storage without losin
   `);
   store.close();
   const migrated = new MemoryStore(databasePath);
-  assert.equal(migrated.stats().schemaVersion, 6);
+  assert.equal(migrated.stats().schemaVersion, 11);
   assert.equal(migrated.getMemory(memory.id).title, "Existing 0.5 profile memory");
   assert.deepEqual(migrated.listAutomations(), []);
   assert.deepEqual(migrated.listAutomationRuns(), []);
   const recoveryDirectory = path.join(directory, "recovery");
   const backups = fs.readdirSync(recoveryDirectory)
-    .filter((name) => /pre-migration-v3-to-v6-.*\.sqlite3$/.test(name));
+    .filter((name) => /pre-migration-v3-to-v11-.*\.sqlite3$/.test(name));
   assert.equal(backups.length, 1);
   const backup = new DatabaseSync(path.join(recoveryDirectory, backups[0]), { readOnly: true });
   assert.equal(backup.prepare("SELECT title FROM memories WHERE id=?").get(memory.id).title, "Existing 0.5 profile memory");
@@ -481,7 +486,7 @@ test("version-five preview profiles receive a verified recovery backup before or
   store.close();
 
   const migrated = new MemoryStore(databasePath);
-  assert.equal(migrated.stats().schemaVersion, 6);
+  assert.equal(migrated.stats().schemaVersion, 11);
   assert.equal(migrated.getMemory(memory.id).content, "This synthetic record must remain intact across the organization schema migration.");
   const organization = migrated.createOrganization({ name: "Synthetic Upgrade Company", edition: "team" });
   assert.equal(organization.workspaces.length, 3);
@@ -489,9 +494,73 @@ test("version-five preview profiles receive a verified recovery backup before or
 
   const recoveryDirectory = path.join(directory, "recovery");
   const backupName = fs.readdirSync(recoveryDirectory)
-    .find((name) => /pre-migration-v5-to-v6-.*\.sqlite3$/.test(name));
+    .find((name) => /pre-migration-v5-to-v11-.*\.sqlite3$/.test(name));
   assert.ok(backupName);
   const backup = new DatabaseSync(path.join(recoveryDirectory, backupName), { readOnly: true });
   assert.equal(backup.prepare("SELECT title FROM memories WHERE id=?").get(memory.id).title, "Existing 0.7 profile memory");
   backup.close();
+});
+
+test("schema seven creates authorization bindings and migrates version-six rows without identity backfill", (context) => {
+  const { directory, store } = fixture(context);
+  const freshOrganizationColumns = store.db.prepare("PRAGMA table_info(organizations)").all().map((column) => column.name);
+  const freshMemberColumns = store.db.prepare("PRAGMA table_info(workspace_members)").all().map((column) => column.name);
+  assert.ok(freshOrganizationColumns.includes("status"));
+  assert.ok(freshMemberColumns.includes("subject_id"));
+  assert.ok(freshMemberColumns.includes("capabilities_json"));
+  assert.ok(store.db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='authorization_subjects'").get());
+
+  const legacyPath = path.join(directory, "legacy-v6.sqlite3");
+  const legacy = new DatabaseSync(legacyPath);
+  legacy.exec(`
+    PRAGMA foreign_keys = ON;
+    CREATE TABLE organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, edition TEXT NOT NULL, data_residency TEXT NOT NULL, ownership_boundary TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE workspaces (id TEXT PRIMARY KEY, organization_id TEXT NOT NULL REFERENCES organizations(id), name TEXT NOT NULL, kind TEXT NOT NULL, visibility TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL);
+    CREATE TABLE workspace_members (id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL REFERENCES workspaces(id), display_name TEXT NOT NULL, email TEXT, role TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, updated_at TEXT NOT NULL, UNIQUE(workspace_id, email));
+    CREATE TABLE memories (id TEXT PRIMARY KEY);
+    INSERT INTO organizations VALUES ('org-v6', 'Legacy', 'legacy', 'team', 'local', 'legacy', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');
+    INSERT INTO workspaces VALUES ('workspace-v6', 'org-v6', 'Legacy workspace', 'team', 'team', 'active', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');
+    INSERT INTO workspace_members VALUES ('member-v6', 'workspace-v6', 'Legacy person', 'legacy@example.invalid', 'member', 'active', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z');
+    PRAGMA user_version = 6;
+  `);
+  legacy.close();
+  const migrated = new MemoryStore(legacyPath);
+  const legacyMember = migrated.db.prepare("SELECT subject_id, capabilities_json FROM workspace_members WHERE id='member-v6'").get();
+  assert.equal(migrated.db.prepare("PRAGMA user_version").get().user_version, 11);
+  assert.equal(migrated.db.prepare("SELECT status FROM organizations WHERE id='org-v6'").get().status, "active");
+  assert.equal(legacyMember.subject_id, null);
+  assert.equal(legacyMember.capabilities_json, "[]");
+  assert.equal(migrated.db.prepare("SELECT COUNT(*) AS count FROM authorization_subjects").get().count, 0);
+  migrated.close();
+});
+
+test("member management authorizes only fresh owner/admin or explicit grants and leaves denials untouched", (context) => {
+  const { store } = fixture(context);
+  const organization = store.createOrganization({ name: "Authorization fixture" });
+  const [workspace, otherWorkspace] = organization.workspaces;
+  const owner = store.createAuthorizationSubjectForFixture({ id: "owner", verified: true });
+  const admin = store.createAuthorizationSubjectForFixture({ id: "admin", verified: true });
+  const manager = store.createAuthorizationSubjectForFixture({ id: "manager", verified: true });
+  const service = store.createAuthorizationSubjectForFixture({ id: "service", kind: "service", verified: true });
+  const suspended = store.createAuthorizationSubjectForFixture({ id: "suspended", verified: true, status: "suspended" });
+  store.upsertWorkspaceMemberForFixture({ workspaceId: workspace.id, displayName: "Owner", email: "owner@example.invalid", subjectId: owner.id, role: "owner" });
+  store.upsertWorkspaceMemberForFixture({ workspaceId: workspace.id, displayName: "Admin", email: "admin@example.invalid", subjectId: admin.id, role: "admin" });
+  store.upsertWorkspaceMemberForFixture({ workspaceId: workspace.id, displayName: "Manager", email: "manager@example.invalid", subjectId: manager.id, role: "manager" });
+  store.upsertWorkspaceMemberForFixture({ workspaceId: workspace.id, displayName: "Service", email: "service@example.invalid", subjectId: service.id, role: "member", capabilities: ["workspace.members.manage", "invalid.capability"] });
+  store.upsertWorkspaceMemberForFixture({ workspaceId: workspace.id, displayName: "Suspended", email: "suspended@example.invalid", subjectId: suspended.id, role: "owner" });
+  const foreignTarget = store.upsertWorkspaceMemberForFixture({ workspaceId: otherWorkspace.id, displayName: "Foreign target", email: "foreign-target@example.invalid", role: "member" });
+
+  assert.equal(store.upsertWorkspaceMemberAuthorized({ workspaceId: workspace.id, displayName: "Allowed owner", email: "allowed-owner@example.invalid", role: "member" }, owner.id).role, "member");
+  assert.equal(store.upsertWorkspaceMemberAuthorized({ workspaceId: workspace.id, displayName: "Allowed admin", email: "allowed-admin@example.invalid", role: "member" }, admin.id).role, "member");
+  assert.equal(store.upsertWorkspaceMemberAuthorized({ workspaceId: workspace.id, displayName: "Allowed service", email: "allowed-service@example.invalid", role: "member" }, service.id).role, "member");
+
+  const beforeMembers = store.db.prepare("SELECT COUNT(*) AS count FROM workspace_members").get().count;
+  const beforeAudit = store.db.prepare("SELECT COUNT(*) AS count FROM organization_audit_events").get().count;
+  for (const actorId of [null, manager.id, suspended.id]) {
+    assert.throws(() => store.upsertWorkspaceMemberAuthorized({ workspaceId: workspace.id, displayName: "Denied", email: `denied-${actorId || "none"}@example.invalid`, role: "member" }, actorId), { message: "AUTHORIZATION_DENIED" });
+  }
+  assert.throws(() => store.upsertWorkspaceMemberAuthorized({ workspaceId: otherWorkspace.id, displayName: "Cross workspace", email: "cross@example.invalid", role: "member" }, owner.id), { message: "AUTHORIZATION_DENIED" });
+  assert.throws(() => store.upsertWorkspaceMemberAuthorized({ id: foreignTarget.id, workspaceId: workspace.id, displayName: "Forged target", email: "forged-target@example.invalid", role: "member" }, owner.id), { message: "AUTHORIZATION_DENIED" });
+  assert.equal(store.db.prepare("SELECT COUNT(*) AS count FROM workspace_members").get().count, beforeMembers);
+  assert.equal(store.db.prepare("SELECT COUNT(*) AS count FROM organization_audit_events").get().count, beforeAudit);
 });

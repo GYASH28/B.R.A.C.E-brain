@@ -9,6 +9,8 @@ const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 test("product navigation maps to implemented memory workflows", () => {
   const shell = read("src/components/brace/brace-app.tsx");
   const automations = read("src/components/brace/automations/automations-view.tsx");
+  const organization = read("src/components/brace/organization/organization-view.tsx");
+  const types = read("src/lib/brace/types.ts");
   const app = `${shell}\n${automations}`;
   const store = read("src/lib/brace/store.ts");
   for (const label of [
@@ -45,6 +47,12 @@ test("product navigation maps to implemented memory workflows", () => {
   assert.match(app, /function AutomationsView\(\)/);
   assert.match(app, /function AutomationBuilder\(/);
   assert.match(app, /Execution traces/);
+  assert.match(app, /Agent control room/);
+  assert.match(app, /Assignment board/);
+  assert.match(app, /Workflow canvas/);
+  assert.match(app, /External actions are locked in this local preview/);
+  assert.match(organization, /Role changes are locked/);
+  assert.match(types, /memberManagementByWorkspace/);
   assert.match(store, /Preview completed without changing memory/);
   assert.match(app, /Retain latest answer/);
   assert.match(app, /Continue with AI/);

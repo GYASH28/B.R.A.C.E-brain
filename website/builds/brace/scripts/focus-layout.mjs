@@ -27,12 +27,18 @@ try{
     });
     const issues=[],visitedIds=[],visitedLabels=[];
     const inspect=async()=>page.evaluate(()=>{
-      const node=document.activeElement,rect=node.getBoundingClientRect(),style=getComputedStyle(node);
-      return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,visible:rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
+      const node=document.activeElement,rect=node.getBoundingClientRect(),style=getComputedStyle(node),parentStyle=node.parentElement?getComputedStyle(node.parentElement):null;
+      return{id:node.dataset.focusAuditId||"",label:String(node.getAttribute("aria-label")||node.textContent||node.getAttribute("name")||node.tagName||"").trim().slice(0,60),left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom,width:rect.width,height:rect.height,outline:Number.parseFloat(style.outlineWidth)||0,parentOutline:Number.parseFloat(parentStyle?.outlineWidth||"0")||0,visible:rect.width>0&&rect.height>0&&style.visibility!=="hidden"&&style.display!=="none"&&Number.parseFloat(style.opacity)>.1};
     });
     for(let index=0;index<count;index+=1){
       if(index===0){
         await page.locator('[data-focus-audit-id="focus-0"]').focus();
+        await page.waitForFunction(()=>{
+          const node=document.activeElement;
+          if(!node.matches(".skip-link"))return false;
+          const rect=node.getBoundingClientRect();
+          return rect.left>=-3&&rect.right<=innerWidth+3&&rect.top>=-3&&rect.bottom<=innerHeight+3;
+        });
       }else{
         await page.keyboard.press("Tab");
       }
@@ -43,7 +49,7 @@ try{
       if(!state.id)issues.push(`focus escaped audited controls: ${state.label}`);
       if(!state.visible)issues.push(`hidden focus: ${state.label}`);
       if(state.left<-3||state.right>width+3||state.top<-3||state.bottom>height+3)issues.push(`offscreen focus: ${state.label}`);
-      if(state.outline<2)issues.push(`missing focus ring: ${state.label}`);
+      if(Math.max(state.outline,state.parentOutline)<2)issues.push(`missing focus ring: ${state.label}`);
     }
     const uniqueIds=new Set(visitedIds.filter(Boolean)).size;
     if(uniqueIds!==count)issues.push(`focus order visited ${uniqueIds} unique controls but expected ${count}`);

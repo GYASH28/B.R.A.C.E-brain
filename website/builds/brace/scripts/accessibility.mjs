@@ -38,6 +38,7 @@ async function keyboardAudit(page) {
     const focused = await page.evaluate(() => {
       const element = document.activeElement;
       const style = getComputedStyle(element);
+      const parentStyle = element.parentElement ? getComputedStyle(element.parentElement) : null;
       const rect = element.getBoundingClientRect();
       return {
         tag: element.tagName.toLowerCase(),
@@ -45,12 +46,17 @@ async function keyboardAudit(page) {
         outlineWidth: Number.parseFloat(style.outlineWidth) || 0,
         outlineStyle: style.outlineStyle,
         boxShadow: style.boxShadow,
+        parentOutlineWidth: Number.parseFloat(parentStyle?.outlineWidth || "0") || 0,
+        parentOutlineStyle: parentStyle?.outlineStyle || "none",
+        parentBoxShadow: parentStyle?.boxShadow || "none",
         visible: rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && Number.parseFloat(style.opacity) > 0.1,
       };
     });
     visited.push(`${focused.tag}:${focused.text}`);
     const hasIndicator = focused.outlineWidth >= 2 && focused.outlineStyle !== "none"
-      || focused.boxShadow !== "none";
+      || focused.boxShadow !== "none"
+      || focused.parentOutlineWidth >= 2 && focused.parentOutlineStyle !== "none"
+      || focused.parentBoxShadow !== "none";
     if (focused.tag !== "body" && !hasIndicator) missingIndicator.push(focused);
   }
   return {

@@ -5,25 +5,32 @@
   const opening = document.querySelector('[data-opening-film]');
   if (!nav || !opening) return;
 
-  let raf = 0;
+  let running = true;
 
   const sync = () => {
-    raf = 0;
     const openingTop = opening.getBoundingClientRect().top + window.scrollY;
-    /* Reveal a little before the pinned film mathematically ends. The primary
-       motion runtime eases visual scroll on purpose; this raw-scroll guard keeps
-       the navigation responsive to the user's actual wheel/touch position. */
+    /* The primary scene runtime deliberately eases visual scroll. Navigation is
+       interaction chrome, so it follows the real scroll position every frame
+       instead. This prevents the nav from visually trailing a fast wheel/touch
+       gesture when the opening film hands off to the page. */
     const revealPoint = openingTop + opening.offsetHeight - window.innerHeight * 0.20;
-    nav.classList.toggle('nav-force-visible', window.scrollY >= revealPoint);
+    const visible = window.scrollY >= revealPoint;
+    nav.classList.toggle('nav-force-visible', visible);
+
+    /* The opening runtime can briefly retain .opening-active while its eased
+       position catches up. Inline important opacity/pointer state is used only
+       during that handoff, then removed when the user re-enters the opening. */
+    if (visible) {
+      nav.style.setProperty('opacity', '1', 'important');
+      nav.style.setProperty('pointer-events', 'auto', 'important');
+    } else {
+      nav.style.removeProperty('opacity');
+      nav.style.removeProperty('pointer-events');
+    }
+
+    if (running) requestAnimationFrame(sync);
   };
 
-  const schedule = () => {
-    if (raf) return;
-    raf = requestAnimationFrame(sync);
-  };
-
-  addEventListener('scroll', schedule, { passive: true });
-  addEventListener('resize', schedule, { passive: true });
-  addEventListener('pageshow', schedule, { passive: true });
-  schedule();
+  addEventListener('pagehide', () => { running = false; }, { once: true });
+  requestAnimationFrame(sync);
 })();

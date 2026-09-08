@@ -44,7 +44,6 @@ async function assertNavClear(page, selector, gap, label) {
 }
 
 try {
-  // DESKTOP: opening, completely new hero, living chat, side scroll, graph, runtime health.
   {
     const {page,errors,failed} = await newPage({width:1440,height:900});
     await assertNoPageOverflow(page,'desktop');
@@ -74,6 +73,7 @@ try {
 
     const heroStart = Number(await page.locator('html').evaluate(el => getComputedStyle(el).getPropertyValue('--hero-p')) || 0);
     await goTo(page,'#hero',.62);
+    await page.waitForFunction(() => Number(getComputedStyle(document.documentElement).getPropertyValue('--hero-p')) > .25, null, {timeout:2500});
     const heroMid = Number(await page.locator('html').evaluate(el => getComputedStyle(el).getPropertyValue('--hero-p')) || 0);
     assert(heroMid > heroStart + .25, 'hero scroll progress is not driving motion');
     await goTo(page,'#hero',0);
@@ -96,9 +96,11 @@ try {
     assert(flowProgress > .25 && flowProgress < .9, `flow progress looks broken (${flowProgress})`);
     const sceneVisibility = await page.evaluate(() => {
       const panels=[...document.querySelectorAll('[data-side-panel]')];
-      return panels.map((el,index) => { const r=el.getBoundingClientRect(); const visible=Math.max(0,Math.min(innerWidth,r.right)-Math.max(0,r.left)); return {index,visible}; }).sort((a,b)=>b.visible-a.visible)[0];
+      const viewport=innerWidth;
+      const active=panels.map((el,index) => { const r=el.getBoundingClientRect(); const visible=Math.max(0,Math.min(viewport,r.right)-Math.max(0,r.left)); return {index,visible}; }).sort((a,b)=>b.visible-a.visible)[0];
+      return active ? {...active,viewport} : null;
     });
-    assert(sceneVisibility?.visible > innerWidth*.72, 'horizontal story has no dominant cinematic scene');
+    assert(sceneVisibility?.visible > sceneVisibility?.viewport*.72, 'horizontal story has no dominant cinematic scene');
     await page.screenshot({path:path.join(out,'03-flow-v3.png')});
 
     await goTo(page,'#brain',.44);
@@ -118,7 +120,6 @@ try {
     await page.close();
   }
 
-  // ULTRAWIDE: make sure cinematic spacing does not collapse into empty bands.
   {
     const {page,errors,failed} = await newPage({width:1920,height:1080});
     await goTo(page,'#hero',0);
@@ -133,7 +134,6 @@ try {
     await page.close();
   }
 
-  // MOBILE: no scroll hijack, no overflow, full living console, swipe story.
   {
     const {page,errors,failed} = await newPage({width:390,height:844});
     await goTo(page,'#hero',0);
@@ -157,7 +157,6 @@ try {
     await page.close();
   }
 
-  // REDUCED MOTION: pinned/scrubbed experiences must flatten.
   {
     const {page,errors,failed} = await newPage({width:1440,height:900},'reduce');
     assert(await page.locator('[data-opening-stage]').evaluate(el => getComputedStyle(el).position) !== 'sticky', 'reduced-motion opening still scrubbed');
@@ -168,7 +167,6 @@ try {
     await page.close();
   }
 
-  // BEGINNER GUIDE: whole-site regression, desktop + mobile.
   {
     const {page,errors,failed} = await newPage({width:1440,height:900},'no-preference',`${base}/guide/`);
     await assertNoPageOverflow(page,'guide desktop');

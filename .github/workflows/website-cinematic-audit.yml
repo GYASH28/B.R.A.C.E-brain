@@ -26,6 +26,7 @@ jobs:
         working-directory: website/builds/brace
         run: npm ci
       - name: Install Chrome
+        id: setup-chrome
         uses: browser-actions/setup-chrome@v1
       - name: Start website
         working-directory: website/builds/brace
@@ -40,7 +41,7 @@ jobs:
       - name: Run cinematic Playwright audit
         working-directory: website/builds/brace
         env:
-          SCROLLCRAFT_CHROME: /opt/hostedtoolcache/setup-chrome/chromium/stable/x64/chrome
+          SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: node scripts/cinematic-audit.mjs
       - name: Upload visual audit frames
         if: always()

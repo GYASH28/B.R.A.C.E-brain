@@ -20,6 +20,11 @@ async function open(viewport, reducedMotion = 'no-preference') {
   return { page, errors };
 }
 
+async function goToTopOf(page, selector) {
+  await page.locator(selector).evaluate(el => window.scrollTo({ top: el.offsetTop, behavior: 'instant' }));
+  await page.waitForTimeout(180);
+}
+
 try {
   {
     const { page, errors } = await open({ width: 1440, height: 900 });
@@ -27,26 +32,50 @@ try {
     assert(await page.locator('[data-opening-video]').count() === 1, 'opening video missing');
     const openingHeight = await page.locator('[data-opening-film]').evaluate(el => el.getBoundingClientRect().height);
     assert(openingHeight > 1500, 'opening film is not scroll-scrubbed');
+    const source = await page.locator('[data-opening-video] source').getAttribute('src');
+    assert(Boolean(source?.includes('brace-opening')), 'opening video source not selected');
     await page.screenshot({ path: path.join(out, '01-opening.png') });
 
-    await page.locator('#hero').scrollIntoViewIfNeeded();
-    await page.waitForTimeout(220);
+    await goToTopOf(page, '#hero');
     assert(await page.locator('[data-live-chat]').count() === 1, 'hero live chat missing');
+    const heroBg = await page.locator('.hero-bg').evaluate(el => getComputedStyle(el).backgroundImage);
+    assert(heroBg.includes('brace-opening-poster'), 'hero cinematic background not loaded');
+    const navBox = await page.locator('[data-site-nav]').boundingBox();
+    const titleBox = await page.locator('#hero h1').boundingBox();
+    assert(navBox && titleBox && titleBox.y > navBox.y + navBox.height + 40, 'desktop hero title collides with navigation');
+
     const before = await page.locator('[data-chat-stream] .message').count();
     await page.locator('[data-chat-prompt="source"]').click();
-    await page.waitForTimeout(1700);
+    await page.waitForFunction(() => document.querySelector('[data-chat-state]')?.textContent === 'READY', null, { timeout: 7000 });
     const after = await page.locator('[data-chat-stream] .message').count();
     assert(after > before, 'live chat does not create new messages');
+    assert(await page.locator('[data-chat-stream] .is-typing').count() === 0, 'live chat left an interrupted typing fragment');
+    assert((await page.locator('[data-chat-stream]').innerText()).includes('launch review'), 'source prompt did not resolve to source-backed response');
     await page.screenshot({ path: path.join(out, '02-hero-chat.png') });
 
     const side = page.locator('[data-side-scroll]');
-    await side.evaluate(el => scrollTo(0, el.offsetTop + el.offsetHeight * .5));
-    await page.waitForTimeout(250);
+    await side.evaluate(el => scrollTo(0, el.offsetTop + (el.offsetHeight - innerHeight) * .56));
+    await page.waitForTimeout(260);
     const sideTransform = await page.locator('[data-side-rail]').evaluate(el => getComputedStyle(el).transform);
     assert(sideTransform !== 'none' && !sideTransform.includes('matrix(1, 0, 0, 1, 0, 0)'), 'desktop side-scroll rail did not move');
+    const visiblePanel = await page.evaluate(() => {
+      const viewport = document.querySelector('.side-viewport')?.getBoundingClientRect();
+      const panels = [...document.querySelectorAll('[data-side-panel]')];
+      if (!viewport || !panels.length) return null;
+      return panels.map((panel, index) => {
+        const r = panel.getBoundingClientRect();
+        const left = Math.max(r.left, viewport.left);
+        const right = Math.min(r.right, viewport.right);
+        return { index, visible: Math.max(0, right - left), panel: r, copy: panel.querySelector('.side-copy')?.getBoundingClientRect() };
+      }).sort((a,b) => b.visible - a.visible)[0];
+    });
+    assert(visiblePanel?.copy && visiblePanel.copy.left >= 0 && visiblePanel.copy.right <= 1440, 'side-scroll active copy is clipped');
     await page.screenshot({ path: path.join(out, '03-side-scroll.png') });
 
-    await page.locator('#brain').scrollIntoViewIfNeeded();
+    await goToTopOf(page, '#brain');
+    const brainNav = await page.locator('[data-site-nav]').boundingBox();
+    const brainTitle = await page.locator('#brain h2').boundingBox();
+    assert(brainNav && brainTitle && brainTitle.y > brainNav.y + brainNav.height + 20, 'brain heading collides with navigation');
     await page.locator('[data-brain-hotspot="evidence"]').click();
     await page.waitForTimeout(120);
     assert((await page.locator('[data-brain-kind]').textContent())?.includes('EVIDENCE'), 'brain hotspot did not update receipt');
@@ -58,13 +87,18 @@ try {
 
   {
     const { page, errors } = await open({ width: 390, height: 844 });
-    await page.locator('#hero').scrollIntoViewIfNeeded();
+    await goToTopOf(page, '#hero');
     const overflow = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth) - innerWidth);
     assert(overflow <= 2, `mobile horizontal overflow ${overflow}px`);
     assert(await page.locator('[data-live-chat]').isVisible(), 'mobile live chat not visible');
+    const navBox = await page.locator('[data-site-nav]').boundingBox();
+    const titleBox = await page.locator('#hero h1').boundingBox();
+    assert(navBox && titleBox && titleBox.y > navBox.y + navBox.height + 28, 'mobile hero title collides with navigation');
     await page.screenshot({ path: path.join(out, '05-mobile-hero.png') });
+
     await page.locator('[data-side-scroll]').scrollIntoViewIfNeeded();
-    assert(await page.locator('.side-viewport').evaluate(el => getComputedStyle(el).overflowX) !== 'visible', 'mobile side story is not swipeable');
+    const mobileOverflowX = await page.locator('.side-viewport').evaluate(el => getComputedStyle(el).overflowX);
+    assert(mobileOverflowX === 'auto' || mobileOverflowX === 'scroll', 'mobile side story is not swipeable');
     assert(errors.length === 0, `mobile console/page errors: ${errors.join(' | ')}`);
     await page.close();
   }

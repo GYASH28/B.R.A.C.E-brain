@@ -47,11 +47,13 @@ jobs:
           SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: node scripts/cinematic-audit.mjs
       - name: Run whole-site accessibility audit
+        if: always()
         working-directory: website/builds/brace
         env:
           SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}
         run: node scripts/scrollcraft-a11y.mjs
       - name: Run performance budgets
+        if: always()
         working-directory: website/builds/brace
         env:
           SCROLLCRAFT_CHROME: ${{ steps.setup-chrome.outputs.chrome-path }}

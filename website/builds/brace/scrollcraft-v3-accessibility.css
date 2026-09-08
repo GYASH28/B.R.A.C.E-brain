@@ -1,0 +1,5 @@
+/* Accessibility refinements kept separate from the motion system so contrast and
+   keyboard guarantees remain explicit and easy to audit. */
+.footer .brand small{color:#425f78}
+.flow-kicker{color:#0b5eae}
+@media (max-width:700px){.flow-kicker{color:#084f96}}

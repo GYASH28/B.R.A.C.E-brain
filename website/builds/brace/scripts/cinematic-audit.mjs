@@ -88,19 +88,20 @@ try {
     await page.screenshot({path:path.join(out,'02-hero-v3.png')});
 
     const flow = page.locator('[data-side-scroll]');
-    await flow.evaluate(el => window.scrollTo({top:el.offsetTop + (el.offsetHeight-innerHeight)*.55,behavior:'instant'}));
-    await page.waitForTimeout(650);
+    await flow.evaluate(el => window.scrollTo({top:el.offsetTop + (el.offsetHeight-innerHeight)*.667,behavior:'instant'}));
+    await page.waitForFunction(() => Number(getComputedStyle(document.documentElement).getPropertyValue('--flow-p')) > .58, null, {timeout:2500});
+    await page.waitForTimeout(180);
     const transform = await page.locator('[data-side-rail]').evaluate(el => getComputedStyle(el).transform);
     assert(transform !== 'none' && !transform.includes('matrix(1, 0, 0, 1, 0, 0)'), 'horizontal story rail did not move');
     const flowProgress = Number(await page.locator('html').evaluate(el => getComputedStyle(el).getPropertyValue('--flow-p')) || 0);
-    assert(flowProgress > .25 && flowProgress < .9, `flow progress looks broken (${flowProgress})`);
+    assert(flowProgress > .5 && flowProgress < .9, `flow progress looks broken (${flowProgress})`);
     const sceneVisibility = await page.evaluate(() => {
       const panels=[...document.querySelectorAll('[data-side-panel]')];
       const viewport=innerWidth;
       const active=panels.map((el,index) => { const r=el.getBoundingClientRect(); const visible=Math.max(0,Math.min(viewport,r.right)-Math.max(0,r.left)); return {index,visible}; }).sort((a,b)=>b.visible-a.visible)[0];
       return active ? {...active,viewport} : null;
     });
-    assert(sceneVisibility?.visible > sceneVisibility?.viewport*.72, 'horizontal story has no dominant cinematic scene');
+    assert(sceneVisibility?.visible > sceneVisibility?.viewport*.72, 'horizontal story does not resolve into a dominant cinematic scene');
     await page.screenshot({path:path.join(out,'03-flow-v3.png')});
 
     await goTo(page,'#brain',.44);

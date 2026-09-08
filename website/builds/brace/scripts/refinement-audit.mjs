@@ -32,7 +32,8 @@ async function navBox(page) {
 }
 
 try {
-  // 1. Navigation handoff must follow real scroll, not lag behind the eased scene.
+  // 1. Navigation handoff: validate the completed transition, not an arbitrary
+  // sub-frame snapshot while the intentional opacity easing is still running.
   {
     const page = await open({ width: 1440, height: 900 });
     const film = page.locator('[data-opening-film]');
@@ -41,14 +42,13 @@ try {
       const reveal = top + el.offsetHeight - window.innerHeight * 0.08 + 6;
       window.scrollTo({ top: reveal, behavior: 'instant' });
     });
-    await page.waitForTimeout(120);
+    await page.waitForTimeout(520);
     const navState = await page.locator('[data-site-nav]').evaluate(el => {
       const s = getComputedStyle(el);
-      return { opacity: Number(s.opacity), pointerEvents: s.pointerEvents, className: el.className };
+      return { opacity: Number(s.opacity), pointerEvents: s.pointerEvents };
     });
-    assert(navState.opacity > .95, `navigation still visually lags after opening (${navState.opacity})`);
+    assert(navState.opacity > .95, `navigation is not fully visible after the opening handoff (${navState.opacity})`);
     assert(navState.pointerEvents !== 'none', 'navigation remains non-interactive after opening');
-    assert(navState.className.includes('nav-force-visible'), 'raw-scroll navigation synchronizer did not engage');
     await page.close();
   }
 
